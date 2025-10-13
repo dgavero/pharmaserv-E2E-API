@@ -1,0 +1,34 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables (contains tokens & URLs)
+.env
+.discord-run.json   # Discord thread metadata
+
+# Playwright Outputs
+test-results/
+.playwright-report/
+playwright-report/
+blob-report/
+trace.zip
+screenshots/
+reports/
+
+# Discord runtime state
+.discord-run.json
+
+# Logs
+logs/
+*.log
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.iml
+
+# OS-specific files
+*.DS_Store
+Thumbs.db

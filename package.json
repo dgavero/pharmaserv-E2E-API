@@ -1,0 +1,23 @@
+{
+  "name": "e2e-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+  "test": "playwright test",
+  "report:publish": "node scripts/publish-report.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "gh-pages": "^6.3.0",
+    "prettier": "^3.6.2"
+  },
+  "dependencies": {
+    "discord.js": "^14.22.1",
+    "dotenv": "^17.2.2"
+  }
+}
