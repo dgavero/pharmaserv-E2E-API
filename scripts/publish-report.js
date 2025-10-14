@@ -4,11 +4,11 @@ const path = require('path');
 const fs = require('fs');
 
 // === CONFIG ===
-const REPORTS_DIR = path.resolve('reports');                 // local folder that accumulates all runs
-const SOURCE_DIR  = path.resolve('.playwright-report');      // Playwright output
-const KEEP_DAYS   = 15;                                      // retention window
-const REPO        = 'dgavero/playwright-automation-template';
-const BASE_URL    = `https://${REPO.split('/')[0]}.github.io/${REPO.split('/')[1]}/reports`;
+const REPORTS_DIR = path.resolve('reports'); // local folder that accumulates all runs
+const SOURCE_DIR = path.resolve('.playwright-report'); // Playwright output
+const KEEP_DAYS = 15; // retention window
+const REPO = 'dgavero/pharmaserv-E2E-API';
+const BASE_URL = `https://${REPO.split('/')[0]}.github.io/${REPO.split('/')[1]}/reports`;
 
 // === HELPERS ===
 function timestampFolderName() {
@@ -46,17 +46,19 @@ function pruneOldReports() {
     pruneOldReports();
 
     // 4) (Optional) Drop a .nojekyll inside reports/ (usually not needed, but harmless)
-    try { fs.writeFileSync(path.join(REPORTS_DIR, '.nojekyll'), ''); } catch {}
+    try {
+      fs.writeFileSync(path.join(REPORTS_DIR, '.nojekyll'), '');
+    } catch {}
 
     // 5) Publish the local REPORTS_DIR, but place it under 'reports' on gh-pages
     ghpages.publish(
       REPORTS_DIR,
       {
         branch: 'gh-pages',
-        dest: 'reports',                 // <-- put contents under /reports on the branch
+        dest: 'reports', // <-- put contents under /reports on the branch
         message: `publish: ${folderName}`,
         dotfiles: true,
-        add: false,                      // overwrite the 'reports' folder each time (we already manage retention)
+        add: false, // overwrite the 'reports' folder each time (we already manage retention)
       },
       (err) => {
         if (err) {

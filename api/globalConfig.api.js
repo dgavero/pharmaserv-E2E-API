@@ -11,7 +11,6 @@
 import { test as base, request as pwRequest } from '@playwright/test';
 import { flushApiReports } from './helpers/testUtilsAPI.js';
 
-
 // Avoid the macOS IPv6 localhost (::1) gotcha by normalizing to 127.0.0.1.
 const BASE_URL = (process.env.API_BASE_URL || '').replace('localhost', '127.0.0.1');
 

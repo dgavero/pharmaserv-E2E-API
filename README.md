@@ -37,14 +37,15 @@ npm install
 ## 🛠 Quick Start
 
 ### 1. Configure `.env`
-Copy `.env.example` to `.env` and fill in your values.
 
+Copy `.env.example` to `.env` and fill in your values.
 
 ### 2. Run Sample Test
 
 ```bash
 TAGS='samples' npx playwright test
 ```
+
 ---
 
 ## 📘 Documentation
@@ -90,6 +91,12 @@ e2e-project/
 ├── README.md / USAGE.md / CHANGELOG.md / PROJECTVISIONS.md
 └── package.json
 ```
+
+---
+
+## Testing Guidelines
+
+See [AGENTS.MD](./agents.md) for how we write API tests (GraphQL + Playwright).
 
 ---
 
