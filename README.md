@@ -98,6 +98,10 @@ e2e-project/
 
 See [AGENTS.MD](./agents.md) for how we write API tests (GraphQL + Playwright).
 
+- **Capitalize** test titles for clean Discord/HTML output
+- **Default tags**: `@api` + domain (e.g., `@patient`) + `@positive` or `@negative`
+- **Group related tests** in one suite (e.g., login success + login failure)
+
 ---
 
 ## 📄 License

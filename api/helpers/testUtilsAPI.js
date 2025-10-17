@@ -41,6 +41,8 @@ export async function safeGraphQL(api, args) {
       ok: false,
       body,
       error: `HTTP ${res.status()} ${text?.slice(0, 200)}`,
+      httpStatus: res.status(),
+      httpOk: false,
 
       // NEW structured fields (null for transport failures)
       errorCode: null,
@@ -58,6 +60,9 @@ export async function safeGraphQL(api, args) {
       ok: false,
       body,
       error: compact.slice(0, 400), // still short & human-friendly
+      httpStatus: res.status(), // 200
+      httpOk: true,
+
       // NEW structured fields for assertions
       errorCode: code, // e.g., "409"
       errorClass: classification, // e.g., "CONFLICT"
@@ -65,7 +70,63 @@ export async function safeGraphQL(api, args) {
     };
   }
 
-  return { ok: true, body, error: null, errorCode: null, errorClass: null, errorMessage: null };
+  return {
+    ok: true,
+    body,
+    error: null,
+    httpStatus: res.status(),
+    httpOk: true,
+    errorCode: null,
+    errorClass: null,
+    errorMessage: null,
+  };
+}
+
+// ============================================================================
+// Domain helpers (Auth)
+// ============================================================================
+
+const LOGIN_MUTATION = `
+  mutation ($username: String!, $password: String!) {
+    patient {
+      auth {
+        login(username: $username, password: $password) {
+          accessToken
+          refreshToken
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Login with username/password and return tokens.
+ * - Hard-require both fields to avoid accidental undefined vars.
+ * - Returns { accessToken, refreshToken, raw } where "raw" is the safeGraphQL envelope.
+ */
+export async function loginAndGetTokens(api, { username, password }) {
+  if (!username || !password) {
+    throw new Error('loginAndGetTokens: username and password are required');
+  }
+  const raw = await safeGraphQL(api, {
+    query: LOGIN_MUTATION,
+    variables: { username, password },
+  });
+  if (!raw.ok) {
+    throw new Error(`Login failed: ${raw.error || 'unknown error'}`);
+  }
+  const node = raw.body?.data?.patient?.auth?.login;
+  return {
+    accessToken: node?.accessToken ?? null,
+    refreshToken: node?.refreshToken ?? null,
+    raw,
+  };
+}
+
+/** Convenience builder for Bearer header from an access token. */
+export function bearer(token) {
+  if (!token) throw new Error('bearer: token is required');
+  return { Authorization: `Bearer ${token}` };
 }
 
 // ============================================================================

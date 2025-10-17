@@ -20,6 +20,7 @@ TAGS='samples' npx playwright test
 ```
 
 ### Run by Project (via env)
+
 ```bash
 # Only API
 PROJECT=api npx playwright test
@@ -30,9 +31,11 @@ PROJECT=e2e,api npx playwright test
 ```
 
 ### Run with Configs
+
 ```bash
 TEST_ENV=ORANGE THREADS=4 TAGS='all' PROJECT=e2e,api  npx playwright test
 ```
+
 ### Filter by Tags
 
 Tag tests with `@tags` in `describe` or `test` titles:
@@ -58,7 +61,7 @@ TAGS='(?!.*@secret)' npx playwright test  # run everything except @secret
 ### `.env`
 
 ```env
-Copy the provided `.env.example` file to `.env` in the project root and update it with your own values.  
+Copy the provided `.env.example` file to `.env` in the project root and update it with your own values.
 ```
 
 ---
@@ -124,6 +127,7 @@ if (!(await safeWaitForElementVisible(page, '#loginBtn'))) {
 ## 5️⃣ Safe Helpers
 
 ### UI Helpers `e2e/helpers/testUtilsUI.js`
+
 All return `true/false` instead of throwing.  
 If `false`, call `markFailed()` with your human context.
 
@@ -139,9 +143,11 @@ Timeouts default to `Timeouts.standard` (15s).
 Override with `Timeouts.short`, `long`, `extraLong`.
 
 ### API Helpers (`api/helpers/testUtilsAPI.js`)
+
 Use Playwright’s native assertions (`expect` / `expect.soft`) for API tests.
 For GraphQL, use the provided **`safeGraphQL`** wrapper in `api/helpers/testUtilsAPI.js`
 to normalize transport (HTTP) vs GraphQL resolver errors without throwing.
+
 ---
 
 ## 6️⃣ More
