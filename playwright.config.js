@@ -49,11 +49,16 @@ const projectEnv = (process.env.PROJECT || process.env.PROJECTS || '').trim();
 let projects = allProjects;
 if (projectEnv) {
   const want = new Set(
-    projectEnv.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+    projectEnv
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
   );
-  projects = allProjects.filter(p => want.has(p.name.toLowerCase()));
+  projects = allProjects.filter((p) => want.has(p.name.toLowerCase()));
   if (projects.length === 0) {
-    throw new Error(`Unknown PROJECT="${projectEnv}". Valid: ${allProjects.map(p => p.name).join(', ')}`);
+    throw new Error(
+      `Unknown PROJECT="${projectEnv}". Valid: ${allProjects.map((p) => p.name).join(', ')}`
+    );
   }
 }
 
@@ -63,7 +68,6 @@ export default defineConfig({
 
   // Where Playwright looks for tests (env PROJECT filter; empty runs both)
   projects,
-  
 
   // Default timeout for each test (in ms) → 60s instead of default 30s
   timeout: 60000,
@@ -87,5 +91,4 @@ export default defineConfig({
   // - matches whole tokens only (no "smoke1" when TAGS=smoke)
   // - supports OR patterns, e.g., TAGS='smoke|regression'
   grep: tags ? new RegExp(`(^|\\s)@?(?:${tags})(?=\\s|$)`, 'i') : undefined,
-
 });

@@ -236,3 +236,62 @@ test('patient.me returns the current user @api @patient @positive', async ({ api
 ---
 
 Happy testing! Keep titles **Capitalized**, tag with **@api** + domain + **@positive/@negative**, and group related flows together.
+
+---
+
+## 9) Use the custom API test fixture (don’t rely on Playwright’s default `baseURL`)
+
+**Why:** Our repo provides a dedicated API Playwright config/fixture that points requests at `API_BASE_URL`. If a spec imports `test` from `@playwright/test`, it may inherit a **web** project `baseURL` (e.g., GitHub Pages) and your GraphQL calls can fail at the gateway (e.g., 405).
+
+**Rule:** For **all API tests**, import `test/expect` from our custom API config and use the **`api`** fixture — **never** `{ request }` from `@playwright/test`.
+
+```diff
+- import { test, expect } from '@playwright/test';
++ import { test, expect } from '../../globalConfig.api.js'; // adjust path as needed
+
+- test('...', async ({ request: api }) => {
++ test('...', async ({ api }) => {
+    // All safeGraphQL calls now use API_BASE_URL + GRAPHQL_PATH
+});
+```
+
+**Standard header for API specs**
+
+```js
+// tests/api/<feature>.spec.js
+import { test, expect } from '../../globalConfig.api.js';
+import { safeGraphQL, bearer } from '../../helpers/testUtilsAPI.js';
+```
+
+**Directory / project routing**
+
+- Keep all API specs under `tests/api/**` so they’re always picked up by the API project.
+- To run a single file under the API project:
+  ```bash
+  npx playwright test -p api tests/api/admin/login.spec.js
+  ```
+
+**Emergency override (only if absolutely needed)**
+
+```js
+// At top of a spec that must run outside the API project:
+import { test } from '@playwright/test';
+test.use({ baseURL: process.env.API_BASE_URL });
+```
+
+This guarantees API tests always hit `http://<API_BASE_URL>/<GRAPHQL_PATH>` and avoids accidental calls to any web `baseURL`.
+
+### Project routing in this repo
+
+Our Playwright config already splits projects by directory and TEST_ENV:
+
+- **API tests:** `./api/tests/**`
+- **E2E/UI tests:** `./e2e/tests/**`
+- Select projects via env: `PROJECT=api` or `PROJECT=e2e,api`
+- Base URL is chosen from `TEST_ENV` (`LOCAL`/`ORANGE`/`PROD`) and injected as `use.baseURL`.
+
+This means the guidance above maps to **this repo** as:
+
+- Keep API specs in `./api/tests/**` (picked up by the **api** project).
+- Run one file under API:  
+  `npx playwright test -p api api/tests/admin/login.admin.spec.js`

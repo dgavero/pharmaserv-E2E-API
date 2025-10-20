@@ -11,18 +11,22 @@ import { sendAPIFailure } from '../../helpers/discord/discordBot.js';
 // Core GraphQL wrapper
 // ============================================================================
 
-// Pulls structured details from the first GraphQL error.
-// Supports APIs that return HTTP-ish codes (e.g., "409") and/or classification (e.g., "CONFLICT").
-function pickGraphQLError(errors) {
-  if (!Array.isArray(errors) || errors.length === 0) {
-    return { code: null, classification: null, message: null, path: null };
-  }
-  const first = errors[0] || {};
-  const code = first?.extensions?.code ?? null; // e.g., "409" or "DUPLICATE_EMAIL"
-  const classification = first?.extensions?.classification ?? null; // e.g., "CONFLICT"
-  const message = typeof first?.message === 'string' ? first.message : null;
-  const path = Array.isArray(first?.path) ? first.path.join('.') : null;
-  return { code, classification, message, path };
+// ----- GraphQL error extractor (single source of truth) -----
+// Accepts either the whole safeGraphQL envelope (with .body) or a raw GraphQL body.
+// Returns a consistent shape for tests and for safeGraphQL to reuse.
+function _extractGqlError(body) {
+  const err = (body?.errors ?? [])[0] ?? {};
+  const message = String(err?.message ?? '');
+  const code = String(err?.extensions?.code ?? '');
+  const classification = String(err?.extensions?.classification ?? '').toUpperCase();
+  const path = Array.isArray(err?.path) ? err.path.join('.') : '';
+  return { message, code, classification, path };
+}
+
+export function getGQLError(resOrBody) {
+  // allow both: gqlError(res) or gqlError(body)
+  const body = resOrBody?.body ?? resOrBody;
+  return _extractGqlError(body);
 }
 
 /**
@@ -33,52 +37,60 @@ function pickGraphQLError(errors) {
  */
 export async function safeGraphQL(api, args) {
   const { res, body } = await graphql(api, args);
+  const status = res.status();
 
-  // Transport-level failure
+  // --- 1) Transport-level failure (non-2xx from gateway/proxy)
   if (!res.ok()) {
     const text = await res.text().catch(() => '');
     return {
       ok: false,
       body,
-      error: `HTTP ${res.status()} ${text?.slice(0, 200)}`,
-      httpStatus: res.status(),
+      error: `HTTP ${status} ${String(text).slice(0, 200)}`,
+      httpStatus: status,
       httpOk: false,
 
-      // NEW structured fields (null for transport failures)
+      // structured fields (null for transport failures)
       errorCode: null,
       errorClass: null,
-      errorMessage: text?.slice(0, 200) || null,
+      errorMessage: text ? String(text).slice(0, 200) : null,
+      errorPath: null,
     };
   }
 
-  // GraphQL-level failure (HTTP 200 but resolver/schema errors)
-  if (body?.errors?.length) {
-    const { code, classification, message } = pickGraphQLError(body.errors);
-    const compact = (code ? `${code}: ` : '') + (message || JSON.stringify(body.errors));
+  // --- 2) Resolver/schema failure (HTTP 200 but GraphQL errors[])
+  if (Array.isArray(body?.errors) && body.errors.length > 0) {
+    // NOTE: pass the WHOLE body, not body.errors
+    const { message, code, classification, path } = _extractGqlError(body);
+
+    const compact =
+      (code ? `${code}: ` : '') + (message || JSON.stringify(body.errors).slice(0, 300));
 
     return {
       ok: false,
       body,
-      error: compact.slice(0, 400), // still short & human-friendly
-      httpStatus: res.status(), // 200
+      error: compact.slice(0, 400),
+      httpStatus: status,
       httpOk: true,
 
-      // NEW structured fields for assertions
-      errorCode: code, // e.g., "409"
-      errorClass: classification, // e.g., "CONFLICT"
-      errorMessage: message, // human-readable message
+      // structured fields for tests
+      errorCode: code || null, // e.g., "409"
+      errorClass: classification || null, // e.g., "CONFLICT"
+      errorMessage: message || null, // human-readable
+      errorPath: path || null, // e.g., "administrator.rider.register"
     };
   }
 
+  // --- 3) Success
   return {
     ok: true,
     body,
     error: null,
-    httpStatus: res.status(),
+    httpStatus: status,
     httpOk: true,
     errorCode: null,
     errorClass: null,
     errorMessage: null,
+    errorPath: null,
   };
 }
 
@@ -127,6 +139,40 @@ export async function loginAndGetTokens(api, { username, password }) {
 export function bearer(token) {
   if (!token) throw new Error('bearer: token is required');
   return { Authorization: `Bearer ${token}` };
+}
+
+// ----- Admin login (parallel to patient login)
+const ADMIN_LOGIN_MUTATION = `
+  mutation ($username: String!, $password: String!) {
+    administrator {
+      auth {
+        login(username: $username, password: $password) {
+          accessToken
+          refreshToken
+        }
+      }
+    }
+  }
+`;
+
+/** Login as administrator and return tokens. */
+export async function adminLoginAndGetTokens(api, { username, password }) {
+  if (!username || !password) {
+    throw new Error('adminLoginAndGetTokens: username and password are required');
+  }
+  const raw = await safeGraphQL(api, {
+    query: ADMIN_LOGIN_MUTATION,
+    variables: { username, password },
+  });
+  if (!raw.ok) {
+    throw new Error(`Admin login failed: ${raw.error || 'unknown error'}`);
+  }
+  const node = raw.body?.data?.administrator?.auth?.login;
+  return {
+    accessToken: node?.accessToken ?? null,
+    refreshToken: node?.refreshToken ?? null,
+    raw,
+  };
 }
 
 // ============================================================================
