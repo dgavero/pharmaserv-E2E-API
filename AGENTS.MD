@@ -1,4 +1,4 @@
-# AGENTS.md — API Test Authoring Guide
+# AGENTS.md — API Test Authoring Guide (Updated)
 
 This guide describes how we write **GraphQL API tests** in this repo: helpers to use, naming, tagging, structure, and assertion style.
 
@@ -10,21 +10,19 @@ This guide describes how we write **GraphQL API tests** in this repo: helpers to
   Example: `test('Should Login And Return Tokens @api @patient @positive', …)`
 - **Default tags** for API tests:
   - `@api` (always)
-  - Domain tag (e.g., `@patient`)
+  - Domain tag (e.g., `@patient`, `@admin`, `@rider`)
   - Polarity: **`@positive`** or **`@negative`**
 - **Group related flows in one file** with a `test.describe(...)` suite.  
   Example: `login.spec.js` contains both **success** and **failure** cases.
 - Prefer **hard** checks for the primary contract, and **soft** checks for details:
   - Hard = must pass (e.g., request succeeded / failed as intended)
   - Soft = nice-to-have details (field values, regex shapes)
-- For GraphQL, use **safeGraphQL** wrapper. It normalizes:
-  - Transport failures (HTTP 4xx/5xx): `ok=false`, `httpStatus` set, no GraphQL errors
-  - GraphQL resolver errors (HTTP 200 + `errors[]`): `ok=false`, `errorCode/errorClass`
-  - Success (HTTP 200, no errors): `ok=true`
+- For GraphQL, use our **`safeGraphQL`** wrapper and **`getGQLError`** extractor for negative cases.
 - When asserting auth failures:
   - If **transport** block (e.g., gateway returns **401**): assert `httpStatus === 401`
-  - If **GraphQL** signals (200 + `errors[]`): assert `errorCode`/`errorClass` (e.g., `401` / `UNAUTHORIZED`)
+  - If **GraphQL** signals (200 + `errors[]`): assert `code`/`classification` (e.g., `401` / `UNAUTHORIZED`)
 - Use **`test.step()`** to name logical phases (Login → Query → Validate). It improves report readability with no extra noise in Discord.
+- **Use definitive, descriptive const names.** See §5 _Naming & readability_ for examples.
 
 ---
 
@@ -39,36 +37,40 @@ This guide describes how we write **GraphQL API tests** in this repo: helpers to
     ok: boolean,
     body: any,                  // parsed JSON (or null)
     error: string | null,       // compact human message
-    httpStatus: number,         // NEW: transport code (200 on success)
-    httpOk: boolean,            // NEW: transport ok flag
+    httpStatus: number,         // transport code (200 on success)
+    httpOk: boolean,            // transport ok flag
     errorCode: string | null,   // GraphQL errors[0].extensions.code (e.g., "409", "401")
     errorClass: string | null,  // GraphQL errors[0].extensions.classification (e.g., "CONFLICT", "UNAUTHORIZED")
-    errorMessage: string | null // GraphQL errors[0].message
+    errorMessage: string | null,// GraphQL errors[0].message
+    errorPath: string | null    // e.g., "patient.auth.login"
   }
   ```
 
-- Typical **happy-path** hard check:
+- **Hard success gate** (use a descriptive const, not `res`):
 
   ```js
-  expect(res.ok, res.error || 'GraphQL call failed').toBe(true);
+  expect(loginRes.ok, loginRes.error || 'GraphQL call failed').toBe(true);
   ```
 
-- Typical **negative** hard check (auth failure):
+- **Hard negative gate** (auth failure via transport):
   ```js
-  expect(res.ok).toBe(false);
-  // transport 401
-  expect(res.httpStatus).toBe(401);
+  expect(meAttempt.ok).toBe(false);
+  expect(meAttempt.httpStatus).toBe(401);
   ```
 
-### `loginAndGetTokens(api, { username, password })`
+### `getGQLError(res)`
+
+- Unified extractor for resolver errors (HTTP 200 + `errors[]`). Accepts the `safeGraphQL` envelope and returns:
+  ```ts
+  { message: string, code: string, classification: string, path: string }
+  ```
+- Use it in negatives to keep assertions tidy and consistent.
+
+### `loginAndGetTokens(api, { username, password })` and `adminLoginAndGetTokens(...)`
 
 - Logs in via GraphQL and returns:
   ```ts
   { accessToken: string|null, refreshToken: string|null, raw: SafeGraphQLResult }
-  ```
-- Use what you need:
-  ```js
-  const { accessToken } = await loginAndGetTokens(api, { username, password });
   ```
 
 ### `bearer(token)`
@@ -100,10 +102,10 @@ test.describe('GraphQL: Patient Login', () => {
 
 ```js
 await test.step('Login', async () => {
-  expect(login.ok, login.error || 'Login failed').toBe(true);
+  expect(loginRes.ok, loginRes.error || 'Login failed').toBe(true);
 });
 await test.step('Query `me`', async () => {
-  expect(me.ok, me.error || 'Me query failed').toBe(true);
+  expect(meRes.ok, meRes.error || 'Me query failed').toBe(true);
 });
 await test.step('Validate payload', async () => {
   expect.soft(typeof meNode.id).toBe('string');
@@ -113,78 +115,108 @@ await test.step('Validate payload', async () => {
 ### C) Assertions
 
 - **Hard** (primary contract)
-  - Success path: `expect(res.ok).toBe(true)`
-  - Negative path: `expect(res.ok).toBe(false)` and, if transport-level, `expect(res.httpStatus).toBe(401)`
+  - Success path: `expect(loginRes.ok).toBe(true)`
+  - Negative path: `expect(meAttempt.ok).toBe(false)` and, if transport-level, `expect(meAttempt.httpStatus).toBe(401)`
 - **Soft** (details)
   - Field types / shapes: `expect.soft(typeof token).toBe('string')`
   - Regex shapes: `expect.soft(uuid).toMatch(UUID36)`
-  - Value equality: `expect.soft(reg.firstName).toBe(patient.firstName)`
+  - Value equality: `expect.soft(regNode.firstName).toBe(patient.firstName)`
 
 ---
 
-## 4) Canonical examples
+## 4) Canonical examples (Updated)
 
-### Login (happy path)
+### Patient Login (happy path)
 
 ```js
 test('Should Login And Return Tokens @api @patient @positive', async ({ api }) => {
   const creds = { username: process.env.LOGIN_USERNAME, password: process.env.LOGIN_PASSWORD };
-  const res = await safeGraphQL(api, { query: LOGIN_MUTATION, variables: creds });
+  const loginRes = await safeGraphQL(api, { query: LOGIN_MUTATION, variables: creds });
 
   await test.step('GraphQL should succeed', async () => {
-    expect(res.ok, res.error || 'GraphQL call failed').toBe(true);
+    expect(loginRes.ok, loginRes.error || 'GraphQL call failed').toBe(true);
   });
 
   await test.step('Validate tokens (strings)', async () => {
-    const node = res.body?.data?.patient?.auth?.login;
-    expect(node, 'Missing data.patient.auth.login').toBeTruthy();
-    expect.soft(typeof node.accessToken).toBe('string');
-    expect.soft(typeof node.refreshToken).toBe('string');
+    const tokens = loginRes.body?.data?.patient?.auth?.login;
+    expect(tokens, 'Missing data.patient.auth.login').toBeTruthy();
+    expect.soft(typeof tokens.accessToken).toBe('string');
+    expect.soft(typeof tokens.refreshToken).toBe('string');
   });
 });
 ```
 
-### Login (invalid credentials)
+### Patient Login (invalid credentials, uses `getGQLError`)
 
 ```js
 test('Should Reject Invalid Credentials @api @patient @negative', async ({ api }) => {
   const creds = { username: 'bad.user', password: 'nope' };
-  const res = await safeGraphQL(api, { query: LOGIN_MUTATION, variables: creds });
+  const loginAttempt = await safeGraphQL(api, { query: LOGIN_MUTATION, variables: creds });
 
   await test.step('Login should fail', async () => {
-    expect(res.ok).toBe(false);
+    expect(loginAttempt.ok).toBe(false);
   });
 
   await test.step('Assert error details', async () => {
-    const code = String(res.errorCode ?? '').trim();
-    const classification = String(res.errorClass ?? '').trim();
-    if (code || classification) {
-      expect.soft(code).toBe('401');
-      expect.soft(classification.toUpperCase()).toBe('UNAUTHORIZED');
-    }
-    // No message fallback needed if we already asserted httpStatus elsewhere.
+    const { message, code, classification, path } = getGQLError(loginAttempt);
+    expect(message.toLowerCase()).toMatch(/(invalid|incorrect|unauthori[sz]ed)/);
+    expect.soft(code).toBe('401');
+    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect.soft(path).toBe('patient.auth.login');
   });
 });
 ```
 
-### Authenticated `me`
+### Authenticated `me` (patient)
 
 ```js
 test('patient.me returns the current user @api @patient @positive', async ({ api }) => {
-  const { accessToken } = await loginAndGetTokens(api, {
+  const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
     username: process.env.LOGIN_USERNAME,
     password: process.env.LOGIN_PASSWORD,
   });
 
-  const me = await safeGraphQL(api, {
-    query: ME_QUERY,
+  const meRes = await safeGraphQL(api, { query: ME_QUERY, headers: bearer(accessToken) });
+
+  expect(loginRes.ok, loginRes.error || 'Login failed').toBe(true);
+  expect(meRes.ok, meRes.error || 'Me query failed').toBe(true);
+
+  const meNode = meRes.body?.data?.patient?.me;
+  expect(meNode, 'Missing data.patient.me').toBeTruthy();
+  expect.soft(typeof meNode.username).toBe('string');
+});
+```
+
+### Register Rider (duplicate negative, descriptive consts + `getGQLError`)
+
+```js
+test('Should Reject Duplicate Rider Registration @api @admin @negative', async ({ api }) => {
+  const { accessToken } = await adminLoginAndGetTokens(api, {
+    username: process.env.ADMIN_USERNAME,
+    password: process.env.ADMIN_PASSWORD,
+  });
+
+  const existingRider = {
+    firstName: 'Dave',
+    lastName: 'Rider',
+    email: 'daverider1@yahoo.com',
+    username: 'daverider1.rider',
+    password: 'Password123',
+  };
+
+  const dupeRegRider = await safeGraphQL(api, {
+    query: REGISTER_RIDER_MUTATION,
+    variables: { rider: existingRider },
     headers: bearer(accessToken),
   });
 
-  expect(me.ok, me.error || 'Me query failed').toBe(true);
-  const node = me.body?.data?.patient?.me;
-  expect(node, 'Missing data.patient.me').toBeTruthy();
-  expect.soft(typeof node.username).toBe('string');
+  expect(dupeRegRider.ok).toBe(false);
+
+  const { message, code, classification, path } = getGQLError(dupeRegRider);
+  expect(message.toLowerCase()).toContain('already registered');
+  expect.soft(code).toBe('409');
+  expect.soft(classification).toBe('CONFLICT');
+  expect.soft(path).toBe('administrator.rider.register');
 });
 ```
 
@@ -193,10 +225,9 @@ test('patient.me returns the current user @api @patient @positive', async ({ api
 ## 5) Naming & readability
 
 - Variables should be **descriptive** of what they hold or do:
-  - ✅ `const registerRes = await safeGraphQL(...)`
-  - ✅ `const tokens = await loginAndGetTokens(...)`
-  - ❌ `const res1`, `const x`, `const getTokens` (sounds like a function)
-- Keep helpers tiny and **single-purpose** (e.g., `loginAndGetTokens`, `bearer`).
+  - ✅ `const loginRes = …`, `const meRes = …`, `const dupeRegRider = …`, `const registerRes = …`
+  - ❌ `const res`, `const result`, `const x`
+- Keep helpers tiny and **single-purpose** (e.g., `loginAndGetTokens`, `adminLoginAndGetTokens`, `bearer`, `getGQLError`).
 
 ---
 
@@ -204,7 +235,7 @@ test('patient.me returns the current user @api @patient @positive', async ({ api
 
 - Default tags we use:
   - `@api` (always in API tests)
-  - domain tags like `@patient`
+  - domain tags like `@patient`, `@admin`, `@rider`
   - polarity: `@positive` or `@negative`
 - You can filter with `TAGS` env:
   ```bash
@@ -216,9 +247,9 @@ test('patient.me returns the current user @api @patient @positive', async ({ api
 
 ## 7) Where to put things
 
-- **`helpers/testUtilsAPI.js`**: `safeGraphQL`, `loginAndGetTokens`, `bearer`
+- **`helpers/testUtilsAPI.js`**: `safeGraphQL`, `getGQLError`, `loginAndGetTokens`, `adminLoginAndGetTokens`, `bearer`
 - **`helpers/graphqlClient.js`**: low-level transport; accepts optional `headers`
-- **`tests/api/*.spec.js`**: your test suites (`describe`) for each feature (e.g., `login`, `register`, `me`).
+- **`api/tests/*.spec.js`**: your test suites (`describe`) for each feature (e.g., `login`, `register`, `me`).
 
 ---
 
@@ -226,16 +257,10 @@ test('patient.me returns the current user @api @patient @positive', async ({ api
 
 - **Why `toBe(true)` for `ok`?**  
   Clear contract: if a request didn’t both (a) transport OK **and** (b) return no GraphQL errors, the test fails.
-
 - **When do I prefer `toBeTruthy()`?**  
   For “is there _something_ here?” checks (e.g., node exists), not for boolean contracts.
-
 - **Do I assert message strings?**  
-  Only as a **fallback** when there’s no structured error; avoid brittle wording checks.
-
----
-
-Happy testing! Keep titles **Capitalized**, tag with **@api** + domain + **@positive/@negative**, and group related flows together.
+  Prefer structured fields via `getGQLError` (`code`/`classification`). Fall back to fuzzy message checks only when structure is absent or unstable.
 
 ---
 
@@ -258,32 +283,14 @@ Happy testing! Keep titles **Capitalized**, tag with **@api** + domain + **@posi
 **Standard header for API specs**
 
 ```js
-// tests/api/<feature>.spec.js
+// api/tests/<feature>.spec.js
 import { test, expect } from '../../globalConfig.api.js';
 import { safeGraphQL, bearer } from '../../helpers/testUtilsAPI.js';
 ```
 
-**Directory / project routing**
+**Project routing in this repo**
 
-- Keep all API specs under `tests/api/**` so they’re always picked up by the API project.
-- To run a single file under the API project:
-  ```bash
-  npx playwright test -p api tests/api/admin/login.spec.js
-  ```
-
-**Emergency override (only if absolutely needed)**
-
-```js
-// At top of a spec that must run outside the API project:
-import { test } from '@playwright/test';
-test.use({ baseURL: process.env.API_BASE_URL });
-```
-
-This guarantees API tests always hit `http://<API_BASE_URL>/<GRAPHQL_PATH>` and avoids accidental calls to any web `baseURL`.
-
-### Project routing in this repo
-
-Our Playwright config already splits projects by directory and TEST_ENV:
+Our Playwright config splits projects by directory and TEST_ENV:
 
 - **API tests:** `./api/tests/**`
 - **E2E/UI tests:** `./e2e/tests/**`
@@ -294,4 +301,4 @@ This means the guidance above maps to **this repo** as:
 
 - Keep API specs in `./api/tests/**` (picked up by the **api** project).
 - Run one file under API:  
-  `npx playwright test -p api api/tests/admin/login.admin.spec.js`
+  `npx playwright test -p api api/tests/patient/login.spec.js`
