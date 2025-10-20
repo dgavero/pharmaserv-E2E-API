@@ -12,7 +12,7 @@
  */
 
 import { test, expect } from '../../globalConfig.api.js';
-import { safeGraphQL } from '../../helpers/testUtilsAPI.js';
+import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
 
 const REGISTER_PATIENT_MUTATION = `
   mutation ($patient: Register!) {
@@ -109,10 +109,7 @@ test.describe('GraphQL: Register Patient', () => {
 
     // 3) Conflict details: prefer structured GraphQL fields; otherwise fall back to message text.
     await test.step('Assert conflict details', async () => {
-      const code = String(second.errorCode ?? '').trim(); // e.g., "409"
-      const classification = String(second.errorClass ?? '').trim(); // e.g., "CONFLICT"
-      const message =
-        second.errorMessage ?? second.error ?? JSON.stringify(second.body?.errors ?? [], null, 2);
+      const { message, code, classification } = getGQLError(second);
 
       if (code || classification) {
         expect.soft(code).toBe('409');

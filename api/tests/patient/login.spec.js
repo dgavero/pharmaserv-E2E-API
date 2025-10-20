@@ -1,7 +1,7 @@
 // tests/api/login.spec.js
 
 import { test, expect } from '../../globalConfig.api.js';
-import { safeGraphQL } from '../../helpers/testUtilsAPI.js';
+import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
 
 const LOGIN_MUTATION = `
   mutation ($username: String!, $password: String!) {
@@ -67,26 +67,22 @@ test.describe('GraphQL: Patient Login', () => {
     });
 
     await test.step('Assert error details', async () => {
-      const code = String(loginAttempt.errorCode ?? '').trim(); // "401"
-      const classification = String(loginAttempt.errorClass ?? '').trim(); // "UNAUTHORIZED"
-      const msg =
-        loginAttempt.errorMessage ??
-        loginAttempt.error ??
-        JSON.stringify(loginAttempt.body?.errors ?? [], null, 2);
+      const { message, code, classification, path } = getGQLError(loginAttempt);
 
-      // Prefer structured: require both if any structure is present
-      if (code || classification) {
-        expect.soft(code).toBe('401');
-        expect.soft(classification).toBe('UNAUTHORIZED');
-      } else {
-        // Fallback: message hint
-        expect.soft(msg).toMatch(/invalid\s+(username|password)/i);
-      }
+      // Fuzzy message: allow any invalid/unauthorized phrasing
+      expect(message.toLowerCase()).toMatch(/(invalid|incorrect|unauthorized)/);
+
+      // Soft checks for code/classification
+      expect.soft(code).toBe('401');
+      expect.soft(classification).toBe('UNAUTHORIZED');
+
+      // Optional (soft): path usually "patient.auth.login"
+      expect.soft(path).toBe('patient.auth.login');
 
       // Safety: no tokens should be present on failure
-      const loginNode = loginAttempt.body?.data?.patient?.auth?.login;
-      expect.soft(loginNode?.accessToken ?? null).toBeFalsy();
-      expect.soft(loginNode?.refreshToken ?? null).toBeFalsy();
+      const node = loginAttempt.body?.data?.patient?.auth?.login;
+      expect.soft(node?.accessToken ?? null).toBeFalsy();
+      expect.soft(node?.refreshToken ?? null).toBeFalsy();
     });
   });
 });

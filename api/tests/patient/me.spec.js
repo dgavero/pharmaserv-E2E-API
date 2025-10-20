@@ -6,7 +6,7 @@
  */
 
 import { test, expect } from '../../globalConfig.api.js';
-import { safeGraphQL, loginAndGetTokens, bearer } from '../../helpers/testUtilsAPI.js';
+import { safeGraphQL, loginAndGetTokens, bearer, getGQLError } from '../../helpers/testUtilsAPI.js';
 
 const ME_QUERY = `
   query {
@@ -56,16 +56,14 @@ test.describe('GraphQL: Me', () => {
     });
 
     await test.step('Assert unauthorized details', async () => {
-      const code = String(meAttempt.errorCode ?? '').trim(); // "401"
-      const classification = String(meAttempt.errorClass ?? '').trim(); // "UNAUTHORIZED"
-      const msg = meAttempt.errorMessage ?? meAttempt.error ?? '';
+      const { message, code, classification } = getGQLError(meAttempt);
 
-      if (code || classification) {
-        expect.soft(code).toBe('401');
-        expect.soft(classification).toBe('UNAUTHORIZED');
-      } else {
-        expect.soft(msg).toMatch(/unauthori[sz]ed|token|credential/i);
-      }
+      // Fuzzy message
+      expect(message.toLowerCase()).toMatch(/unauthori[sz]ed|token|credential/);
+
+      // Soft checks
+      expect.soft(code).toBe('401');
+      expect.soft(classification).toBe('UNAUTHORIZED');
     });
   });
 
