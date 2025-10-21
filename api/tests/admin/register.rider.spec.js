@@ -1,3 +1,4 @@
+import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../globalConfig.api.js';
 import {
   safeGraphQL,
@@ -23,13 +24,6 @@ const REGISTER_RIDER_MUTATION = `
   }
 `;
 
-// 13-digit ms timestamp + 6 random digits
-function uniqueSuffix() {
-  return `${Date.now()}${Math.floor(Math.random() * 1e6)
-    .toString()
-    .padStart(6, '0')}`;
-}
-
 test.describe('GraphQL: Rider Register', () => {
   test('Should Login As Admin And Register A New Rider @api @admin @positive', async ({ api }) => {
     const adminUser = process.env.ADMIN_USERNAME;
@@ -43,7 +37,7 @@ test.describe('GraphQL: Rider Register', () => {
     });
 
     // 2) Prepare unique rider input to avoid duplicates
-    const suffix = uniqueSuffix();
+    const suffix = randomAlphanumeric(8);
     const riderInput = {
       firstName: 'Dave',
       lastName: 'Rider',

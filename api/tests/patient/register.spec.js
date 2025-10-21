@@ -13,6 +13,7 @@
 
 import { test, expect } from '../../globalConfig.api.js';
 import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
+import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 
 const REGISTER_PATIENT_MUTATION = `
   mutation ($patient: Register!) {
@@ -20,18 +21,9 @@ const REGISTER_PATIENT_MUTATION = `
   }
 `;
 
-// ----- Helpers (unique positive + fixed negative) -----
-
-function uniqueSuffix() {
-  // 13-digit ms timestamp + 6 random digits, zero-padded
-  return `${Date.now()}${Math.floor(Math.random() * 1e6)
-    .toString()
-    .padStart(6, '0')}`;
-}
-
-// Small helper to generate a unique patient each run (avoid duplicate clashes).
+// helper to generate a unique patient each run (avoid duplicate clashes).
 function makeNewPatient() {
-  const suffix = uniqueSuffix();
+  const suffix = randomAlphanumeric(10); // e.g., "a9m2x0q1bz"
   return {
     firstName: 'RainierQA',
     lastName: 'AmoyoQA',
