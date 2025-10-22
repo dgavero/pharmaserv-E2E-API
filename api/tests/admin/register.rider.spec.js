@@ -1,3 +1,4 @@
+import { heading } from 'discord.js';
 import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../globalConfig.api.js';
 import {
@@ -5,6 +6,8 @@ import {
   bearer,
   adminLoginAndGetTokens,
   getGQLError,
+  noAuth,
+  INVALID_JWT,
 } from '../../helpers/testUtilsAPI.js';
 
 // GQL: Register Rider
@@ -131,9 +134,8 @@ test.describe('GraphQL: Rider Register', () => {
 
     const regRiderNoToken = await test.step('Register rider without token', async () =>
       safeGraphQL(api, {
-        query: REGISTER_RIDER_MUTATION, // ← reuse test-level mutation
+        query: REGISTER_RIDER_MUTATION, // test-level mutation
         variables: { rider: riderInput },
-        // no headers: bearer()
       }));
 
     // Expect failure

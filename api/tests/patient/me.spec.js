@@ -48,8 +48,9 @@ test.describe('GraphQL: Me', () => {
 
   test('patient.me without Authorization returns UNAUTHORIZED @api @patient @negative', async ({
     api,
+    noAuth,
   }) => {
-    const meAttempt = await safeGraphQL(api, { query: ME_QUERY });
+    const meAttempt = await safeGraphQL(api, { query: ME_QUERY, headers: noAuth });
 
     await test.step('Me should fail without token', async () => {
       expect(meAttempt.ok, 'Expected unauthorized when missing token').toBe(false);
@@ -69,12 +70,11 @@ test.describe('GraphQL: Me', () => {
 
   test('patient.me with invalid token returns UNAUTHORIZED @api @patient @negative', async ({
     api,
+    invalidAuth,
   }) => {
-    const INVALID_TOKEN = 'eyJ.invalid.token';
-
     const meAttempt = await safeGraphQL(api, {
       query: ME_QUERY,
-      headers: { Authorization: `Bearer ${INVALID_TOKEN}` },
+      headers: invalidAuth,
     });
 
     await test.step('Me should fail with invalid token', async () => {

@@ -29,6 +29,14 @@ export function getGQLError(resOrBody) {
   return _extractGqlError(body);
 }
 
+// Syntactically-valid but invalid JWT → reliably 401 (no GraphQL errors[])
+export const INVALID_JWT =
+  'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJpbnZhbGlkIiwiZXhwIjoxNTAwMDAwMDAwfQ.invalidsig';
+
+// Headers helpers
+export const bearerInvalid = () => ({ Authorization: `Bearer ${INVALID_JWT}` });
+export const noAuth = Object.freeze({}); // convenience for "no bearer"
+
 /**
  * Thin "safe" layer that does NOT throw.
  * - ok: boolean (HTTP ok AND no GraphQL errors)
