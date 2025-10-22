@@ -106,12 +106,13 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
 
   test('Should not return rider detail without Authorization @api @admin @negative', async ({
     api,
+    noAuth,
   }) => {
     // Correct ID, but NO bearer header
     const riderDetailNoAuth = await safeGraphQL(api, {
       query: GET_RIDER_QUERY,
       variables: { by: { id: 31 } },
-      // no headers: bearer(...)
+      headers: noAuth,
     });
 
     // Expect resolver error
@@ -165,11 +166,12 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
 
   test('Should not return paged riders without Authorization @api @admin @negative', async ({
     api,
+    noAuth,
   }) => {
     const pagedRidersNoAuth = await safeGraphQL(api, {
       query: GET_PAGED_RIDERS_QUERY,
       variables: { filter: { pageSize: 5, page: 1, ascending: true } },
-      // no headers
+      headers: noAuth,
     });
 
     expect(pagedRidersNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);

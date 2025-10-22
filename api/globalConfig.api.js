@@ -9,7 +9,7 @@
  */
 
 import { test as base, request as pwRequest } from '@playwright/test';
-import { flushApiReports } from './helpers/testUtilsAPI.js';
+import { flushApiReports, INVALID_JWT } from './helpers/testUtilsAPI.js';
 
 // Avoid the macOS IPv6 localhost (::1) gotcha by normalizing to 127.0.0.1.
 const BASE_URL = (process.env.API_BASE_URL || '').replace('localhost', '127.0.0.1');
@@ -43,6 +43,15 @@ export const test = base.extend({
 
     // Cleanup after the test finishes (best practice).
     await api.dispose();
+  },
+
+  //  Missing bearer: pass `headers: noAuth`
+  //  Invalid token:  pass `headers: invalidAuth` (syntactically valid JWT → transport 401)
+  invalidAuth: async ({}, use) => {
+    await use({ Authorization: `Bearer ${INVALID_JWT}` });
+  },
+  noAuth: async ({}, use) => {
+    await use({}); // empty headers
   },
 });
 

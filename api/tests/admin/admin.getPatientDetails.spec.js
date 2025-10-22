@@ -113,13 +113,14 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
 
   test('Should not return patient detail without Authorization @api @admin @negative', async ({
     api,
+    noAuth,
   }) => {
     const PATIENT_EMAIL = 'rainier@gmail.com'; // correct email, but NO bearer
 
     const patientDetailNoAuth = await safeGraphQL(api, {
       query: GET_PATIENT_QUERY,
       variables: { by: { email: PATIENT_EMAIL } },
-      // no headers: bearer(...)
+      headers: noAuth,
     });
 
     expect(patientDetailNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
@@ -171,11 +172,12 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
 
   test('Should not return paged patients without Authorization @api @admin @negative', async ({
     api,
+    noAuth,
   }) => {
     const pagedPatientsNoAuth = await safeGraphQL(api, {
       query: GET_PAGED_PATIENTS_QUERY,
       variables: { filter: { pageSize: 5, page: 1, ascending: true } },
-      // no headers: bearer(...)
+      headers: noAuth,
     });
 
     expect(pagedPatientsNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
