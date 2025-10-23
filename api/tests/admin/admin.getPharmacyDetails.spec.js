@@ -1,10 +1,3 @@
-/**
- * GraphQL: Admin → Paged Pharmacies
- * - Positive: admin login → pagedPharmacies(pageSize=5, page=1, sortField='name', ascending=true)
- * - Negative: same filter without bearer → UNAUTHORIZED
- * - Checks: node existence, exact count (5), per-item shape (id/name strings)
- */
-
 import { test, expect } from '../../globalConfig.api.js';
 import {
   safeGraphQL,
@@ -40,7 +33,7 @@ const GET_PHARMACY_QUERY = `
 `;
 
 test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
-  test('Should return paged pharmacies with pageSize=5 (page=1) @api @admin @positive', async ({
+  test('Should return paged pharmacies with pageSize=5 (page=1) @api @admin @positive @smoke', async ({
     api,
   }) => {
     // 1) Admin login
@@ -79,7 +72,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     }
   });
 
-  test('Should not return paged pharmacies without Authorization @api @admin @negative', async ({
+  test('Should not return paged pharmacies without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -103,7 +96,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     expect.soft(classification).toBe('UNAUTHORIZED');
   });
 
-  test('Should return pharmacy detail for id=9 @api @admin @positive', async ({ api }) => {
+  test('Should return pharmacy detail for id=9 @api @admin @positive @smoke', async ({ api }) => {
     // 1) Admin login
     const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
@@ -136,7 +129,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     expect.soft(typeof pharmacyNode.name).toBe('string');
   });
 
-  test('Should NOT return pharmacy detail for id=9999999 @api @admin @negative', async ({
+  test('Should NOT return pharmacy detail for id=9999999 @api @admin @negative @smoke', async ({
     api,
   }) => {
     // Admin login
@@ -167,7 +160,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     expect.soft(classification).toBe('NOT_FOUND');
   });
 
-  test('Should NOT return pharmacy detail without Authorization @api @admin @negative', async ({
+  test('Should NOT return pharmacy detail without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -191,7 +184,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     expect.soft(classification).toBe('UNAUTHORIZED');
   });
 
-  test('Should NOT return pharmacy detail with invalid token @api @admin @negative', async ({
+  test('Should NOT return pharmacy detail with invalid token @api @admin @negative @smoke', async ({
     api,
     invalidAuth,
   }) => {

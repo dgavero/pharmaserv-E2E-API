@@ -1,10 +1,3 @@
-/**
- * GraphQL: Me
- * - Happy path: login -> me (Bearer <accessToken>)
- * - Negative: missing token (unauthorized)
- * - Negative: invalid token (unauthorized)
- */
-
 import { test, expect } from '../../globalConfig.api.js';
 import { safeGraphQL, loginAndGetTokens, bearer, getGQLError } from '../../helpers/testUtilsAPI.js';
 
@@ -15,7 +8,7 @@ const ME_QUERY = `
 `;
 
 test.describe('GraphQL: Me', () => {
-  test('Authenticated call to patient.me returns the current user  @api @patient @positive', async ({
+  test('Authenticated call to patient.me returns the current user  @api @patient @positive @smoke', async ({
     api,
   }) => {
     const username = process.env.LOGIN_USERNAME || 'daveg123.patient';
@@ -46,7 +39,7 @@ test.describe('GraphQL: Me', () => {
     expect.soft(typeof me?.username).toBe('string');
   });
 
-  test('patient.me without Authorization returns UNAUTHORIZED @api @patient @negative', async ({
+  test('patient.me without Authorization returns UNAUTHORIZED @api @patient @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -68,7 +61,7 @@ test.describe('GraphQL: Me', () => {
     });
   });
 
-  test('patient.me with invalid token returns UNAUTHORIZED @api @patient @negative', async ({
+  test('patient.me with invalid token returns UNAUTHORIZED @api @patient @negative @smoke', async ({
     api,
     invalidAuth,
   }) => {

@@ -1,16 +1,3 @@
-// tests/api/register.spec.js
-
-/**
- * GraphQL: Register Patient
- * - Positive: creates a brand-new patient (unique email/username per run).
- * - Negative: rejects duplicate registration (fixed identity).
- *
- * Notes:
- * - Uses safeGraphQL for consistent transport/GraphQL handling.
- * - Keeps assertions minimal and readable; hard gates for success/failure,
- *   soft checks for payload details.
- */
-
 import { test, expect } from '../../globalConfig.api.js';
 import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
@@ -45,7 +32,7 @@ function buildFixedPatient() {
 }
 
 test.describe('GraphQL: Register Patient', () => {
-  test('Should Register A New Patient @api @patient @positive', async ({ api }) => {
+  test('Should Register A New Patient @api @patient @positive @create', async ({ api }) => {
     const patient = makeNewPatient();
 
     const registerRes = await safeGraphQL(api, {
@@ -76,7 +63,7 @@ test.describe('GraphQL: Register Patient', () => {
     });
   });
 
-  test('Should Reject Duplicate Registration @api @patient @negative', async ({ api }) => {
+  test('Should Reject Duplicate Registration @api @patient @negative @create', async ({ api }) => {
     const patient = buildFixedPatient();
     const DUPLICATE_HINT = /already\s+registered/i; // fallback hint if server lacks structured fields
 

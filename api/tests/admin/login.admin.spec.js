@@ -10,7 +10,7 @@ function buildAdminCreds() {
 }
 
 test.describe('GraphQL: Admin Login', () => {
-  test('Should Login And Return Tokens @api @admin @positive', async ({ api }) => {
+  test('Should Login And Return Tokens @api @admin @positive @login', async ({ api }) => {
     const creds = buildAdminCreds();
     const { accessToken, refreshToken, raw } = await adminLoginAndGetTokens(api, creds);
 

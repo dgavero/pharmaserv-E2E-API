@@ -1,5 +1,3 @@
-// tests/api/login.spec.js
-
 import { test, expect } from '../../globalConfig.api.js';
 import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
 
@@ -33,7 +31,7 @@ function buildInvalidCreds() {
 }
 
 test.describe('GraphQL: Patient Login', () => {
-  test('Should Login And Return Tokens @api @patient @positive', async ({ api }) => {
+  test('Should Login And Return Tokens @api @patient @positive @login @smoke', async ({ api }) => {
     const creds = buildValidCreds();
 
     const loginUser = await safeGraphQL(api, {
@@ -54,7 +52,9 @@ test.describe('GraphQL: Patient Login', () => {
     });
   });
 
-  test('Should Reject Invalid Credentials @api @patient @negative', async ({ api }) => {
+  test('Should Reject Invalid Credentials @api @patient @negative @smoke @login', async ({
+    api,
+  }) => {
     const creds = buildInvalidCreds();
 
     const loginAttempt = await safeGraphQL(api, {

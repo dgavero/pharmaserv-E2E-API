@@ -1,12 +1,3 @@
-// api/tests/admin/create.pharmacy.spec.js
-
-/**
- * GraphQL: Admin → Pharmacy Create
- * - Positive: admin login → pharmacy.create (randomized name & licenseNumber)
- * - Negative: same payload without bearer → UNAUTHORIZED
- * - Validate on positive: node exists; id/name are strings
- */
-
 import { test, expect } from '../../globalConfig.api.js';
 import {
   safeGraphQL,
@@ -38,7 +29,7 @@ function buildPharmacyInput() {
 }
 
 test.describe('GraphQL: Admin Create Pharmacy', () => {
-  test('Should create a new pharmacy with randomized fields @api @admin @positive', async ({
+  test('Should create a new pharmacy with randomized fields @api @admin @positive @create', async ({
     api,
   }) => {
     // 1) Admin login
@@ -70,7 +61,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
     expect.soft(typeof pharmacyNode.name).toBe('string');
   });
 
-  test('Should not create a pharmacy without Authorization @api @admin @negative', async ({
+  test('Should not create a pharmacy without Authorization @api @admin @negative @create', async ({
     api,
     noAuth,
   }) => {
@@ -90,7 +81,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
     expect.soft(classification).toBe('UNAUTHORIZED');
   });
 
-  test('Should not create a pharmacy with invalid token @api @admin @negative', async ({
+  test('Should not create a pharmacy with invalid token @api @admin @negative @create', async ({
     api,
     invalidAuth,
   }) => {

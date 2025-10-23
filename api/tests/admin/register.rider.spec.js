@@ -28,7 +28,9 @@ const REGISTER_RIDER_MUTATION = `
 `;
 
 test.describe('GraphQL: Rider Register', () => {
-  test('Should Login As Admin And Register A New Rider @api @admin @positive', async ({ api }) => {
+  test('Should Login As Admin And Register A New Rider @api @admin @positive @create', async ({
+    api,
+  }) => {
     const adminUser = process.env.ADMIN_USERNAME;
     const adminPass = process.env.ADMIN_PASSWORD;
     expect(adminUser, 'Missing ADMIN_USERNAME in env').toBeTruthy();
@@ -77,7 +79,9 @@ test.describe('GraphQL: Rider Register', () => {
     expect.soft(node.uuid).toMatch(uuidRe);
   });
 
-  test('Should Reject Duplicate Rider Registration @api @admin @negative', async ({ api }) => {
+  test('Should Reject Duplicate Rider Registration @api @admin @negative @create', async ({
+    api,
+  }) => {
     // 1) Admin login
     const { accessToken } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
@@ -94,7 +98,7 @@ test.describe('GraphQL: Rider Register', () => {
     };
 
     // 3) Attempt duplicate register
-    const regDupeRider = await test.step('Register duplicate rider', async () =>
+    const regDupeRider = await test.step('Register duplicate rider @create', async () =>
       safeGraphQL(api, {
         query: REGISTER_RIDER_MUTATION,
         variables: { rider: existingRider },
@@ -122,7 +126,7 @@ test.describe('GraphQL: Rider Register', () => {
   });
 
   // Unauthorized (no bearer) → expect 401 transport or UNAUTHORIZED
-  test('Should Reject Register Without Token @api @admin @negative', async ({ api }) => {
+  test('Should Reject Register Without Token @api @admin @negative @create', async ({ api }) => {
     const suffix = `${Date.now()}`;
     const riderInput = {
       firstName: 'NoAuth',
@@ -132,7 +136,7 @@ test.describe('GraphQL: Rider Register', () => {
       password: 'Password123',
     };
 
-    const regRiderNoToken = await test.step('Register rider without token', async () =>
+    const regRiderNoToken = await test.step('Register rider without token @create', async () =>
       safeGraphQL(api, {
         query: REGISTER_RIDER_MUTATION, // test-level mutation
         variables: { rider: riderInput },
@@ -153,7 +157,7 @@ test.describe('GraphQL: Rider Register', () => {
   });
 
   // Missing required field (password = empty) → INTERNAL_SERVER_ERROR (500)
-  test('Should Reject Missing Password @api @admin @negative', async ({ api }) => {
+  test('Should Reject Missing Password @api @admin @negative @create', async ({ api }) => {
     // Admin login
     const { accessToken } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
