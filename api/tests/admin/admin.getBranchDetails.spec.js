@@ -74,9 +74,6 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
       expect.soft(typeof item.id).toBe('string');
       expect.soft(item.name).toEqual(expect.stringContaining('QA'));
     }
-
-    // Optional sanity (not required, but harmless):
-    // expect.soft(pagedBranchesNode.page.totalSize).toBeGreaterThanOrEqual(items.length);
   });
 
   test('Should NOT return paged branches with missing bearer token (401 Unauthorized) @api @admin @negative', async ({
