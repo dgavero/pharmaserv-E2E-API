@@ -31,7 +31,7 @@ const SET_RIDER_UNAVAILABLE_MUTATION = `
 `;
 
 test.describe('GraphQL: Admin Set Rider Status', () => {
-  test('Should set rider status to AVAILABLE @api @admin @positive', async ({ api }) => {
+  test('Should set rider status to AVAILABLE @api @admin @positive @smoke', async ({ api }) => {
     // 1) Admin login
     const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
@@ -59,7 +59,7 @@ test.describe('GraphQL: Admin Set Rider Status', () => {
     expect(statusNode.status).toBe('AVAILABLE');
   });
 
-  test('Should NOT set rider status AVAILABLE with missing bearer token (401 Unauthorized) @api @admin @negative', async ({
+  test('Should NOT set rider status AVAILABLE with missing bearer token (401 Unauthorized) @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -83,7 +83,7 @@ test.describe('GraphQL: Admin Set Rider Status', () => {
     }
   });
 
-  test('Should NOT set rider status AVAILABLE with invalid bearer token (401 Unauthorized) @api @admin @negative', async ({
+  test('Should NOT set rider status AVAILABLE with invalid bearer token (401 Unauthorized) @api @admin @negative @smoke', async ({
     api,
     invalidAuth,
   }) => {
@@ -102,7 +102,7 @@ test.describe('GraphQL: Admin Set Rider Status', () => {
 });
 
 test.describe('GraphQL: Admin Set Rider Unavailable', () => {
-  test('Should set rider status to UNAVAILABLE @api @admin @positive', async ({ api }) => {
+  test('Should set rider status to UNAVAILABLE @api @admin @positive @smoke', async ({ api }) => {
     // 1) Admin login
     const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
@@ -130,7 +130,7 @@ test.describe('GraphQL: Admin Set Rider Unavailable', () => {
     expect(statusNode.status).toBe('UNAVAILABLE');
   });
 
-  test('Should NOT set rider status UNAVAILABLE with missing bearer token (401 Unauthorized) @api @admin @negative', async ({
+  test('Should NOT set rider status UNAVAILABLE with missing bearer token (401 Unauthorized) @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -154,7 +154,7 @@ test.describe('GraphQL: Admin Set Rider Unavailable', () => {
     }
   });
 
-  test('Should NOT set rider status UNAVAILABLE with invalid bearer token (401 Unauthorized) @api @admin @negative', async ({
+  test('Should NOT set rider status UNAVAILABLE with invalid bearer token (401 Unauthorized) @api @admin @negative @smoke', async ({
     api,
     invalidAuth,
   }) => {

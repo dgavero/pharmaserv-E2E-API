@@ -1,9 +1,3 @@
-/**
- * GraphQL: Admin → Rider Detail (by ID)
- * - Positive: admin login → rider.detail(id: 31)
- * - Hard assert: username, email, firstName, lastName
- */
-
 import { test, expect } from '../../globalConfig.api.js';
 import {
   safeGraphQL,
@@ -51,7 +45,7 @@ const EXPECTED_RIDER = {
 };
 
 test.describe('GraphQL: Admin Get Rider Detail', () => {
-  test('Should return rider detail for id=31 @api @admin @positive', async ({ api }) => {
+  test('Should return rider detail for id=31 @api @admin @positive @smoke', async ({ api }) => {
     // 1) Admin login
     const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
@@ -77,7 +71,7 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
     expect(node.lastName).toBe(EXPECTED_RIDER.lastName);
   });
 
-  test('Should not return rider details for id 999999999 @api @admin @negative', async ({
+  test('Should not return rider details for id 999999999 @api @admin @negative @smoke', async ({
     api,
   }) => {
     // Admin login
@@ -104,7 +98,7 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
     expect.soft(classification).toBe('NOT_FOUND');
   });
 
-  test('Should not return rider detail without Authorization @api @admin @negative', async ({
+  test('Should not return rider detail without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -125,7 +119,7 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
     expect.soft(classification).toBe('UNAUTHORIZED');
   });
 
-  test('Should return paged riders with pageSize=5 (page=1) @api @admin @positive', async ({
+  test('Should return paged riders with pageSize=5 (page=1) @api @admin @positive @smoke', async ({
     api,
   }) => {
     // Admin login
@@ -164,7 +158,7 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
     }
   });
 
-  test('Should not return paged riders without Authorization @api @admin @negative', async ({
+  test('Should not return paged riders without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {

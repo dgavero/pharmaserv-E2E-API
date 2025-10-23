@@ -1,10 +1,3 @@
-/**
- * GraphQL: Admin → Patient Detail (by email)
- * - Positive: admin login → patient.detail(email: "rainier.patient@gmail.com")
- * - Hard assert: username, email, firstName, lastName
- * - Note: uuid intentionally ignored
- */
-
 import { test, expect } from '../../globalConfig.api.js';
 import {
   safeGraphQL,
@@ -51,7 +44,7 @@ const EXPECTED_PATIENT = {
 };
 
 test.describe('GraphQL: Admin Get Patient Detail', () => {
-  test('Should return patient detail for email=rainier@gmail.com @api @admin @positive', async ({
+  test('Should return patient detail for email=rainier@gmail.com @api @admin @positive @smoke', async ({
     api,
   }) => {
     // 1) Admin login
@@ -82,7 +75,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     expect(patientNode.lastName).toBe(EXPECTED_PATIENT.lastName);
   });
 
-  test('Should not return patient detail for unknown email @api @admin @negative', async ({
+  test('Should not return patient detail for unknown email @api @admin @negative @smoke', async ({
     api,
   }) => {
     const UNKNOWN_EMAIL = 'rainier99999@gmail.com';
@@ -111,7 +104,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     expect.soft(classification).toBe('NOT_FOUND');
   });
 
-  test('Should not return patient detail without Authorization @api @admin @negative', async ({
+  test('Should not return patient detail without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -131,7 +124,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     expect.soft(classification).toBe('UNAUTHORIZED');
   });
 
-  test('Should return paged patients with pageSize=5 (page=1) @api @admin @positive', async ({
+  test('Should return paged patients with pageSize=5 (page=1) @api @admin @positive @smoke', async ({
     api,
   }) => {
     // 1) Admin login
@@ -170,7 +163,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     }
   });
 
-  test('Should not return paged patients without Authorization @api @admin @negative', async ({
+  test('Should not return paged patients without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {

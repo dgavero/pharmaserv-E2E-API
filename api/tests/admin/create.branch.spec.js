@@ -86,7 +86,7 @@ function buildBranchVariables() {
 }
 
 test.describe('GraphQL: Admin Create Branch', () => {
-  test('Able to create a new branch with randomized fields @api @admin @positive', async ({
+  test('Able to create a new branch with randomized fields @api @admin @positive @create', async ({
     api,
   }) => {
     // 1) Admin login

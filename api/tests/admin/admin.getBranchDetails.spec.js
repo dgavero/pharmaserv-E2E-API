@@ -5,7 +5,6 @@ import {
   bearer,
   getGQLError,
 } from '../../helpers/testUtilsAPI.js';
-import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 
 const GET_PAGED_BRANCHES_QUERY = `
   query ($pharmacyId: ID!, $filter: FilterRequest!) {
@@ -38,7 +37,7 @@ function buildPagedBranchesVariables() {
 }
 
 test.describe('GraphQL: Admin Get Paged Branches', () => {
-  test('Should return paged branches (hard node check; soft id string; soft name contains "QA") @api @admin @positive', async ({
+  test('Should return paged branches (hard node check; soft id string; soft name contains "QA") @api @admin @positive @smoke', async ({
     api,
   }) => {
     // 1) Admin login
@@ -76,7 +75,7 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
     }
   });
 
-  test('Should NOT return paged branches with missing bearer token (401 Unauthorized) @api @admin @negative', async ({
+  test('Should NOT return paged branches with missing bearer token (401 Unauthorized) @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -102,7 +101,7 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
     }
   });
 
-  test('Should NOT return paged branches with invalid bearer token (401 Unauthorized) @api @admin @negative', async ({
+  test('Should NOT return paged branches with invalid bearer token (401 Unauthorized) @api @admin @negative @smoke', async ({
     api,
     invalidAuth,
   }) => {
