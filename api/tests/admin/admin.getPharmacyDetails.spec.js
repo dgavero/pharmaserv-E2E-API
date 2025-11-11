@@ -96,7 +96,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     expect.soft(classification).toBe('UNAUTHORIZED');
   });
 
-  test('Should return pharmacy detail for id=9 @api @admin @positive @smoke', async ({ api }) => {
+  test('Should return pharmacy detail for id=1 @api @admin @positive @smoke', async ({ api }) => {
     // 1) Admin login
     const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
@@ -105,11 +105,11 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
     // 2) Query pharmacy detail (hard-coded id)
-    const EXPECTED_PHARMACY = { id: '9', name: 'Generika' };
+    const EXPECTED_PHARMACY = { id: '1', name: 'Mercury Drug' };
 
     const pharmacyRes = await safeGraphQL(api, {
       query: GET_PHARMACY_QUERY,
-      variables: { pharmacyId: 9 }, // ID! accepts number or string
+      variables: { pharmacyId: 1 }, // ID! accepts number or string
       headers: bearer(accessToken),
     });
 

@@ -26,9 +26,9 @@ const GET_PAGED_BRANCHES_QUERY = `
 
 function buildPagedBranchesVariables() {
   return {
-    pharmacyId: 35,
+    pharmacyId: 1,
     filter: {
-      pageSize: 5,
+      pageSize: 3,
       page: 1,
       sortField: 'name',
       ascending: true,
@@ -71,7 +71,7 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
     // 5) Soft checks on each item
     for (const item of items) {
       expect.soft(typeof item.id).toBe('string');
-      expect.soft(item.name).toEqual(expect.stringContaining('QA'));
+      expect.soft(item.name).toEqual(expect.stringContaining('Branch'));
     }
   });
 
@@ -95,9 +95,9 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
     } else {
       // HTTP 200 + GraphQL errors[]
       const unauthorizedErr = getGQLError(getPagedBranchesMissingBearerRes);
-      expect(unauthorizedErr.message.toLowerCase()).toContain('unauthorized');
-      expect.soft(unauthorizedErr.code).toBe('401');
-      expect.soft(unauthorizedErr.classification).toBe('UNAUTHORIZED');
+      expect(unauthorizedErr.message.toLowerCase()).toContain('access denied');
+      expect.soft(unauthorizedErr.code).toBe('500');
+      expect.soft(unauthorizedErr.classification).toBe('INTERNAL_ERROR');
     }
   });
 

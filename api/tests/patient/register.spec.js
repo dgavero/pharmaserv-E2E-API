@@ -3,8 +3,16 @@ import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 
 const REGISTER_PATIENT_MUTATION = `
-  mutation ($patient: Register!) {
-    patient { register(patient: $patient) { id uuid firstName lastName username } }
+  mutation ($patientId: ID!, $patient: Register!) {
+    patient {
+      register(patientId: $patientId, patient: $patient) {
+        id
+        uuid
+        firstName
+        lastName
+        username
+      }
+    }
   }
 `;
 
@@ -34,10 +42,11 @@ function buildFixedPatient() {
 test.describe('GraphQL: Register Patient', () => {
   test('Should Register A New Patient @api @patient @positive @create', async ({ api }) => {
     const patient = makeNewPatient();
+    const patientId = 5;
 
     const registerRes = await safeGraphQL(api, {
       query: REGISTER_PATIENT_MUTATION,
-      variables: { patient },
+      variables: { patientId, patient },
     });
 
     await test.step('GraphQL should succeed', async () => {
@@ -65,6 +74,7 @@ test.describe('GraphQL: Register Patient', () => {
 
   test('Should Reject Duplicate Registration @api @patient @negative @create', async ({ api }) => {
     const patient = buildFixedPatient();
+    const patientId = 5;
     const DUPLICATE_HINT = /already\s+registered/i; // fallback hint if server lacks structured fields
 
     // 1) Seed: attempt an initial registration to ensure the user exists.
@@ -72,14 +82,14 @@ test.describe('GraphQL: Register Patient', () => {
     await test.step('Seed initial registration (best-effort)', async () => {
       await safeGraphQL(api, {
         query: REGISTER_PATIENT_MUTATION,
-        variables: { patient },
+        variables: { patientId, patient },
       });
     });
 
     // 2) Second call: must be rejected as duplicate.
     const second = await safeGraphQL(api, {
       query: REGISTER_PATIENT_MUTATION,
-      variables: { patient },
+      variables: { patientId, patient },
     });
 
     await test.step('Second registration should fail', async () => {
