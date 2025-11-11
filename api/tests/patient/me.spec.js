@@ -3,7 +3,7 @@ import { safeGraphQL, loginAndGetTokens, bearer, getGQLError } from '../../helpe
 
 const ME_QUERY = `
   query {
-    patient { me { id firstName lastName username } }
+    patient { me { id uuid firstName lastName username email phoneNumber } }
   }
 `;
 
@@ -11,8 +11,8 @@ test.describe('GraphQL: Me', () => {
   test('Authenticated call to patient.me returns the current user  @api @patient @positive @smoke', async ({
     api,
   }) => {
-    const username = process.env.LOGIN_USERNAME || 'daveg123.patient';
-    const password = process.env.LOGIN_PASSWORD || 'Test1234!';
+    const username = process.env.LOGIN_USERNAME;
+    const password = process.env.LOGIN_PASSWORD;
 
     const { accessToken, raw: login } = await loginAndGetTokens(api, { username, password });
 
@@ -34,9 +34,12 @@ test.describe('GraphQL: Me', () => {
 
     // Minimal field checks (keep simple per your preference)
     expect.soft(typeof me?.id).toBe('string');
+    expect.soft(typeof me?.uuid).toBe('string');
     expect.soft(typeof me?.firstName).toBe('string');
     expect.soft(typeof me?.lastName).toBe('string');
     expect.soft(typeof me?.username).toBe('string');
+    expect.soft(typeof me?.email).toBe('string');
+    expect.soft(me?.phoneNumber === null || typeof me?.phoneNumber === 'string').toBe(true);
   });
 
   test('patient.me without Authorization returns UNAUTHORIZED @api @patient @negative @smoke', async ({

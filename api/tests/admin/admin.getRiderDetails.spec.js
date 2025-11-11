@@ -37,11 +37,11 @@ const GET_PAGED_RIDERS_QUERY = `
 
 // Expected identity for id=31 (hard-coded test oracle)
 const EXPECTED_RIDER = {
-  id: 31,
-  username: 'rainier3.rider',
-  email: 'rainier3@yahoo.com',
-  firstName: 'Rainier',
-  lastName: 'Amoyo',
+  id: 2,
+  username: 'emil.rider',
+  email: 'emil.rider@gmail.com',
+  firstName: 'Emil',
+  lastName: 'Rider',
 };
 
 test.describe('GraphQL: Admin Get Rider Detail', () => {

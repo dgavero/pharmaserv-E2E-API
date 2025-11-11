@@ -13,6 +13,7 @@ const CREATE_PHARMACY_MUTATION = `
       pharmacy {
         create(pharmacy: $pharmacy) {
           id
+          code
           name
         }
       }
@@ -22,10 +23,10 @@ const CREATE_PHARMACY_MUTATION = `
 
 /** Reusable randomized input (for both positive and negatives) */
 function buildPharmacyInput() {
-  return {
-    name: `QA-Pharmacy-${randomAlphanumeric(8)}`, // e.g., QA-Pharmacy-ab12cd34
-    licenseNumber: `QAPH-${randomAlphanumeric(10)}`, // e.g., QAPH-a1b2c3d4e5
-  };
+  const name = `QA-Pharmacy-${randomAlphanumeric(8)}`; // e.g.,  QA-Pharmacy-ab12cd34
+  const code = randomAlphanumeric(3).toUpperCase(); // e.g.,  'QPH'
+  const licenseNumber = `QAPH-${randomAlphanumeric(10)}`; // e.g.,  QAPH-a1b2c3d4e5
+  return { name, code, licenseNumber };
 }
 
 test.describe('GraphQL: Admin Create Pharmacy', () => {
@@ -57,8 +58,8 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
     const pharmacyNode = createPharmacyRes.body?.data?.administrator?.pharmacy?.create;
     expect(pharmacyNode, 'Missing data.administrator.pharmacy.create').toBeTruthy();
 
-    expect.soft(typeof pharmacyNode.id).toBe('string');
-    expect.soft(typeof pharmacyNode.name).toBe('string');
+    expect.soft(pharmacyNode.name).toBe(pharmacyInput.name);
+    expect.soft(pharmacyNode.code).toBe(pharmacyInput.code);
   });
 
   test('Should not create a pharmacy without Authorization @api @admin @negative @create', async ({
