@@ -4,6 +4,9 @@ import {
   adminLoginAndGetTokens,
   bearer,
   getGQLError,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CODES,
+  NOAUTH_CLASSIFICATIONS,
 } from '../../helpers/testUtilsAPI.js';
 
 const SET_RIDER_AVAILABLE_MUTATION = `
@@ -76,10 +79,10 @@ test.describe('GraphQL: Admin Set Rider Status', () => {
     if (!setRiderMissingBearerRes.httpOk) {
       expect(setRiderMissingBearerRes.httpStatus).toBe(401);
     } else {
-      const unauthorizedErr = getGQLError(setRiderMissingBearerRes);
-      expect(unauthorizedErr.message.toLowerCase()).toContain('unauthorized');
-      expect.soft(unauthorizedErr.code).toBe('401');
-      expect.soft(unauthorizedErr.classification).toBe('UNAUTHORIZED');
+      const { message, code, classification } = getGQLError(setRiderMissingBearerRes);
+      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      expect.soft(NOAUTH_CODES).toContain(code);
+      expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   });
 
@@ -147,10 +150,10 @@ test.describe('GraphQL: Admin Set Rider Unavailable', () => {
     if (!setRiderUnavailableMissingBearerRes.httpOk) {
       expect(setRiderUnavailableMissingBearerRes.httpStatus).toBe(401);
     } else {
-      const unauthorizedErr = getGQLError(setRiderUnavailableMissingBearerRes);
-      expect(unauthorizedErr.message.toLowerCase()).toContain('unauthorized');
-      expect.soft(unauthorizedErr.code).toBe('401');
-      expect.soft(unauthorizedErr.classification).toBe('UNAUTHORIZED');
+      const { message, code, classification } = getGQLError(setRiderUnavailableMissingBearerRes);
+      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      expect.soft(NOAUTH_CODES).toContain(code);
+      expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   });
 

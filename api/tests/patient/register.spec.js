@@ -32,7 +32,7 @@ function buildFixedPatient() {
 }
 
 test.describe('GraphQL: Register Patient', () => {
-  test('Should Register A New Patient @apiX123 @patient @positive @create', async ({ api }) => {
+  test('Should Register A New Patient @api @patient @positive @create', async ({ api }) => {
     const patient = makeNewPatient();
     const patientId = 5;
 
@@ -64,9 +64,7 @@ test.describe('GraphQL: Register Patient', () => {
     });
   });
 
-  test('Should Reject Duplicate Registration @apiX123 @patient @negative @create', async ({
-    api,
-  }) => {
+  test('Should Reject Duplicate Registration @api @patient @negative @create', async ({ api }) => {
     const patient = buildFixedPatient();
     const patientId = 5;
     const DUPLICATE_HINT = /already\s+registered/i; // fallback hint if server lacks structured fields
