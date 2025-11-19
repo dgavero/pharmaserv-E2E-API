@@ -1,19 +1,9 @@
 import { test, expect } from '../../globalConfig.api.js';
 import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
-import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
+import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
 
 const REGISTER_PATIENT_MUTATION = `
-  mutation ($patientId: ID!, $patient: Register!) {
-    patient {
-      register(patientId: $patientId, patient: $patient) {
-        id
-        uuid
-        firstName
-        lastName
-        username
-      }
-    }
-  }
+mutation ($patientId: ID!, $patient: Register!) { patient { register(patientId: $patientId, patient: $patient) { id uuid firstName lastName username } } }
 `;
 
 // helper to generate a unique patient each run (avoid duplicate clashes).
@@ -25,6 +15,7 @@ function makeNewPatient() {
     email: `rainierrandomqa_${suffix}@example.com`,
     username: `rainierrandomqa_${suffix}.patient`,
     password: 'Password123qa',
+    phoneNumber: `+63${randomNum(10)}`,
   };
 }
 
@@ -36,11 +27,12 @@ function buildFixedPatient() {
     email: 'davetheg@gmail.com',
     username: 'davetheg.patient',
     password: 'Password123',
+    phoneNumber: `+63${randomNum(10)}`,
   };
 }
 
 test.describe('GraphQL: Register Patient', () => {
-  test('Should Register A New Patient @api @patient @positive @create', async ({ api }) => {
+  test('Should Register A New Patient @apiX123 @patient @positive @create', async ({ api }) => {
     const patient = makeNewPatient();
     const patientId = 5;
 
@@ -72,7 +64,9 @@ test.describe('GraphQL: Register Patient', () => {
     });
   });
 
-  test('Should Reject Duplicate Registration @api @patient @negative @create', async ({ api }) => {
+  test('Should Reject Duplicate Registration @apiX123 @patient @negative @create', async ({
+    api,
+  }) => {
     const patient = buildFixedPatient();
     const patientId = 5;
     const DUPLICATE_HINT = /already\s+registered/i; // fallback hint if server lacks structured fields
