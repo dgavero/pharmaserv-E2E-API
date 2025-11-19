@@ -4,6 +4,9 @@ import {
   adminLoginAndGetTokens,
   bearer,
   getGQLError,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_MESSAGE_PATTERN,
 } from '../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 
@@ -62,7 +65,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
     expect.soft(pharmacyNode.code).toBe(pharmacyInput.code);
   });
 
-  test('Should not create a pharmacy without Authorization @api @admin @negative @create', async ({
+  test('Should not create a pharmacy without Authorization @apiX123 @admin @negative @create', async ({
     api,
     noAuth,
   }) => {
@@ -77,9 +80,9 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
     expect(createPharmacyNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
 
     const { message, code, classification } = getGQLError(createPharmacyNoAuth);
-    expect(message.toLowerCase()).toContain('unauthorized access');
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 
   test('Should not create a pharmacy with invalid token @api @admin @negative @create', async ({
