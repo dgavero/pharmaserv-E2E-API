@@ -1,5 +1,13 @@
 import { test, expect } from '../../globalConfig.api.js';
-import { safeGraphQL, loginAndGetTokens, bearer, getGQLError } from '../../helpers/testUtilsAPI.js';
+import {
+  safeGraphQL,
+  loginAndGetTokens,
+  bearer,
+  getGQLError,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CODES,
+  NOAUTH_CLASSIFICATIONS,
+} from '../../helpers/testUtilsAPI.js';
 
 const ME_QUERY = `
   query {
@@ -55,12 +63,9 @@ test.describe('GraphQL: Me', () => {
     await test.step('Assert unauthorized details', async () => {
       const { message, code, classification } = getGQLError(meAttempt);
 
-      // Fuzzy message
-      expect(message.toLowerCase()).toMatch(/unauthori[sz]ed|token|credential/);
-
-      // Soft checks
-      expect.soft(code).toBe('401');
-      expect.soft(classification).toBe('UNAUTHORIZED');
+      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      expect.soft(NOAUTH_CODES).toContain(code);
+      expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     });
   });
 
