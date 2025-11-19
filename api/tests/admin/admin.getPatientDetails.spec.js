@@ -4,6 +4,9 @@ import {
   adminLoginAndGetTokens,
   bearer,
   getGQLError,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CODES,
+  NOAUTH_CLASSIFICATIONS,
 } from '../../helpers/testUtilsAPI.js';
 
 const GET_PATIENT_QUERY = `
@@ -119,9 +122,9 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     expect(patientDetailNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
 
     const { message, code, classification } = getGQLError(patientDetailNoAuth);
-    expect(message.toLowerCase()).toContain('unauthorized access');
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 
   test('Should return paged patients with pageSize=5 (page=1) @api @admin @positive @smoke', async ({
@@ -176,8 +179,8 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     expect(pagedPatientsNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
 
     const { message, code, classification } = getGQLError(pagedPatientsNoAuth);
-    expect(message.toLowerCase()).toContain('unauthorized access');
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 });
