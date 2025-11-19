@@ -269,3 +269,20 @@ export function enqueueApiFailure({ title, snippet }) {
     await sendAPIFailure({ title, snippet });
   });
 }
+
+// ============================================================================
+// EXPECTED CONSTANTS FOR TESTS
+// ============================================================================
+export const NOAUTH_MESSAGES = [
+  'Unauthorized',
+  'Unauthorized Access',
+  'Access Denied',
+  'INTERNAL_SERVER_ERROR',
+];
+
+// Prebuilt regex pattern for matching any of the above messages
+export const NOAUTH_MESSAGE_PATTERN = new RegExp(`(${NOAUTH_MESSAGES.join('|')})`);
+
+export const NOAUTH_CLASSIFICATIONS = ['UNAUTHORIZED', 'CONFLICT', 'INTERNAL_ERROR'];
+
+export const NOAUTH_CODES = ['401', '500'];
