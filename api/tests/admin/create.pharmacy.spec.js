@@ -65,7 +65,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
     expect.soft(pharmacyNode.code).toBe(pharmacyInput.code);
   });
 
-  test('Should not create a pharmacy without Authorization @apiX123 @admin @negative @create', async ({
+  test('Should not create a pharmacy without Authorization @api @admin @negative @create', async ({
     api,
     noAuth,
   }) => {
