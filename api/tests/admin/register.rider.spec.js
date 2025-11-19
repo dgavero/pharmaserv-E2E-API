@@ -1,5 +1,5 @@
 import { heading } from 'discord.js';
-import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
+import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../globalConfig.api.js';
 import {
   safeGraphQL,
@@ -28,7 +28,7 @@ const REGISTER_RIDER_MUTATION = `
 `;
 
 test.describe('GraphQL: Rider Register', () => {
-  test('Should Login As Admin And Register A New Rider @api @admin @positive @create', async ({
+  test('Should Login As Admin And Register A New Rider @apiX123 @admin @positive @create', async ({
     api,
   }) => {
     const adminUser = process.env.ADMIN_USERNAME;
@@ -49,6 +49,7 @@ test.describe('GraphQL: Rider Register', () => {
       email: `daverider+${suffix}@example.com`,
       username: `daverider_${suffix}`,
       password: 'Password123',
+      phoneNumber: `+63${randomNum(10)}`,
     };
 
     // 3) Call register

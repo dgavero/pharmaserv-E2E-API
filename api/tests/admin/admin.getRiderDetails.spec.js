@@ -45,7 +45,7 @@ const EXPECTED_RIDER = {
 };
 
 test.describe('GraphQL: Admin Get Rider Detail', () => {
-  test('Should return rider detail for id=31 @api @admin @positive @smoke', async ({ api }) => {
+  test('Should return rider detail for id=2 @api @admin @positive @smoke', async ({ api }) => {
     // 1) Admin login
     const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
