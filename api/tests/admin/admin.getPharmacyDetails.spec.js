@@ -75,7 +75,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     }
   });
 
-  test('Should not return paged pharmacies without Authorization @apiX123 @admin @negative @smoke', async ({
+  test('Should not return paged pharmacies without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
@@ -163,7 +163,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     expect.soft(classification).toBe('NOT_FOUND');
   });
 
-  test('Should NOT return pharmacy detail without Authorization @apiX123 @admin @negative @smoke', async ({
+  test('Should NOT return pharmacy detail without Authorization @api @admin @negative @smoke', async ({
     api,
     noAuth,
   }) => {
