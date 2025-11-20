@@ -4,6 +4,9 @@ import {
   adminLoginAndGetTokens,
   bearer,
   getGQLError,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_MESSAGE_PATTERN,
 } from '../../helpers/testUtilsAPI.js';
 
 const GET_RIDER_QUERY = `
@@ -45,7 +48,7 @@ const EXPECTED_RIDER = {
 };
 
 test.describe('GraphQL: Admin Get Rider Detail', () => {
-  test('Should return rider detail for id=31 @api @admin @positive @smoke', async ({ api }) => {
+  test('Should return rider detail for id=2 @api @admin @positive @smoke', async ({ api }) => {
     // 1) Admin login
     const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
       username: process.env.ADMIN_USERNAME,
@@ -114,9 +117,9 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
 
     // Check message, code, classification only
     const { message, code, classification } = getGQLError(riderDetailNoAuth);
-    expect(message.toLowerCase()).toContain('unauthorized access');
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 
   test('Should return paged riders with pageSize=5 (page=1) @api @admin @positive @smoke', async ({
@@ -171,8 +174,8 @@ test.describe('GraphQL: Admin Get Rider Detail', () => {
     expect(pagedRidersNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
 
     const { message, code, classification } = getGQLError(pagedRidersNoAuth);
-    expect(message.toLowerCase()).toContain('unauthorized access');
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 });

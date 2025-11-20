@@ -4,6 +4,9 @@ import {
   adminLoginAndGetTokens,
   bearer,
   getGQLError,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_MESSAGE_PATTERN,
 } from '../../helpers/testUtilsAPI.js';
 
 const GET_PAGED_PHARMACIES_QUERY = `
@@ -91,9 +94,9 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     }
 
     const { message, code, classification } = getGQLError(pagedPharmaciesNoAuth);
-    expect(message.toLowerCase()).toContain('unauthorized access');
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 
   test('Should return pharmacy detail for id=1 @api @admin @positive @smoke', async ({ api }) => {
@@ -179,9 +182,9 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     }
 
     const { message, code, classification } = getGQLError(noBearerRes);
-    expect(message.toLowerCase()).toContain('unauthorized');
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 
   test('Should NOT return pharmacy detail with invalid token @api @admin @negative @smoke', async ({

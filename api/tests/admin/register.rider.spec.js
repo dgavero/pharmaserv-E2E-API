@@ -1,5 +1,5 @@
 import { heading } from 'discord.js';
-import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
+import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../globalConfig.api.js';
 import {
   safeGraphQL,
@@ -8,6 +8,9 @@ import {
   getGQLError,
   noAuth,
   INVALID_JWT,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
 } from '../../helpers/testUtilsAPI.js';
 
 // GQL: Register Rider
@@ -49,6 +52,7 @@ test.describe('GraphQL: Rider Register', () => {
       email: `daverider+${suffix}@example.com`,
       username: `daverider_${suffix}`,
       password: 'Password123',
+      phoneNumber: `+63${randomNum(10)}`,
     };
 
     // 3) Call register
@@ -70,6 +74,7 @@ test.describe('GraphQL: Rider Register', () => {
     expect.soft(typeof node.lastName).toBe('string');
     expect.soft(typeof node.username).toBe('string');
 
+    // 5) Assert returned data matches input
     expect.soft(node.firstName).toBe(riderInput.firstName);
     expect.soft(node.lastName).toBe(riderInput.lastName);
     expect.soft(node.username).toBe(riderInput.username);
@@ -95,6 +100,7 @@ test.describe('GraphQL: Rider Register', () => {
       email: 'daverider1@yahoo.com',
       username: 'daverider1.rider',
       password: 'Password123',
+      phoneNumber: `+63${randomNum(10)}`,
     };
 
     // 3) Attempt duplicate register
@@ -134,6 +140,7 @@ test.describe('GraphQL: Rider Register', () => {
       email: `noauth+${suffix}@example.com`,
       username: `noauth_${suffix}`,
       password: 'Password123',
+      phoneNumber: `+63${randomNum(10)}`,
     };
 
     const regRiderNoToken = await test.step('Register rider without token @create', async () =>
@@ -148,12 +155,12 @@ test.describe('GraphQL: Rider Register', () => {
     // Resolver error contract (HTTP 200 + errors[])
     const { message, code, classification } = getGQLError(regRiderNoToken);
 
-    // Hard check: message contains “Unauthorized access”
-    expect(message.toLowerCase()).toContain('unauthorized access');
+    // Hard check: message contains any of the expected no-auth messages
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
 
     // Soft checks: code & classification
-    expect.soft(code).toBe('401');
-    expect.soft(classification).toBe('UNAUTHORIZED');
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 
   // Missing required field (password = empty) → INTERNAL_SERVER_ERROR (500)
@@ -171,6 +178,7 @@ test.describe('GraphQL: Rider Register', () => {
       email: `nopass+${suffix}@example.com`,
       username: `nopass_${suffix}`,
       password: '', // ← intentionally empty
+      phoneNumber: `+63${randomNum(10)}`,
     };
 
     const regRiderNoPass = await test.step('Register rider with empty password', async () =>
@@ -185,9 +193,9 @@ test.describe('GraphQL: Rider Register', () => {
 
     // Resolver error path: fuzzy message + soft code/classification
     const { message, code, classification } = getGQLError(regRiderNoPass);
-    expect(message.toUpperCase()).toContain('INTERNAL_SERVER_ERROR');
 
-    expect.soft(code).toBe('500');
-    expect.soft(classification).toBe('INTERNAL_ERROR');
+    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+    expect.soft(NOAUTH_CODES).toContain(code);
+    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
   });
 });

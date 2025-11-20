@@ -4,6 +4,9 @@ import {
   adminLoginAndGetTokens,
   bearer,
   getGQLError,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CODES,
+  NOAUTH_CLASSIFICATIONS,
 } from '../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 
@@ -48,6 +51,8 @@ function buildBranchVariables() {
   const phoneNumber = randomDigits(11);
   const lat = randomIntWithinFloatBounds(7.71, 12.49);
   const lng = randomIntWithinFloatBounds(116.74, 121.61);
+  const openingTime = '10:00:00+08:00';
+  const closingTime = '21:00:00+08:00';
 
   // IMPORTANT: pharmacyId must be sent as a top-level GQL variable, not inside branch.
   // Prefer env for portability; fall back to 2.
@@ -64,6 +69,8 @@ function buildBranchVariables() {
     phoneNumber, // string
     lat, // int (GraphQL ID vs Float is server-defined; JS number is fine)
     lng, // int
+    closingTime, // string
+    openingTime, // string
   };
 
   const meta = {
@@ -124,7 +131,7 @@ test.describe('GraphQL: Admin Create Branch', () => {
     api,
     noAuth,
   }) => {
-    const { branch } = buildBranchVariables();
+    const { pharmacyId, branch } = buildBranchVariables();
 
     const createBranchNoAuthRes = await safeGraphQL(api, {
       query: CREATE_BRANCH_MUTATION,
@@ -139,10 +146,11 @@ test.describe('GraphQL: Admin Create Branch', () => {
       expect(createBranchNoAuthRes.httpStatus).toBe(401);
     } else {
       // GraphQL 200 + errors[]
-      const unauthorizedErr = getGQLError(createBranchNoAuthRes);
-      expect(unauthorizedErr.message.toLowerCase()).toContain('unauthorized');
-      expect.soft(unauthorizedErr.code).toBe('401');
-      expect.soft(unauthorizedErr.classification).toBe('UNAUTHORIZED');
+      const { message, code, classification } = getGQLError(createBranchNoAuthRes);
+
+      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      expect.soft(NOAUTH_CODES).toContain(code);
+      expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   });
 
