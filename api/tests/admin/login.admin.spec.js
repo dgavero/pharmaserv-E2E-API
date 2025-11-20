@@ -10,14 +10,20 @@ function buildAdminCreds() {
 }
 
 test.describe('GraphQL: Admin Login', () => {
-  test('Should Login And Return Tokens @api @admin @positive @login', async ({ api }) => {
-    const creds = buildAdminCreds();
-    const { accessToken, refreshToken, raw } = await adminLoginAndGetTokens(api, creds);
+  test(
+    'PHARMA-30 | Admin Login And Return Tokens',
+    {
+      tag: ['@api', '@admin', '@positive', '@login', '@pharma-30'],
+    },
+    async ({ api }) => {
+      const creds = buildAdminCreds();
+      const { accessToken, refreshToken, raw } = await adminLoginAndGetTokens(api, creds);
 
-    expect(raw.ok, raw.error || `Admin login failed (HTTP ${raw.httpStatus})`).toBe(true);
-    expect(typeof accessToken).toBe('string');
-    expect(accessToken.length).toBeGreaterThan(10);
-    expect(typeof refreshToken).toBe('string');
-    expect(refreshToken.length).toBeGreaterThan(10);
-  });
+      expect(raw.ok, raw.error || `Admin login failed (HTTP ${raw.httpStatus})`).toBe(true);
+      expect(typeof accessToken).toBe('string');
+      expect(accessToken.length).toBeGreaterThan(10);
+      expect(typeof refreshToken).toBe('string');
+      expect(refreshToken.length).toBeGreaterThan(10);
+    }
+  );
 });
