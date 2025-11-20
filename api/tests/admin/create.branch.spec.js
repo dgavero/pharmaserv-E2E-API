@@ -85,89 +85,99 @@ function buildBranchVariables() {
 }
 
 test.describe('GraphQL: Admin Create Branch', () => {
-  test('Able to create a new branch with randomized fields @api @admin @positive @create', async ({
-    api,
-  }) => {
-    // 1) Admin login
-    const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
-      username: process.env.ADMIN_USERNAME,
-      password: process.env.ADMIN_PASSWORD,
-    });
-    expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
+  test(
+    'PHARMA-24 | Able to create a new Pharmacy Branch with randomized fields',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-24'],
+    },
+    async ({ api }) => {
+      // 1) Admin login
+      const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
+        username: process.env.ADMIN_USERNAME,
+        password: process.env.ADMIN_PASSWORD,
+      });
+      expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
 
-    // 2) Variables (branch only; meta kept separate)
-    const { pharmacyId, branch, meta } = buildBranchVariables();
+      // 2) Variables (branch only; meta kept separate)
+      const { pharmacyId, branch, meta } = buildBranchVariables();
 
-    // 3) Create branch
-    const createBranchRes = await safeGraphQL(api, {
-      query: CREATE_BRANCH_MUTATION,
-      variables: { pharmacyId, branch },
-      headers: bearer(accessToken),
-    });
-    expect(
-      createBranchRes.ok,
-      createBranchRes.error || 'administrator.pharmacy.branch.create failed'
-    ).toBe(true);
+      // 3) Create branch
+      const createBranchRes = await safeGraphQL(api, {
+        query: CREATE_BRANCH_MUTATION,
+        variables: { pharmacyId, branch },
+        headers: bearer(accessToken),
+      });
+      expect(
+        createBranchRes.ok,
+        createBranchRes.error || 'administrator.pharmacy.branch.create failed'
+      ).toBe(true);
 
-    // 4) Payload
-    const branchNode = createBranchRes.body?.data?.administrator?.pharmacy?.branch?.create;
-    expect(branchNode, 'Missing data.administrator.pharmacy.branch.create').toBeTruthy();
+      // 4) Payload
+      const branchNode = createBranchRes.body?.data?.administrator?.pharmacy?.branch?.create;
+      expect(branchNode, 'Missing data.administrator.pharmacy.branch.create').toBeTruthy();
 
-    // 5) Assertions
-    expect.soft(typeof branchNode.id).toBe('string'); // id present
-    expect.soft(branchNode.name).toBe(meta.expectedName); // echoes randomized name
-    expect.soft(branchNode.pharmacyName).toBe('South Star'); // fixed by pharmacyId=2
+      // 5) Assertions
+      expect.soft(typeof branchNode.id).toBe('string'); // id present
+      expect.soft(branchNode.name).toBe(meta.expectedName); // echoes randomized name
+      expect.soft(branchNode.pharmacyName).toBe('South Star'); // fixed by pharmacyId=2
 
-    // lat/lng should be numbers (ints are numbers in JS) and within our integer bounds
-    expect.soft(typeof branchNode.lat).toBe('number');
-    expect.soft(typeof branchNode.lng).toBe('number');
-    expect.soft(branchNode.lat).toBeGreaterThanOrEqual(meta.latBoundMin);
-    expect.soft(branchNode.lat).toBeLessThanOrEqual(meta.latBoundMax);
-    expect.soft(branchNode.lng).toBeGreaterThanOrEqual(meta.lngBoundMin);
-    expect.soft(branchNode.lng).toBeLessThanOrEqual(meta.lngBoundMax);
-  });
-
-  test('Should NOT return branch details with missing bearer token (401 Unauthorized) @api @admin @negative @create', async ({
-    api,
-    noAuth,
-  }) => {
-    const { pharmacyId, branch } = buildBranchVariables();
-
-    const createBranchNoAuthRes = await safeGraphQL(api, {
-      query: CREATE_BRANCH_MUTATION,
-      variables: { pharmacyId, branch },
-      headers: noAuth,
-    });
-
-    expect(createBranchNoAuthRes.ok).toBe(false);
-
-    if (!createBranchNoAuthRes.httpOk) {
-      // Transport-level unauthorized
-      expect(createBranchNoAuthRes.httpStatus).toBe(401);
-    } else {
-      // GraphQL 200 + errors[]
-      const { message, code, classification } = getGQLError(createBranchNoAuthRes);
-
-      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
-      expect.soft(NOAUTH_CODES).toContain(code);
-      expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
+      // lat/lng should be numbers (ints are numbers in JS) and within our integer bounds
+      expect.soft(typeof branchNode.lat).toBe('number');
+      expect.soft(typeof branchNode.lng).toBe('number');
+      expect.soft(branchNode.lat).toBeGreaterThanOrEqual(meta.latBoundMin);
+      expect.soft(branchNode.lat).toBeLessThanOrEqual(meta.latBoundMax);
+      expect.soft(branchNode.lng).toBeGreaterThanOrEqual(meta.lngBoundMin);
+      expect.soft(branchNode.lng).toBeLessThanOrEqual(meta.lngBoundMax);
     }
-  });
+  );
 
-  test('Should NOT return branch details with invalid bearer token (401 Unauthorized) @api @admin @negative @create', async ({
-    api,
-    invalidAuth,
-  }) => {
-    const { pharmacyId, branch } = buildBranchVariables();
+  test(
+    'PHARMA-25 | Should NOT return branch details with missing bearer token (401 Unauthorized)',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-25'],
+    },
+    async ({ api, noAuth }) => {
+      const { pharmacyId, branch } = buildBranchVariables();
 
-    const createBranchInvalidAuthRes = await safeGraphQL(api, {
-      query: CREATE_BRANCH_MUTATION,
-      variables: { pharmacyId, branch },
-      headers: invalidAuth,
-    });
+      const createBranchNoAuthRes = await safeGraphQL(api, {
+        query: CREATE_BRANCH_MUTATION,
+        variables: { pharmacyId, branch },
+        headers: noAuth,
+      });
 
-    expect(createBranchInvalidAuthRes.ok).toBe(false);
-    expect(createBranchInvalidAuthRes.httpOk).toBe(false);
-    expect(createBranchInvalidAuthRes.httpStatus).toBe(401);
-  });
+      expect(createBranchNoAuthRes.ok).toBe(false);
+
+      if (!createBranchNoAuthRes.httpOk) {
+        // Transport-level unauthorized
+        expect(createBranchNoAuthRes.httpStatus).toBe(401);
+      } else {
+        // GraphQL 200 + errors[]
+        const { message, code, classification } = getGQLError(createBranchNoAuthRes);
+
+        expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+        expect.soft(NOAUTH_CODES).toContain(code);
+        expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
+      }
+    }
+  );
+
+  test(
+    'PHARMA-26 | Should NOT return branch details with invalid bearer token (401 Unauthorized)',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-26'],
+    },
+    async ({ api, invalidAuth }) => {
+      const { pharmacyId, branch } = buildBranchVariables();
+
+      const createBranchInvalidAuthRes = await safeGraphQL(api, {
+        query: CREATE_BRANCH_MUTATION,
+        variables: { pharmacyId, branch },
+        headers: invalidAuth,
+      });
+
+      expect(createBranchInvalidAuthRes.ok).toBe(false);
+      expect(createBranchInvalidAuthRes.httpOk).toBe(false);
+      expect(createBranchInvalidAuthRes.httpStatus).toBe(401);
+    }
+  );
 });

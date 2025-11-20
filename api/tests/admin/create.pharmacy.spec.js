@@ -33,73 +33,83 @@ function buildPharmacyInput() {
 }
 
 test.describe('GraphQL: Admin Create Pharmacy', () => {
-  test('Should create a new pharmacy with randomized fields @api @admin @positive @create', async ({
-    api,
-  }) => {
-    // 1) Admin login
-    const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-      username: process.env.ADMIN_USERNAME,
-      password: process.env.ADMIN_PASSWORD,
-    });
-    expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+  test(
+    'PHARMA-27 | Should create a new pharmacy with randomized fields',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-27'],
+    },
+    async ({ api }) => {
+      // 1) Admin login
+      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
+        username: process.env.ADMIN_USERNAME,
+        password: process.env.ADMIN_PASSWORD,
+      });
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
-    // 2) Randomized input (reused builder)
-    const pharmacyInput = buildPharmacyInput();
+      // 2) Randomized input (reused builder)
+      const pharmacyInput = buildPharmacyInput();
 
-    // 3) Create pharmacy
-    const createPharmacyRes = await safeGraphQL(api, {
-      query: CREATE_PHARMACY_MUTATION,
-      variables: { pharmacy: pharmacyInput },
-      headers: bearer(accessToken),
-    });
-    expect(
-      createPharmacyRes.ok,
-      createPharmacyRes.error || 'administrator.pharmacy.create failed'
-    ).toBe(true);
+      // 3) Create pharmacy
+      const createPharmacyRes = await safeGraphQL(api, {
+        query: CREATE_PHARMACY_MUTATION,
+        variables: { pharmacy: pharmacyInput },
+        headers: bearer(accessToken),
+      });
+      expect(
+        createPharmacyRes.ok,
+        createPharmacyRes.error || 'administrator.pharmacy.create failed'
+      ).toBe(true);
 
-    // 4) Validate payload (node + id/name are strings)
-    const pharmacyNode = createPharmacyRes.body?.data?.administrator?.pharmacy?.create;
-    expect(pharmacyNode, 'Missing data.administrator.pharmacy.create').toBeTruthy();
+      // 4) Validate payload (node + id/name are strings)
+      const pharmacyNode = createPharmacyRes.body?.data?.administrator?.pharmacy?.create;
+      expect(pharmacyNode, 'Missing data.administrator.pharmacy.create').toBeTruthy();
 
-    expect.soft(pharmacyNode.name).toBe(pharmacyInput.name);
-    expect.soft(pharmacyNode.code).toBe(pharmacyInput.code);
-  });
+      expect.soft(pharmacyNode.name).toBe(pharmacyInput.name);
+      expect.soft(pharmacyNode.code).toBe(pharmacyInput.code);
+    }
+  );
 
-  test('Should not create a pharmacy without Authorization @api @admin @negative @create', async ({
-    api,
-    noAuth,
-  }) => {
-    // Reuse the same builder — ensures same shape as positive
-    const pharmacyInput = buildPharmacyInput();
-    const createPharmacyNoAuth = await safeGraphQL(api, {
-      query: CREATE_PHARMACY_MUTATION,
-      variables: { pharmacy: pharmacyInput },
-      headers: noAuth,
-    });
+  test(
+    'PHARM-28 | Should NOT create a pharmacy without Authorization token',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-28'],
+    },
+    async ({ api, noAuth }) => {
+      // Reuse the same builder — ensures same shape as positive
+      const pharmacyInput = buildPharmacyInput();
+      const createPharmacyNoAuth = await safeGraphQL(api, {
+        query: CREATE_PHARMACY_MUTATION,
+        variables: { pharmacy: pharmacyInput },
+        headers: noAuth,
+      });
 
-    expect(createPharmacyNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
+      expect(createPharmacyNoAuth.ok, 'Expected UNAUTHORIZED when missing token').toBe(false);
 
-    const { message, code, classification } = getGQLError(createPharmacyNoAuth);
-    expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
-    expect.soft(NOAUTH_CODES).toContain(code);
-    expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
-  });
+      const { message, code, classification } = getGQLError(createPharmacyNoAuth);
+      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      expect.soft(NOAUTH_CODES).toContain(code);
+      expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
+    }
+  );
 
-  test('Should not create a pharmacy with invalid token @api @admin @negative @create', async ({
-    api,
-    invalidAuth,
-  }) => {
-    const pharmacyInput = buildPharmacyInput();
+  test(
+    'PHARMA-29 | Should NOT create a pharmacy with invalid tokens',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-29'],
+    },
+    async ({ api, invalidAuth }) => {
+      const pharmacyInput = buildPharmacyInput();
 
-    const createPharmacyBadAuth = await safeGraphQL(api, {
-      query: CREATE_PHARMACY_MUTATION,
-      variables: { pharmacy: pharmacyInput },
-      headers: invalidAuth,
-    });
+      const createPharmacyBadAuth = await safeGraphQL(api, {
+        query: CREATE_PHARMACY_MUTATION,
+        variables: { pharmacy: pharmacyInput },
+        headers: invalidAuth,
+      });
 
-    // Transport-level 401 (no GraphQL errors[])
-    expect(createPharmacyBadAuth.ok).toBe(false);
-    expect(createPharmacyBadAuth.httpOk).toBe(false);
-    expect(createPharmacyBadAuth.httpStatus).toBe(401);
-  });
+      // Transport-level 401 (no GraphQL errors[])
+      expect(createPharmacyBadAuth.ok).toBe(false);
+      expect(createPharmacyBadAuth.httpOk).toBe(false);
+      expect(createPharmacyBadAuth.httpStatus).toBe(401);
+    }
+  );
 });
