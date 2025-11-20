@@ -31,58 +31,67 @@ function buildInvalidCreds() {
 }
 
 test.describe('GraphQL: Patient Login', () => {
-  test('Should Login And Return Tokens @api @patient @positive @login @smoke', async ({ api }) => {
-    const creds = buildValidCreds();
+  test(
+    'PHARMA-1 | Patient Should Login And Return Tokens',
+    {
+      tag: ['@api', '@patient', '@positive', '@login', '@pharma-1'],
+    },
+    async ({ api }) => {
+      const creds = buildValidCreds();
 
-    const loginUser = await safeGraphQL(api, {
-      query: LOGIN_MUTATION,
-      variables: creds,
-    });
+      const loginUser = await safeGraphQL(api, {
+        query: LOGIN_MUTATION,
+        variables: creds,
+      });
 
-    await test.step('GraphQL should succeed', async () => {
-      expect(loginUser.ok, loginUser.error || 'GraphQL call failed').toBe(true);
-    });
+      await test.step('GraphQL should succeed', async () => {
+        expect(loginUser.ok, loginUser.error || 'GraphQL call failed').toBe(true);
+      });
 
-    await test.step('Validate tokens (strings)', async () => {
-      const tokens = loginUser.body?.data?.patient?.auth?.login;
-      expect(tokens, 'Missing data.patient.auth.login').toBeTruthy();
+      await test.step('Validate tokens (strings)', async () => {
+        const tokens = loginUser.body?.data?.patient?.auth?.login;
+        expect(tokens, 'Missing data.patient.auth.login').toBeTruthy();
 
-      expect.soft(typeof tokens.accessToken).toBe('string');
-      expect.soft(typeof tokens.refreshToken).toBe('string');
-    });
-  });
+        expect.soft(typeof tokens.accessToken).toBe('string');
+        expect.soft(typeof tokens.refreshToken).toBe('string');
+      });
+    }
+  );
 
-  test('Should Reject Invalid Credentials @api @patient @negative @smoke @login', async ({
-    api,
-  }) => {
-    const creds = buildInvalidCreds();
+  test(
+    'PHARMA-2 | Patient Login Should Reject Invalid Credentials',
+    {
+      tag: ['@api', '@patient', '@positive', '@login', '@pharma-2'],
+    },
+    async ({ api }) => {
+      const creds = buildInvalidCreds();
 
-    const loginAttempt = await safeGraphQL(api, {
-      query: LOGIN_MUTATION,
-      variables: creds,
-    });
+      const loginAttempt = await safeGraphQL(api, {
+        query: LOGIN_MUTATION,
+        variables: creds,
+      });
 
-    await test.step('Login should fail', async () => {
-      expect(loginAttempt.ok, 'API accepted invalid credentials (expected rejection)').toBe(false);
-    });
+      await test.step('Login should fail', async () => {
+        expect(loginAttempt.ok, 'API accepted invalid credentials (expected rejection)').toBe(
+          false
+        );
+      });
 
-    await test.step('Assert error details', async () => {
-      const { message, code, classification, path } = getGQLError(loginAttempt);
+      await test.step('Assert error details', async () => {
+        const { message, code, classification, path } = getGQLError(loginAttempt);
 
-      // Fuzzy message: allow any invalid/unauthorized phrasing
-      expect(message.toLowerCase()).toMatch(/(invalid|incorrect|unauthorized)/);
+        // Fuzzy message: allow any invalid/unauthorized phrasing
+        expect(message.toLowerCase()).toMatch(/(invalid|incorrect|unauthorized)/);
 
-      // Soft checks for code/classification
-      expect.soft(code).toBe('401');
-      expect.soft(classification).toBe('UNAUTHORIZED');
+        // Soft checks for code/classification
+        expect.soft(code).toBe('401');
+        expect.soft(classification).toBe('UNAUTHORIZED');
 
-      // Optional (soft): path usually "patient.auth.login"
-      expect.soft(path).toBe('patient.auth.login');
-
-      // Safety: no tokens should be present on failure
-      const node = loginAttempt.body?.data?.patient?.auth?.login;
-      expect.soft(node?.accessToken ?? null).toBeFalsy();
-      expect.soft(node?.refreshToken ?? null).toBeFalsy();
-    });
-  });
+        // Safety: no tokens should be present on failure
+        const node = loginAttempt.body?.data?.patient?.auth?.login;
+        expect.soft(node?.accessToken ?? null).toBeFalsy();
+        expect.soft(node?.refreshToken ?? null).toBeFalsy();
+      });
+    }
+  );
 });
