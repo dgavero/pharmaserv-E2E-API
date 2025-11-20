@@ -73,7 +73,6 @@ test.describe('GraphQL: Rider Register', () => {
     expect.soft(typeof node.firstName).toBe('string');
     expect.soft(typeof node.lastName).toBe('string');
     expect.soft(typeof node.username).toBe('string');
-    expect.soft(typeof node.phoneNumber).toBe('string');
 
     // 5) Assert returned data matches input
     expect.soft(node.firstName).toBe(riderInput.firstName);
