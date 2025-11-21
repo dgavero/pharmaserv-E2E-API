@@ -70,7 +70,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
   );
 
   test(
-    'PHARM-28 | Should NOT create a pharmacy without Authorization token',
+    'PHARMA-28 | Should NOT create a pharmacy without Authorization token',
     {
       tag: ['@api', '@admin', '@negative', '@pharma-28'],
     },
