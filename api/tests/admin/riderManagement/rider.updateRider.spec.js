@@ -1,5 +1,5 @@
-import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
-import { test, expect } from '../../globalConfig.api.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   bearer,
@@ -9,7 +9,7 @@ import {
   NOAUTH_CLASSIFICATIONS,
   NOAUTH_CODES,
   NOAUTH_HTTP_STATUSES,
-} from '../../helpers/testUtilsAPI.js';
+} from '../../../helpers/testUtilsAPI.js';
 
 // RiderID to update
 const riderId = 4;

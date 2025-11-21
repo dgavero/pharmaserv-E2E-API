@@ -1,4 +1,4 @@
-import { test, expect } from '../../globalConfig.api.js';
+import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   adminLoginAndGetTokens,
@@ -7,7 +7,7 @@ import {
   NOAUTH_CLASSIFICATIONS,
   NOAUTH_CODES,
   NOAUTH_MESSAGE_PATTERN,
-} from '../../helpers/testUtilsAPI.js';
+} from '../../../helpers/testUtilsAPI.js';
 
 const GET_RIDER_QUERY = `
   query ($by: IdentifierRequest!) {

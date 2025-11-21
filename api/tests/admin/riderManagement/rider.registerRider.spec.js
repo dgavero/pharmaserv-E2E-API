@@ -1,5 +1,5 @@
-import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
-import { test, expect } from '../../globalConfig.api.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   bearer,
@@ -8,7 +8,7 @@ import {
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CLASSIFICATIONS,
   NOAUTH_CODES,
-} from '../../helpers/testUtilsAPI.js';
+} from '../../../helpers/testUtilsAPI.js';
 
 // GQL: Register Rider
 const REGISTER_RIDER_MUTATION = `

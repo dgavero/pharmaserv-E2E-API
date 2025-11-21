@@ -1,4 +1,4 @@
-import { test, expect } from '../../globalConfig.api.js';
+import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   adminLoginAndGetTokens,
@@ -7,7 +7,7 @@ import {
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CODES,
   NOAUTH_CLASSIFICATIONS,
-} from '../../helpers/testUtilsAPI.js';
+} from '../../../helpers/testUtilsAPI.js';
 
 const SET_RIDER_AVAILABLE_MUTATION = `
   mutation ($riderId: ID!) {
