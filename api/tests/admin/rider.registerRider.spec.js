@@ -1,4 +1,3 @@
-import { heading } from 'discord.js';
 import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../globalConfig.api.js';
 import {
@@ -6,8 +5,6 @@ import {
   bearer,
   adminLoginAndGetTokens,
   getGQLError,
-  noAuth,
-  INVALID_JWT,
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CLASSIFICATIONS,
   NOAUTH_CODES,

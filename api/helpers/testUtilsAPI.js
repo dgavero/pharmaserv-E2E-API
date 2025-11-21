@@ -278,11 +278,19 @@ export const NOAUTH_MESSAGES = [
   'Unauthorized Access',
   'Access Denied',
   'INTERNAL_SERVER_ERROR',
+  'invalid',
 ];
 
 // Prebuilt regex pattern for matching any of the above messages
 export const NOAUTH_MESSAGE_PATTERN = new RegExp(`(${NOAUTH_MESSAGES.join('|')})`);
 
-export const NOAUTH_CLASSIFICATIONS = ['UNAUTHORIZED', 'CONFLICT', 'INTERNAL_ERROR'];
+export const NOAUTH_CLASSIFICATIONS = [
+  'UNAUTHORIZED',
+  'CONFLICT',
+  'INTERNAL_ERROR',
+  'VALIDATIONERROR',
+];
 
 export const NOAUTH_CODES = ['401', '500'];
+
+export const NOAUTH_HTTP_STATUSES = [401, 403, 500];
