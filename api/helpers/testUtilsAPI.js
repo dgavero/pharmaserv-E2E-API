@@ -278,7 +278,7 @@ export const NOAUTH_MESSAGES = [
   'Unauthorized Access',
   'Access Denied',
   'INTERNAL_SERVER_ERROR',
-  'invalid',
+  'invalid value',
 ];
 
 // Prebuilt regex pattern for matching any of the above messages
