@@ -152,7 +152,7 @@ test.describe('GraphQL: Admin Set Rider Unavailable', () => {
   );
 
   test(
-    'Should NOT set rider status UNAVAILABLE with missing bearer token from admin login',
+    'PHARMA-39 | Should NOT set rider status UNAVAILABLE with missing bearer token from admin login',
     {
       tag: ['@api', '@admin', '@negative', '@pharma-39'],
     },
