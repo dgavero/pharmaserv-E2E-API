@@ -48,7 +48,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
         username: process.env.LOGIN_USERNAME,
         password: process.env.LOGIN_PASSWORD,
       });
-      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const discountCardData = discountCardInput();
       const createDCRes = await safeGraphQL(api, {
