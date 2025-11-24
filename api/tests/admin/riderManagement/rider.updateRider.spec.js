@@ -37,7 +37,23 @@ function buildRiderUpdateInput() {
   const email = `updatedrider+${randomAlphanumeric(8)}@example.com`;
   const username = `updatedrider_${randomAlphanumeric(8)}`;
   const phoneNumber = `+63${randomNum(10)}`;
-  return { firstName, lastName, email, username, phoneNumber };
+  const houseNumber = `${randomNum(3)}`;
+  const street = `${randomNum(3)} Main St`;
+  const barangay = `Barangay ${randomAlphanumeric(4)}`;
+  const city = `Manila`;
+  const zipCode = `${randomNum(4)}`;
+  return {
+    firstName,
+    lastName,
+    email,
+    username,
+    phoneNumber,
+    houseNumber,
+    street,
+    barangay,
+    city,
+    zipCode,
+  };
 }
 
 test.describe('GraphQL: Update Rider', () => {
