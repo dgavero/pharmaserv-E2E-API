@@ -88,7 +88,7 @@ test.describe('GraphQL: Admin Create Branch', () => {
   test(
     'PHARMA-24 | Able to create a new Pharmacy Branch with randomized fields',
     {
-      tag: ['@api', '@admin', '@positive', 'create', '@pharma-24'],
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-24'],
     },
     async ({ api }) => {
       // 1) Admin login

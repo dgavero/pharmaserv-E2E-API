@@ -1,6 +1,6 @@
-import { test, expect } from '../../globalConfig.api.js';
-import { safeGraphQL, getGQLError } from '../../helpers/testUtilsAPI.js';
-import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { safeGraphQL, getGQLError } from '../../../helpers/testUtilsAPI.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 
 const REGISTER_PATIENT_MUTATION = `
 mutation ($patientId: ID!, $patient: Register!) { patient { register(patientId: $patientId, patient: $patient) { id uuid firstName lastName username } } }
