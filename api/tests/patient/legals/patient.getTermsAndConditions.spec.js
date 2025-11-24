@@ -27,7 +27,7 @@ test.describe('GraphQL: Get Terms and Conditions', () => {
   test(
     'PHARMA-60 | Should be able to load Terms and Conditions',
     {
-      tag: ['@api', '@admin', '@positive', '@pharma-60', '@legals'],
+      tag: ['@api', '@patient', '@positive', '@pharma-60', '@legals'],
     },
     async ({ api, noAuth }) => {
       const getTNCRes = await safeGraphQL(api, {
