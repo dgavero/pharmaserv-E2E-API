@@ -35,7 +35,7 @@ test.describe('GraphQL: Register Patient', () => {
   test(
     'PHARMA-6 | Able to Register A New Patient Successfully',
     {
-      tag: ['@api', '@patient', '@positive', '@registration', '@pharma-6'],
+      tag: ['@api', '@patient', '@positive', '@register', '@pharma-6'],
     },
     async ({ api }) => {
       const patient = makeNewPatient();
@@ -73,7 +73,7 @@ test.describe('GraphQL: Register Patient', () => {
   test(
     'PHARMA-7 | Should Reject Duplicate Registration @api @patient @negative @create',
     {
-      tag: ['@api', '@patient', '@negative', '@registration', '@pharma-7'],
+      tag: ['@api', '@patient', '@negative', '@register', '@pharma-7'],
     },
     async ({ api }) => {
       const patient = buildFixedPatient();

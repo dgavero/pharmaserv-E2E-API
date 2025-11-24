@@ -36,7 +36,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
   test(
     'PHARMA-27 | Should create a new pharmacy with randomized fields',
     {
-      tag: ['@api', '@admin', '@positive', '@pharma-27'],
+      tag: ['@api', '@admin', '@positive', 'create', '@pharma-27'],
     },
     async ({ api }) => {
       // 1) Admin login
@@ -72,7 +72,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
   test(
     'PHARMA-28 | Should NOT create a pharmacy without Authorization token',
     {
-      tag: ['@api', '@admin', '@negative', '@pharma-28'],
+      tag: ['@api', '@admin', '@negative', 'create', '@pharma-28'],
     },
     async ({ api, noAuth }) => {
       // Reuse the same builder — ensures same shape as positive
@@ -95,7 +95,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
   test(
     'PHARMA-29 | Should NOT create a pharmacy with invalid tokens',
     {
-      tag: ['@api', '@admin', '@negative', '@pharma-29'],
+      tag: ['@api', '@admin', '@negative', 'create', '@pharma-29'],
     },
     async ({ api, invalidAuth }) => {
       const pharmacyInput = buildPharmacyInput();
