@@ -10,9 +10,37 @@ import {
   NOAUTH_CODES,
 } from '../../../helpers/testUtilsAPI.js';
 
+// Build Correct Rider Input Payload
+function buildRiderInput() {
+  const firstName = `Dave`;
+  const lastName = `Rider`;
+  const email = `daveRider+${randomAlphanumeric(6)}@yopmail.com`;
+  const username = `daverider_${randomAlphanumeric(6)}`;
+  const phoneNumber = `+63${randomNum(10)}`;
+  const houseNumber = `${randomNum(3)}`;
+  const street = `${randomNum(3)} Main St`;
+  const barangay = `Barangay ${randomAlphanumeric(4)}`;
+  const city = `Manila`;
+  const zipCode = `${randomNum(4)}`;
+  const password = `Password123`;
+  return {
+    firstName,
+    lastName,
+    email,
+    username,
+    phoneNumber,
+    houseNumber,
+    street,
+    barangay,
+    city,
+    zipCode,
+    password,
+  };
+}
+
 // GQL: Register Rider
-const REGISTER_RIDER_MUTATION = `
-  mutation ($rider: Register!) {
+const REGISTER_RIDER_MUTATION = /* GraphQL */ `
+  mutation ($rider: RiderRegister!) {
     administrator {
       rider {
         register(rider: $rider) {
@@ -45,15 +73,7 @@ test.describe('GraphQL: Rider Register', () => {
       });
 
       // 2) Prepare unique rider input to avoid duplicates
-      const suffix = randomAlphanumeric(8);
-      const riderInput = {
-        firstName: 'Dave',
-        lastName: 'Rider',
-        email: `daverider+${suffix}@example.com`,
-        username: `daverider_${suffix}`,
-        password: 'Password123',
-        phoneNumber: `+63${randomNum(10)}`,
-      };
+      const riderInput = buildRiderInput();
 
       // 3) Call register
       const reg = await test.step('Register rider', async () =>
@@ -103,8 +123,13 @@ test.describe('GraphQL: Rider Register', () => {
         lastName: 'Rider',
         email: 'daverider1@yahoo.com',
         username: 'daverider1.rider',
+        houseNumber: '123',
+        street: '123 Main St',
+        barangay: 'Barangay 1234',
+        city: 'Manila',
+        zipCode: '1000',
+        phoneNumber: `+639123456789`,
         password: 'Password123',
-        phoneNumber: `+63${randomNum(10)}`,
       };
 
       // 3) Attempt duplicate register
@@ -143,15 +168,7 @@ test.describe('GraphQL: Rider Register', () => {
       tag: ['@api', '@admin', '@negative', '@pharma-33'],
     },
     async ({ api }) => {
-      const suffix = `${Date.now()}`;
-      const riderInput = {
-        firstName: 'NoAuth',
-        lastName: 'Rider',
-        email: `noauth+${suffix}@example.com`,
-        username: `noauth_${suffix}`,
-        password: 'Password123',
-        phoneNumber: `+63${randomNum(10)}`,
-      };
+      const riderInput = buildRiderInput();
 
       const regRiderNoToken = await test.step('Register rider without token @create', async () =>
         safeGraphQL(api, {
@@ -187,15 +204,8 @@ test.describe('GraphQL: Rider Register', () => {
         password: process.env.ADMIN_PASSWORD,
       });
 
-      const suffix = `${Date.now()}`;
-      const riderInput = {
-        firstName: 'NoPass',
-        lastName: 'Rider',
-        email: `nopass+${suffix}@example.com`,
-        username: `nopass_${suffix}`,
-        password: '', // ← intentionally empty
-        phoneNumber: `+63${randomNum(10)}`,
-      };
+      const riderInput = buildRiderInput();
+      riderInput.password = ''; // Empty password to simulate missing required field
 
       const regRiderNoPass = await test.step('Register rider with empty password', async () =>
         safeGraphQL(api, {
