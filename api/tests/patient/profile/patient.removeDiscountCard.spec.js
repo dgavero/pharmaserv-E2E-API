@@ -61,7 +61,7 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
         username: process.env.LOGIN_USERNAME,
         password: process.env.LOGIN_PASSWORD,
       });
-      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       // Create a discount card to be removed and get its ID
       const discountCardData = discountCardInput();
@@ -104,7 +104,7 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
         username: process.env.LOGIN_USERNAME,
         password: process.env.LOGIN_PASSWORD,
       });
-      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const removeDiscountCardRes = await safeGraphQL(api, {
         query: REMOVE_DC_CARD,
         variables: { discountCardId: unownedDiscountCardId },
