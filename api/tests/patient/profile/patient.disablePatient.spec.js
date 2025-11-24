@@ -79,4 +79,8 @@ test.describe('GraphQL: Disable a related patient', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  // Todo add
+  // Should NOT be able disable a related patient without Authentication
+  // Should NOT be able to disable a related patient with invalid Authentication
 });
