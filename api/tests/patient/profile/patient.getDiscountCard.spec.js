@@ -37,8 +37,8 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -60,8 +60,8 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const getDCRes = await safeGraphQL(api, {

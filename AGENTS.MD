@@ -159,7 +159,7 @@ await test
 
 - `API_BASE_URL` – consumed by `globalConfig.api.js` for the `api` fixture.
 - Credentials (examples; set in `.env` or CI secrets):
-  - `LOGIN_USERNAME`, `LOGIN_PASSWORD` (patient)
+  - `USER_USERNAME`, `USER_PASSWORD` (patient)
   - `ADMIN_USERNAME`, `ADMIN_PASSWORD` (admin)
 - For GraphQL pathing, your client (`graphqlClient.js`) uses the configured base; do not hardcode hostnames in tests.
 
