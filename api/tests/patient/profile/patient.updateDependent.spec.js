@@ -31,7 +31,7 @@ const UPDATE_DEPENDENT_QUERY = /* GraphQL */ `
 `;
 
 const notDependentId = 999999; // assuming this ID does not belong to any dependent of the patient
-const dependentId = 296; // hardcoded and linked to used patient
+const dependentId = 2; // hardcoded and linked to used patient
 function updateDependentInput() {
   const height = randomNum(3);
   const weight = randomNum(3);
