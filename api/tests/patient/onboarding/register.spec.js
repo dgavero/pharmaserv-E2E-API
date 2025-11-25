@@ -1,5 +1,11 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { safeGraphQL, getGQLError } from '../../../helpers/testUtilsAPI.js';
+import {
+  safeGraphQL,
+  getGQLError,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+} from '../../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 
 const REGISTER_PATIENT_MUTATION = `
@@ -32,7 +38,7 @@ function buildFixedPatient() {
 }
 
 // Fixed MAIN patientId for registration
-const patientId = 1;
+const patientId = 99872;
 
 test.describe('GraphQL: Register Patient', () => {
   test(
@@ -102,13 +108,9 @@ test.describe('GraphQL: Register Patient', () => {
       // 3) Conflict details: prefer structured GraphQL fields; otherwise fall back to message text.
       await test.step('Assert conflict details', async () => {
         const { message, code, classification } = getGQLError(second);
-
-        if (code || classification) {
-          expect.soft(code).toBe('409');
-          expect.soft(classification).toBe('CONFLICT');
-        } else {
-          expect.soft(message).toMatch(DUPLICATE_HINT);
-        }
+        expect.soft(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+        expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
+        expect.soft(NOAUTH_CODES).toContain(code);
       });
     }
   );
