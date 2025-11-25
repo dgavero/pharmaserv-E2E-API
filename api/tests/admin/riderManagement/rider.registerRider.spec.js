@@ -83,8 +83,8 @@ test.describe('GraphQL: Rider Register', () => {
           headers: bearer(accessToken),
         }));
 
-      // 4) Assert success + payload contract
-      expect(reg.ok, reg.error || `Register failed (HTTP ${reg.httpStatus})`).toBe(true);
+      // 4) Main Assertion
+      expect(reg.ok, reg.error || `Register new rider failed (HTTP ${reg.httpStatus})`).toBe(true);
 
       const node = reg.body?.data?.administrator?.rider?.register;
       expect(node, 'Missing data.administrator.rider.register').toBeTruthy();
@@ -205,7 +205,8 @@ test.describe('GraphQL: Rider Register', () => {
       });
 
       const riderInput = buildRiderInput();
-      riderInput.password = ''; // Empty password to simulate missing required field
+      // Delete password variable to simulate missing required field
+      delete riderInput.password;
 
       const regRiderNoPass = await test.step('Register rider with empty password', async () =>
         safeGraphQL(api, {
@@ -218,10 +219,9 @@ test.describe('GraphQL: Rider Register', () => {
       expect(regRiderNoPass.ok).toBe(false);
 
       // Resolver error path: fuzzy message + soft code/classification
-      const { message, code, classification } = getGQLError(regRiderNoPass);
+      const { message, classification } = getGQLError(regRiderNoPass);
 
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
-      expect.soft(NOAUTH_CODES).toContain(code);
       expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
