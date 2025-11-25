@@ -31,6 +31,9 @@ function buildFixedPatient() {
   };
 }
 
+// Fixed MAIN patientId for registration
+const patientId = 1;
+
 test.describe('GraphQL: Register Patient', () => {
   test(
     'PHARMA-6 | Able to Register A New Patient Successfully',
@@ -39,8 +42,6 @@ test.describe('GraphQL: Register Patient', () => {
     },
     async ({ api }) => {
       const patient = makeNewPatient();
-      const patientId = 5;
-
       const registerRes = await safeGraphQL(api, {
         query: REGISTER_PATIENT_MUTATION,
         variables: { patientId, patient },
@@ -77,7 +78,6 @@ test.describe('GraphQL: Register Patient', () => {
     },
     async ({ api }) => {
       const patient = buildFixedPatient();
-      const patientId = 5;
       const DUPLICATE_HINT = /already\s+registered/i; // fallback hint if server lacks structured fields
 
       // 1) Seed: attempt an initial registration to ensure the user exists.
