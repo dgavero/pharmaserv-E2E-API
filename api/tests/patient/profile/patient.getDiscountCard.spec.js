@@ -4,7 +4,6 @@ import { loginAndGetTokens } from '../../../helpers/testUtilsAPI';
 import {
   safeGraphQL,
   bearer,
-  adminLoginAndGetTokens,
   getGQLError,
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CLASSIFICATIONS,
