@@ -1,5 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { loginAndGetTokens } from '../../../helpers/testUtilsAPI';
+import { loginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/testUtilsAPI';
 import {
   safeGraphQL,
   bearer,
@@ -80,7 +80,59 @@ test.describe('GraphQL: Disable a related patient', () => {
     }
   );
 
-  // Todo add
-  // Should NOT be able disable a related patient without Authentication
-  // Should NOT be able to disable a related patient with invalid Authentication
+  test(
+    'PHARMA-84 | Should NOT be able disable a related patient without Authentication',
+    {
+      tag: ['@api', '@patient', '@negative', '@pharma-84'],
+    },
+    async ({ api, noAuth }) => {
+      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
+        username: process.env.LOGIN_USERNAME,
+        password: process.env.LOGIN_PASSWORD,
+      });
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const disablePatientResNoAuth = await safeGraphQL(api, {
+        query: DISABLE_PATIENT_QUERY,
+        variables: { patientId },
+        headers: noAuth,
+      });
+
+      // Main Assertion
+      expect(disablePatientResNoAuth.ok, 'Disable a patient without Auth is expected to fail').toBe(
+        false
+      );
+
+      const { message, code, classification } = getGQLError(disablePatientResNoAuth);
+
+      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      expect(NOAUTH_CODES).toContain(code);
+      expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
+    }
+  );
+
+  test(
+    'PHARMA-85 | Should NOT be able to disable a related patient with invalid Authentication',
+    {
+      tag: ['@api', '@patient', '@negative', '@pharma-85'],
+    },
+    async ({ api, invalidAuth }) => {
+      const disablePatientResInvalidAuth = await safeGraphQL(api, {
+        query: DISABLE_PATIENT_QUERY,
+        variables: { patientId },
+        headers: invalidAuth,
+      });
+
+      // Main Assertion
+      expect(
+        disablePatientResInvalidAuth.ok,
+        'Disable a patient invalid Auth is expected to fail'
+      ).toBe(false);
+
+      // Transport-level 401 (no GraphQL errors[])
+      expect(disablePatientResInvalidAuth.ok).toBe(false);
+      expect(disablePatientResInvalidAuth.httpOk).toBe(false);
+      expect(NOAUTH_HTTP_STATUSES).toContain(disablePatientResInvalidAuth.httpStatus);
+    }
+  );
 });
