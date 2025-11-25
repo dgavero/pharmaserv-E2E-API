@@ -14,7 +14,7 @@ import {
 function buildRiderInput() {
   const firstName = `Dave`;
   const lastName = `Rider`;
-  const email = `daveRider+${randomAlphanumeric(6)}@yopmail.com`;
+  const email = `daveRider+${randomAlphanumeric(6)}@example.com`;
   const username = `daverider_${randomAlphanumeric(6)}`;
   const phoneNumber = `+63${randomNum(10)}`;
   const houseNumber = `${randomNum(3)}`;
