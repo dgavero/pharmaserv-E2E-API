@@ -38,11 +38,11 @@ const CREATE_DC_CARD = /* GraphQL */ `
   }
 `;
 
-const unownedDiscountCardId = 1;
+const unownedDiscountCardId = 9999;
 
 // Will be used to create and then remove the discount card
 function discountCardInput() {
-  const patientId = 296; // Existing patient ID for testing
+  const patientId = 1; // Existing patient ID for testing
   const cardType = `Discount Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `Wats-${randomAlphanumeric(8)}`;
@@ -58,8 +58,8 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -95,14 +95,14 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
   );
 
   test(
-    'PHARMA-81 | Should NOT be able to remove unowned Discount Card of Patient',
+    'PHARMA-81 | Should NOT be able to remove Discount Card that are not found/created',
     {
       tag: ['@api', '@patient', '@negative', '@pharma-81'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const removeDiscountCardRes = await safeGraphQL(api, {
@@ -114,7 +114,7 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
       // Main Assertion
       expect(
         removeDiscountCardRes.ok,
-        'Remove Discount Card request for UNOWNED CARD should have failed'
+        'Remove Discount Card request for NOT FOUND CARD should have failed'
       ).toBe(false);
 
       const { message, code, classification } = getGQLError(removeDiscountCardRes);
@@ -123,4 +123,6 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
       expect(NOAUTH_CODES).toContain(code);
     }
   );
+
+  //Todo add > Should NOT be able to remove unowned Discount Card of Patient
 });

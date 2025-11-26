@@ -40,10 +40,10 @@ const GET_PAGED_PATIENTS_QUERY = `
 
 // Expected identity for the fixed email
 const EXPECTED_PATIENT = {
-  email: 'rainier@gmail.com',
-  username: 'rainier.patient',
-  firstName: 'Rainier',
-  lastName: 'Amoyo',
+  email: 'user.patient@gmail.com',
+  username: 'user.patient',
+  firstName: 'Patient',
+  lastName: 'User',
 };
 
 test.describe('GraphQL: Admin Get Patient Detail', () => {
@@ -139,7 +139,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
   );
 
   test(
-    'PHARMA-11 | Should return paged patients with pageSize=5 (page=1)',
+    'PHARMA-11 | Should return paged patients with pageSize=3 (page=1)',
     {
       tag: ['@api', '@admin', '@positive', '@pharma-11'],
     },
@@ -154,7 +154,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
       // 2) Query paged patients with hardcoded page/pageSize
       const pagedPatientsRes = await safeGraphQL(api, {
         query: GET_PAGED_PATIENTS_QUERY,
-        variables: { filter: { pageSize: 5, page: 1, ascending: true } },
+        variables: { filter: { pageSize: 3, page: 1, ascending: true } },
         headers: bearer(accessToken),
       });
       expect(pagedPatientsRes.ok, pagedPatientsRes.error || 'pagedPatients query failed').toBe(
@@ -171,7 +171,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
       expect(Array.isArray(items), 'items should be an array').toBe(true);
 
       // 4) Count contract: exactly 5 items returned
-      expect(items.length).toBe(5);
+      expect(items.length).toBe(3);
 
       // 5) Per-item shape (soft checks)
       for (const it of items) {

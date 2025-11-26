@@ -17,8 +17,8 @@ const LOGIN_MUTATION = `
 // Valid creds (env-backed with local fallbacks)
 function buildValidCreds() {
   return {
-    username: process.env.LOGIN_USERNAME || 'daveg123.patient',
-    password: process.env.LOGIN_PASSWORD || 'Test1234!',
+    username: process.env.USER_USERNAME || 'daveg123.patient',
+    password: process.env.USER_PASSWORD || 'Test1234!',
   };
 }
 

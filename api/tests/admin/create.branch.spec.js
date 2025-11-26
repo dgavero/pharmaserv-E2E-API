@@ -11,7 +11,7 @@ import {
 import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 
 const CREATE_BRANCH_MUTATION = `
-mutation ($pharmacyId: ID!, $branch: BranchRequest!) 
+mutation ($pharmacyId: ID!, $branch: BranchCreateRequest!) 
 { administrator { pharmacy { branch { create(pharmacyId: $pharmacyId, branch: $branch) 
  { id code pharmacyName name lat lng } } } } }
 `;
@@ -54,9 +54,8 @@ function buildBranchVariables() {
   const openingTime = '10:00:00+08:00';
   const closingTime = '21:00:00+08:00';
 
-  // IMPORTANT: pharmacyId must be sent as a top-level GQL variable, not inside branch.
-  // Prefer env for portability; fall back to 2.
-  const pharmacyId = String(2);
+  // Created branch for API test
+  const pharmacyId = String(4);
 
   const branch = {
     name, // string
@@ -119,7 +118,7 @@ test.describe('GraphQL: Admin Create Branch', () => {
       // 5) Assertions
       expect.soft(typeof branchNode.id).toBe('string'); // id present
       expect.soft(branchNode.name).toBe(meta.expectedName); // echoes randomized name
-      expect.soft(branchNode.pharmacyName).toBe('South Star'); // fixed by pharmacyId=2
+      expect.soft(branchNode.pharmacyName).toBe('Mercury Drug'); // fixed by pharmacyId=4
 
       // lat/lng should be numbers (ints are numbers in JS) and within our integer bounds
       expect.soft(typeof branchNode.lat).toBe('number');

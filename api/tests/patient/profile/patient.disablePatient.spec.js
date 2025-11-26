@@ -17,8 +17,8 @@ const DISABLE_PATIENT_QUERY = /* GraphQL */ `
   }
 `;
 
-const patientId = 297; // Existing patient ID related to user
-const unrelatedPatientId = 1; // Patient ID NOT related to user
+const patientId = 3; // Existing patient ID related to user
+const unrelatedPatientId = 20; // Patient ID NOT related to user
 
 test.describe('GraphQL: Disable a related patient', () => {
   test(
@@ -28,8 +28,8 @@ test.describe('GraphQL: Disable a related patient', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -57,8 +57,8 @@ test.describe('GraphQL: Disable a related patient', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -87,8 +87,8 @@ test.describe('GraphQL: Disable a related patient', () => {
     },
     async ({ api, noAuth }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 

@@ -12,15 +12,15 @@ import {
 
 // RiderID to getData
 const riderId = '1';
-const riderUUID = '5d6d557f-2a22-431e-b0de-4c93211c500c';
-const riderFirstName = 'Patrick';
+const riderUUID = '9b538c11-2ec4-412d-ad84-9068e6a2dd19';
+const riderFirstName = 'User';
 
 // Expected identity for id=31
 const EXPECTED_RIDER = {
-  id: 2,
-  username: 'emil.rider',
-  email: 'emil.rider@gmail.com',
-  firstName: 'Emil',
+  id: 5,
+  username: 'master.rider',
+  email: 'master.rider@pharmaserv.express',
+  firstName: 'Master',
   lastName: 'Rider',
 };
 

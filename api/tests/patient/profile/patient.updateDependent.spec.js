@@ -31,7 +31,7 @@ const UPDATE_DEPENDENT_QUERY = /* GraphQL */ `
 `;
 
 const notDependentId = 999999; // assuming this ID does not belong to any dependent of the patient
-const dependentId = 296; // hardcoded and linked to used patient
+const dependentId = 2; // hardcoded and linked to used patient
 function updateDependentInput() {
   const height = randomNum(3);
   const weight = randomNum(3);
@@ -48,8 +48,8 @@ test.describe('GraphQL: Patient Update Dependent', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 

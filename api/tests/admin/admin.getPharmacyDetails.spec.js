@@ -37,7 +37,7 @@ const GET_PHARMACY_QUERY = `
 
 test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
   test(
-    'PHARMA-13 | Should return paged pharmacies with pageSize=5 (page=1)',
+    'PHARMA-13 | Should return paged pharmacies with pageSize=3 (page=1)',
     {
       tag: ['@api', '@admin', '@positive', '@pharma-13'],
     },
@@ -52,7 +52,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       // 2) Query paged pharmacies (hardcoded filter)
       const pagedPharmaciesRes = await safeGraphQL(api, {
         query: GET_PAGED_PHARMACIES_QUERY,
-        variables: { filter: { pageSize: 5, page: 1, sortField: 'name', ascending: true } },
+        variables: { filter: { pageSize: 3, page: 1, sortField: 'name', ascending: true } },
         headers: bearer(accessToken),
       });
       expect(
@@ -69,8 +69,8 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       expect(pageNode, 'Missing data.administrator.pharmacy.pagedPharmacies.page').toBeTruthy();
       expect(Array.isArray(items), 'items should be an array').toBe(true);
 
-      // 4) Count contract: exactly 5 items
-      expect(items.length).toBe(5);
+      // 4) Count contract: exactly 3 items
+      expect(items.length).toBe(3);
 
       // 5) Per-item shape (soft)
       for (const it of items) {

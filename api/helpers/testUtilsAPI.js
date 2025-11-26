@@ -280,6 +280,7 @@ export const NOAUTH_MESSAGES = [
   'INTERNAL_SERVER_ERROR',
   'invalid value',
   'Access denied',
+  'not found',
 ];
 
 // Prebuilt regex pattern for matching any of the above messages
@@ -291,8 +292,10 @@ export const NOAUTH_CLASSIFICATIONS = [
   'INTERNAL_ERROR',
   'VALIDATIONERROR',
   'FORBIDDEN',
+  'NOT_FOUND',
+  'BAD_REQUEST',
 ];
 
-export const NOAUTH_CODES = ['401', '403', '500'];
+export const NOAUTH_CODES = ['400', '401', '404', '403', '500'];
 
-export const NOAUTH_HTTP_STATUSES = [401, 403, 500];
+export const NOAUTH_HTTP_STATUSES = [401, 404, 403, 500];

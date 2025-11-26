@@ -4,7 +4,6 @@ import { loginAndGetTokens } from '../../../helpers/testUtilsAPI';
 import {
   safeGraphQL,
   bearer,
-  adminLoginAndGetTokens,
   getGQLError,
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CLASSIFICATIONS,
@@ -26,8 +25,8 @@ const GET_DC_CARD = /* GraphQL */ `
   }
 `;
 
-const patientId = 296; // Existing patient ID
-const incorrectPatientId = 1; // Non-existing patient ID
+const patientId = 1; // Existing patient ID
+const incorrectPatientId = 999; // Non-existing patient ID
 
 test.describe('GraphQL: Patient Get Discount Card Details', () => {
   test(
@@ -37,8 +36,8 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -60,8 +59,8 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.LOGIN_USERNAME,
-        password: process.env.LOGIN_PASSWORD,
+        username: process.env.USER_USERNAME,
+        password: process.env.USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const getDCRes = await safeGraphQL(api, {
