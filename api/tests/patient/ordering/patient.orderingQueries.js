@@ -37,3 +37,20 @@ export const SUBMIT_PABILI_ORDER_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for ordering in FindMyMeds
+export const SUBMIT_FINDMYMEDS_ORDER_QUERY = /* GraphQL */ `
+  mutation ($order: OrderRequest!) {
+    patient {
+      order {
+        book(order: $order) {
+          id
+          patient {
+            firstName
+            lastName
+          }
+        }
+      }
+    }
+  }
+`;
