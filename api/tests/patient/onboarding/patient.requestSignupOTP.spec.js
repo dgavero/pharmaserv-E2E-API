@@ -1,6 +1,6 @@
 import { randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { REQ_OTP_QUERY } from '../patient.queries.js';
+import { REQ_OTP_QUERY } from '../authentication/patient.authenticationQueries.js';
 import {
   safeGraphQL,
   bearer,

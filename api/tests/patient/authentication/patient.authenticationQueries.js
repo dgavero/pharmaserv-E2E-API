@@ -11,7 +11,7 @@ export const REQ_OTP_QUERY = /* GraphQL */ `
 `;
 
 // Used for verifying OTP during patient signup
-const VERIFY_OTP_QUERY = /* GraphQL */ `
+export const VERIFY_OTP_QUERY = /* GraphQL */ `
   mutation ($otp: OtpRequest!) {
     patient {
       verifySignupOTP(otp: $otp) {
