@@ -293,8 +293,9 @@ export const NOAUTH_CLASSIFICATIONS = [
   'VALIDATIONERROR',
   'FORBIDDEN',
   'NOT_FOUND',
+  'BAD_REQUEST',
 ];
 
-export const NOAUTH_CODES = ['401', '404', '403', '500'];
+export const NOAUTH_CODES = ['400', '401', '404', '403', '500'];
 
 export const NOAUTH_HTTP_STATUSES = [401, 404, 403, 500];

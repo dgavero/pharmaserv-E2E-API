@@ -1,4 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
+import { REQ_OTP_QUERY } from '../patient.queries.js';
 import {
   safeGraphQL,
   getGQLError,
@@ -21,7 +22,7 @@ function makeNewPatient() {
     email: `rainierrandomqa_${suffix}@example.com`,
     username: `rainierrandomqa_${suffix}.patient`,
     password: 'Password123qa',
-    phoneNumber: `+63${randomNum(10)}`,
+    phoneNumber: '',
   };
 }
 
@@ -33,12 +34,34 @@ function buildFixedPatient() {
     email: 'davetheg@gmail.com',
     username: 'davetheg.patient',
     password: 'Password123',
-    phoneNumber: `+63${randomNum(10)}`,
+    phoneNumber: '',
   };
 }
 
-// Fixed MAIN patientId for registration
-const patientId = 99872;
+function buildPhoneNumberInput() {
+  const phoneNumber = `+639${randomNum(9)}`;
+  console.log(`Using phone number: ${phoneNumber}`);
+  return phoneNumber;
+}
+
+const phoneNumberInput = buildPhoneNumberInput();
+
+// Request OTP and return the patient ID
+const getPatientId = async ({ api, noAuth }) => {
+  const getPatientIdRes = await safeGraphQL(api, {
+    query: REQ_OTP_QUERY,
+    variables: { phoneNumber: phoneNumberInput },
+    headers: noAuth,
+  });
+
+  // Main Assertion
+  expect(getPatientIdRes.ok, getPatientIdRes.error || 'Request signup OTP failed').toBe(true);
+
+  const node = getPatientIdRes.body.data.patient.requestSignupOTP;
+  expect(node && node.id, 'requestSignupOTP.id is null or missing').toBeTruthy();
+  console.log(`The id returned is: ${node.id}`);
+  return node.id; // 🔹 return the id to use on main tests
+};
 
 test.describe('GraphQL: Register Patient', () => {
   test(
@@ -46,8 +69,10 @@ test.describe('GraphQL: Register Patient', () => {
     {
       tag: ['@api', '@patient', '@positive', '@register', '@pharma-6'],
     },
-    async ({ api }) => {
+    async ({ api, noAuth }) => {
+      const patientId = await getPatientId({ api, noAuth });
       const patient = makeNewPatient();
+      patient.phoneNumber = phoneNumberInput;
       const registerRes = await safeGraphQL(api, {
         query: REGISTER_PATIENT_MUTATION,
         variables: { patientId, patient },

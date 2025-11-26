@@ -11,7 +11,7 @@ import {
 import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
 
 const CREATE_BRANCH_MUTATION = `
-mutation ($pharmacyId: ID!, $branch: BranchRequest!) 
+mutation ($pharmacyId: ID!, $branch: BranchCreateRequest!) 
 { administrator { pharmacy { branch { create(pharmacyId: $pharmacyId, branch: $branch) 
  { id code pharmacyName name lat lng } } } } }
 `;
