@@ -17,3 +17,23 @@ export const SUBMIT_DELIVERX_ORDER_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for Pabili Orders
+export const SUBMIT_PABILI_ORDER_QUERY = /* GraphQL */ `
+  mutation ($order: OrderRequest!) {
+    patient {
+      order {
+        book(order: $order) {
+          id
+          code
+          trackingCode
+          patient {
+            firstName
+            lastName
+          }
+          status
+        }
+      }
+    }
+  }
+`;
