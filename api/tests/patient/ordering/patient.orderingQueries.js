@@ -54,3 +54,15 @@ export const SUBMIT_FINDMYMEDS_ORDER_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for Finding Pharmacies
+export const FIND_PHAMARCIES_QUERY = /* GraphQL */ `
+  query ($query: String!) {
+    patient {
+      pharmacies(query: $query) {
+        id
+        name
+      }
+    }
+  }
+`;
