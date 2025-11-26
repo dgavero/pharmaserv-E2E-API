@@ -29,7 +29,7 @@ const CREATE_DC_CARD = /* GraphQL */ `
 `;
 
 function discountCardInput() {
-  const patientId = 296; // Existing patient ID for testing
+  const patientId = 1; // Existing patient ID for testing
   const cardType = `Discount Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `Wats-${randomAlphanumeric(8)}`;

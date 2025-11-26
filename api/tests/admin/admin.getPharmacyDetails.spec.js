@@ -52,7 +52,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       // 2) Query paged pharmacies (hardcoded filter)
       const pagedPharmaciesRes = await safeGraphQL(api, {
         query: GET_PAGED_PHARMACIES_QUERY,
-        variables: { filter: { pageSize: 5, page: 1, sortField: 'name', ascending: true } },
+        variables: { filter: { pageSize: 3, page: 1, sortField: 'name', ascending: true } },
         headers: bearer(accessToken),
       });
       expect(
