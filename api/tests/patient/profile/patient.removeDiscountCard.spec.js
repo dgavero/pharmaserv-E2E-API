@@ -42,7 +42,7 @@ const unownedDiscountCardId = 9999;
 
 // Will be used to create and then remove the discount card
 function discountCardInput() {
-  const patientId = 1; // Existing patient ID for testing
+  const patientId = process.env.USER_USERNAME_PATIENT_ID; // Existing patient ID for testing
   const cardType = `Discount Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `Wats-${randomAlphanumeric(8)}`;
