@@ -40,10 +40,10 @@ const GET_PAGED_PATIENTS_QUERY = `
 
 // Expected identity for the fixed email
 const EXPECTED_PATIENT = {
-  email: 'user.patient@gmail.com',
-  username: 'user.patient',
-  firstName: 'Patient',
-  lastName: 'User',
+  email: 'test.qadev@gmail.com',
+  username: 'test.qadev',
+  firstName: 'Test',
+  lastName: 'QA Dev',
 };
 
 test.describe('GraphQL: Admin Get Patient Detail', () => {

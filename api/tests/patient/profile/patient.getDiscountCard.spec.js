@@ -25,7 +25,7 @@ const GET_DC_CARD = /* GraphQL */ `
   }
 `;
 
-const patientId = 1; // Existing patient ID
+const patientId = process.env.USER_USERNAME_PATIENT_ID; // Existing patient ID
 const incorrectPatientId = 999; // Non-existing patient ID
 
 test.describe('GraphQL: Patient Get Discount Card Details', () => {

@@ -17,7 +17,7 @@ const DISABLE_PATIENT_QUERY = /* GraphQL */ `
   }
 `;
 
-const patientId = 3; // Existing patient ID related to user
+const patientId = process.env.USER_USERNAME_RELATED_ID; // Existing patient ID related to user
 const unrelatedPatientId = 20; // Patient ID NOT related to user
 
 test.describe('GraphQL: Disable a related patient', () => {
