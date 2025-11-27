@@ -120,7 +120,7 @@ const LOGIN_MUTATION = `
 `;
 
 /**
- * Login with username/password and return tokens.
+ * Login with username/password and return tokens FOR PATIENT
  * - Hard-require both fields to avoid accidental undefined vars.
  * - Returns { accessToken, refreshToken, raw } where "raw" is the safeGraphQL envelope.
  */
@@ -149,7 +149,7 @@ export function bearer(token) {
   return { Authorization: `Bearer ${token}` };
 }
 
-// ----- Admin login (parallel to patient login)
+// ----- Admin login
 const ADMIN_LOGIN_MUTATION = `
   mutation ($username: String!, $password: String!) {
     administrator {
@@ -176,6 +176,39 @@ export async function adminLoginAndGetTokens(api, { username, password }) {
     throw new Error(`Admin login failed: ${raw.error || 'unknown error'}`);
   }
   const node = raw.body?.data?.administrator?.auth?.login;
+  return {
+    accessToken: node?.accessToken ?? null,
+    refreshToken: node?.refreshToken ?? null,
+    raw,
+  };
+}
+
+//** LOGIN as Rider */
+export const RIDER_LOGIN_QUERY = /* GraphQL */ `
+  mutation ($username: String!, $password: String!) {
+    rider {
+      auth {
+        login(username: $username, password: $password) {
+          accessToken
+          refreshToken
+        }
+      }
+    }
+  }
+`;
+
+export async function riderLoginAndGetTokens(api, { username, password }) {
+  if (!username || !password) {
+    throw new Error('riderLoginAndGetTokens: username and password are required');
+  }
+  const raw = await safeGraphQL(api, {
+    query: RIDER_LOGIN_QUERY,
+    variables: { username, password },
+  });
+  if (!raw.ok) {
+    throw new Error(`Rider login failed: ${raw.error || 'unknown error'}`);
+  }
+  const node = raw.body?.data?.rider?.auth?.login;
   return {
     accessToken: node?.accessToken ?? null,
     refreshToken: node?.refreshToken ?? null,
