@@ -66,3 +66,42 @@ export const FIND_PHAMARCIES_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for Getting Order Details
+export const GET_ORDER_QUERY = /* GraphQL */ `
+  query ($orderId: ID!) {
+    patient {
+      order(orderId: $orderId) {
+        patient {
+          id
+          firstName
+          lastName
+        }
+        legs {
+          branchQR
+          riderQR
+          prescriptionItems {
+            medicine {
+              id
+              brand
+              genericName
+            }
+            unitPrice
+            quantity
+          }
+          status
+        }
+        paymentProof {
+          photo
+        }
+        dropOffAddress {
+          addressName
+          address
+          lat
+          lng
+        }
+        status
+      }
+    }
+  }
+`;
