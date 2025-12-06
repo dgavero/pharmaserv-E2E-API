@@ -12,7 +12,10 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
 
-const orderID = 1; // Existing Order of logged in user
+const orderID = 167; // Existing Order of logged in user
+const nameUser = 'user.patient'; // using other credentials here
+const wordPass = 'Password11';
+const userId = 1; // ID of logged in user
 
 test.describe('GraphQL: Patient Get Order', () => {
   test(
@@ -22,8 +25,8 @@ test.describe('GraphQL: Patient Get Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: nameUser,
+        password: wordPass,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -36,7 +39,10 @@ test.describe('GraphQL: Patient Get Order', () => {
       // Main Assertion
       expect(getOrderRes.ok, getOrderRes.error || 'Get Order request failed').toBe(true);
 
-      //Todo: Add more assertions based on response structure later
+      const node = getOrderRes.body.data.patient.order.patient;
+      expect(node).toBeTruthy();
+      expect(node.id).toBe(userId.toString());
+      expect(typeof node.firstName).toBe('string');
     }
   );
 
