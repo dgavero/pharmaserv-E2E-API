@@ -15,7 +15,7 @@ import {
 function orderDetailsInput() {
   return {
     deliveryType: 'DELIVER_X',
-    patientId: 1,
+    patientId: process.env.USER_USERNAME_PATIENT_ID,
     branchId: 1,
     prescriptionItems: [
       {
