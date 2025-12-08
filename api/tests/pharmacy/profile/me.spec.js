@@ -1,9 +1,8 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   bearer,
-  adminLoginAndGetTokens,
   getGQLError,
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CLASSIFICATIONS,
@@ -12,11 +11,6 @@ import {
   pharmacistLoginAndGetTokens,
 } from '../../../helpers/testUtilsAPI.js';
 import { PHARMACIST_ME_QUERY } from './pharmacy.profileQueries.js';
-
-function builderName() {
-  const firstName = `builderName${randomAlphanumeric(4)}`;
-  return firstName;
-}
 
 test.describe('GraphQL: Pharmacist Profile', () => {
   test(
