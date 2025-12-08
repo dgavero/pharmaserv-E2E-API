@@ -52,3 +52,19 @@ export const PHARMACIST_GET_MY_PHARMACY_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for Get My Co-Branches
+export const PHARMACIST_GET_MY_CO_BRANCHES_QUERY = /* GraphQL */ `
+  query {
+    pharmacy {
+      branches {
+        id
+        pharmacyName
+        name
+        status
+        lat
+        lng
+      }
+    }
+  }
+`;
