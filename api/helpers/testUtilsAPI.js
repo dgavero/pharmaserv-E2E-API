@@ -216,6 +216,39 @@ export async function riderLoginAndGetTokens(api, { username, password }) {
   };
 }
 
+//** LOGIN as Pharmacist  */
+export const PHARMACIST_LOGIN_QUERY = /* GraphQL */ `
+  mutation ($username: String!, $password: String!) {
+    pharmacist {
+      auth {
+        login(username: $username, password: $password) {
+          accessToken
+          refreshToken
+        }
+      }
+    }
+  }
+`;
+
+export async function pharmacistLoginAndGetTokens(api, { username, password }) {
+  if (!username || !password) {
+    throw new Error('pharmacistLoginAndGetTokens: username and password are required');
+  }
+  const raw = await safeGraphQL(api, {
+    query: PHARMACIST_LOGIN_QUERY,
+    variables: { username, password },
+  });
+  if (!raw.ok) {
+    throw new Error(`Pharmacist login failed: ${raw.error || 'unknown error'}`);
+  }
+  const node = raw.body?.data?.pharmacist?.auth?.login;
+  return {
+    accessToken: node?.accessToken ?? null,
+    refreshToken: node?.refreshToken ?? null,
+    raw,
+  };
+}
+
 // ============================================================================
 // Queue + Flush system for Discord reporting
 // ============================================================================
