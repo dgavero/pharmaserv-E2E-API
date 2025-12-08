@@ -40,3 +40,15 @@ export const PHARMACIST_GET_MY_BRANCH_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for Get My Pharmacy
+export const PHARMACIST_GET_MY_PHARMACY_QUERY = /* GraphQL */ `
+  query {
+    pharmacy {
+      myPharmacy {
+        id
+        name
+      }
+    }
+  }
+`;
