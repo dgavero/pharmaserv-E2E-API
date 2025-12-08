@@ -68,3 +68,23 @@ export const PHARMACIST_GET_MY_CO_BRANCHES_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for Update My Branch
+export const PHARMACIST_UPDATE_MY_BRANCH_QUERY = /* GraphQL */ `
+  mutation ($branch: BranchRequest!) {
+    pharmacy {
+      branch {
+        update(branch: $branch) {
+          id
+          code
+          pharmacyName
+          name
+          openingTime
+          closingTime
+          lat
+          lng
+        }
+      }
+    }
+  }
+`;
