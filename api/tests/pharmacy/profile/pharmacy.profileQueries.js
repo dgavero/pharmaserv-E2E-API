@@ -88,3 +88,55 @@ export const PHARMACIST_UPDATE_MY_BRANCH_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+// Used for Open My Branch
+export const PHARMACIST_OPEN_MY_BRANCH_QUERY = /* GraphQL */ `
+  mutation {
+    pharmacy {
+      branch {
+        open {
+          id
+          pharmacyName
+          name
+          status
+          lat
+          lng
+        }
+      }
+    }
+  }
+`;
+
+// Used for Close My Branch
+export const PHARMACIST_CLOSE_MY_BRANCH_QUERY = /* GraphQL */ `
+  mutation {
+    pharmacy {
+      branch {
+        close {
+          id
+          pharmacyName
+          name
+          status
+          lat
+          lng
+        }
+      }
+    }
+  }
+`;
+
+// Used for Pause My Branch
+export const PHARMACIST_PAUSE_MY_BRANCH_QUERY = /* GraphQL */ `
+  mutation ($duration: PauseDuration!) {
+    pharmacy {
+      branch {
+        pause(duration: $duration) {
+          id
+          pharmacyName
+          name
+          status
+        }
+      }
+    }
+  }
+`;
