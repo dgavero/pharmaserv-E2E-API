@@ -1,5 +1,5 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { declineOrderAsPharmacist } from '../../../helpers/orderHelpers.js';
 import { SUBMIT_DELIVERX_ORDER_QUERY } from './patient.orderingQueries.js';
 import {
   safeGraphQL,
@@ -71,6 +71,9 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
       expect(typeof node.code).toBe('string');
       expect(typeof node.trackingCode).toBe('string');
       expect(node.status).toBe('NEW_ORDER');
+
+      const orderId = node.id;
+      await declineOrderAsPharmacist(api, orderId);
     }
   );
 
