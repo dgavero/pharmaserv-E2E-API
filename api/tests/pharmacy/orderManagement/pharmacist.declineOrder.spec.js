@@ -12,7 +12,6 @@ import {
   pharmacistLoginAndGetTokens,
 } from '../../../helpers/testUtilsAPI.js';
 
-const orderId = 38; //Order id that is tied to the user but is already inactive
 test.describe('GraphQL: Pharmacy Decline Order', () => {
   test(
     'PHARMA-168 | Should NOT be able to decline an inactive order',
@@ -29,7 +28,7 @@ test.describe('GraphQL: Pharmacy Decline Order', () => {
       const declineOrderRes = await safeGraphQL(api, {
         query: DECLINE_ORDER_QUERY,
         variables: {
-          orderId: orderId,
+          orderId: process.env.PHARMACIST_REUSABLE_ORDERID,
           reason: 'Order is declined via API',
         },
         headers: bearer(accessToken),
