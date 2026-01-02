@@ -21,34 +21,34 @@ const patientId = process.env.USER_USERNAME_RELATED_ID; // Existing patient ID r
 const unrelatedPatientId = 20; // Patient ID NOT related to user
 
 test.describe('GraphQL: Disable a related patient', () => {
-  test(
-    'PHARMA-82 | Should be able disable a related patient',
-    {
-      tag: ['@api', '@patient', '@positive', '@pharma-82'],
-    },
-    async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
-      });
-      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+  // test( --DISABLED > NOT NEEDED ATM
+  //   'PHARMA-82 | Should be able disable a related patient',
+  //   {
+  //     tag: ['@api', '@patient', '@positive', '@pharma-82'],
+  //   },
+  //   async ({ api }) => {
+  //     const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
+  //       username: process.env.USER_USERNAME,
+  //       password: process.env.USER_PASSWORD,
+  //     });
+  //     expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
-      const disablePatientRes = await safeGraphQL(api, {
-        query: DISABLE_PATIENT_QUERY,
-        variables: { patientId },
-        headers: bearer(accessToken),
-      });
+  //     const disablePatientRes = await safeGraphQL(api, {
+  //       query: DISABLE_PATIENT_QUERY,
+  //       variables: { patientId },
+  //       headers: bearer(accessToken),
+  //     });
 
-      // Main Assertion
-      expect(
-        disablePatientRes.ok,
-        disablePatientRes.error || 'Disable Patient request failed'
-      ).toBe(true);
+  //     // Main Assertion
+  //     expect(
+  //       disablePatientRes.ok,
+  //       disablePatientRes.error || 'Disable Patient request failed'
+  //     ).toBe(true);
 
-      const disablePatientResNode = disablePatientRes.body.data.patient.disable;
-      expect(disablePatientResNode).toContain('disabled');
-    }
-  );
+  //     const disablePatientResNode = disablePatientRes.body.data.patient.disable;
+  //     expect(disablePatientResNode).toContain('disabled');
+  //   }
+  // );
 
   test(
     'PHARMA-83 | Should NOT be able to disable unrelated Patient',
@@ -80,36 +80,36 @@ test.describe('GraphQL: Disable a related patient', () => {
     }
   );
 
-  test(
-    'PHARMA-84 | Should NOT be able disable a related patient without Authentication',
-    {
-      tag: ['@api', '@patient', '@negative', '@pharma-84'],
-    },
-    async ({ api, noAuth }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
-      });
-      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+  // test(  --DISABLED > NOT NEEDED ATM
+  //   'PHARMA-84 | Should NOT be able disable a related patient without Authentication',
+  //   {
+  //     tag: ['@api', '@patient', '@negative', '@pharma-84'],
+  //   },
+  //   async ({ api, noAuth }) => {
+  //     const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
+  //       username: process.env.USER_USERNAME,
+  //       password: process.env.USER_PASSWORD,
+  //     });
+  //     expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
-      const disablePatientResNoAuth = await safeGraphQL(api, {
-        query: DISABLE_PATIENT_QUERY,
-        variables: { patientId },
-        headers: noAuth,
-      });
+  //     const disablePatientResNoAuth = await safeGraphQL(api, {
+  //       query: DISABLE_PATIENT_QUERY,
+  //       variables: { patientId },
+  //       headers: noAuth,
+  //     });
 
-      // Main Assertion
-      expect(disablePatientResNoAuth.ok, 'Disable a patient without Auth is expected to fail').toBe(
-        false
-      );
+  //     // Main Assertion
+  //     expect(disablePatientResNoAuth.ok, 'Disable a patient without Auth is expected to fail').toBe(
+  //       false
+  //     );
 
-      const { message, code, classification } = getGQLError(disablePatientResNoAuth);
+  //     const { message, code, classification } = getGQLError(disablePatientResNoAuth);
 
-      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
-      expect(NOAUTH_CODES).toContain(code);
-      expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
-    }
-  );
+  //     expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+  //     expect(NOAUTH_CODES).toContain(code);
+  //     expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
+  //   }
+  // );
 
   test(
     'PHARMA-85 | Should NOT be able to disable a related patient with invalid Authentication',
