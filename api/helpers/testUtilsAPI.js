@@ -347,6 +347,7 @@ export const NOAUTH_MESSAGES = [
   'invalid value',
   'Access denied',
   'not found',
+  'Bad Request',
 ];
 
 // Prebuilt regex pattern for matching any of the above messages

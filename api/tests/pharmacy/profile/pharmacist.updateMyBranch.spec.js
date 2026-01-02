@@ -13,7 +13,7 @@ import { PHARMACIST_UPDATE_MY_BRANCH_QUERY } from './pharmacy.profileQueries.js'
 
 //** This should be returned as is - only simulates update but nott actually updating data in DB */
 function buildBranchUpdate() {
-  const name = `Sta Ana Branch`;
+  const name = `PKC Branch 01`;
   const address = `Pedro Gil St. Sta Ana`;
   const city = `Manila`;
   const province = `Metro Manila`;
