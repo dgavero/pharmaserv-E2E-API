@@ -58,6 +58,9 @@ test.describe('GraphQL: Rider able to set shift start/end', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
+      // Create rider schedule first
+      await createRiderScheduleAsAdmin(api, process.env.RIDER_USERID);
+
       const setShiftEndRes = await safeGraphQL(api, {
         query: RIDER_SET_SHIFT_END_QUERY,
         headers: bearer(accessToken),
