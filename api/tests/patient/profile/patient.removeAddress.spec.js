@@ -18,9 +18,10 @@ function newAddressInput() {
   const address = `123 Test St, Test City, TC ${randomNum(3)}`;
   const city = `Test City`;
   const province = `Test Province`;
+  const label = `Work`;
   const lat = 14.5995;
   const lng = 120.9842;
-  return { patientId, addressName, address, city, province, lat, lng };
+  return { patientId, addressName, address, city, province, label, lat, lng };
 }
 
 test.describe('GraphQL: Patient Remove Address', () => {
@@ -85,7 +86,7 @@ test.describe('GraphQL: Patient Remove Address', () => {
 
       const removeAddressRes = await safeGraphQL(api, {
         query: REMOVE_ADDRESS_QUERY,
-        variables: { addressId: 1 }, // addressId belongs to another patient
+        variables: { addressId: 20 }, // addressId belongs to another patient
         headers: bearer(accessToken),
       });
 
