@@ -12,9 +12,9 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
 
-const orderID = 167; // Existing Order of logged in user
-const nameUser = 'user.patient'; // using other credentials here
-const wordPass = 'Password11';
+const orderID = 87; // Existing Order of logged in user
+const nameUser = process.env.USER_USERNAME;
+const wordPass = process.env.USER_PASSWORD;
 const userId = 1; // ID of logged in user
 
 test.describe('GraphQL: Patient Get Order', () => {
