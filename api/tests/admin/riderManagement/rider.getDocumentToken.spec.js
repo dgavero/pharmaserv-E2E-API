@@ -10,15 +10,13 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
 
-const blobNameInput = `dl-f0dbaac9-1b87-458a-9c07-2db159cb9516`;
-
 const GET_DOCUMENT_TOKEN_QUERY = /* GraphQL */ `
-  query ($blobName: String!) {
+  query ($riderId: ID!, $type: DocumentType!) {
     administrator {
       rider {
-        blobToken(blobName: $blobName) {
-          blobName
-          url
+        document(riderId: $riderId, type: $type) {
+          type
+          photo
         }
       }
     }
@@ -40,7 +38,7 @@ test.describe('GraphQL: Get Document Token', () => {
 
       const getDocumentTokenRes = await safeGraphQL(api, {
         query: GET_DOCUMENT_TOKEN_QUERY,
-        variables: { blobName: blobNameInput },
+        variables: { riderId: process.env.RIDER_USERID, type: `DRIVER_LICENSE` },
         headers: bearer(accessToken),
       });
 
@@ -50,10 +48,8 @@ test.describe('GraphQL: Get Document Token', () => {
       );
 
       // Get document token data
-      const node = getDocumentTokenRes.body.data.administrator.rider.blobToken;
+      const node = getDocumentTokenRes.body.data.administrator.rider.document;
       expect(node, 'Document Token is null').toBeTruthy();
-      expect(node.blobName).toBe(blobNameInput);
-      expect(node.url).toContain(blobNameInput);
     }
   );
 
@@ -65,7 +61,7 @@ test.describe('GraphQL: Get Document Token', () => {
     async ({ api, noAuth }) => {
       const getDocumentTokenNoAuthRes = await safeGraphQL(api, {
         query: GET_DOCUMENT_TOKEN_QUERY,
-        variables: { blobName: blobNameInput },
+        variables: { riderId: process.env.RIDER_USERID, type: `DRIVER_LICENSE` },
         headers: noAuth,
       });
 
@@ -91,7 +87,7 @@ test.describe('GraphQL: Get Document Token', () => {
     async ({ api, invalidAuth }) => {
       const getDocumentTokenInvalidAuthRes = await safeGraphQL(api, {
         query: GET_DOCUMENT_TOKEN_QUERY,
-        variables: { blobName: blobNameInput },
+        variables: { riderId: process.env.RIDER_USERID, type: `DRIVER_LICENSE` },
         headers: invalidAuth,
       });
 
