@@ -74,7 +74,7 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
       const updatedBranch = branchUpdateRes.body.data.pharmacy.branch.update;
       expect(updatedBranch).toBeTruthy();
       expect(typeof updatedBranch.id).toBe('string');
-      expect(updatedBranch.name).toBe('Sta Ana Branch');
+      expect(updatedBranch.name).toBe('PKC Branch 01');
     }
   );
 
