@@ -43,3 +43,22 @@ export const REMOVE_ADDRESS_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const UPDATE_ADDRESS_QUERY = /* GraphQL */ `
+  mutation ($addressId: ID!, $address: AddressRequest!) {
+    patient {
+      address {
+        update(addressId: $addressId, address: $address) {
+          id
+          addressName
+          address
+          label
+          landmark
+          deliveryInstructions
+          lat
+          lng
+        }
+      }
+    }
+  }
+`;
