@@ -62,3 +62,19 @@ export const UPDATE_ADDRESS_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const UPDATE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
+  mutation ($discountCardId: ID!, $discountCard: DiscountCardRequest!) {
+    patient {
+      discountCard {
+        update(discountCardId: $discountCardId, discountCard: $discountCard) {
+          id
+          name
+          cardType
+          cardNumber
+          photo
+        }
+      }
+    }
+  }
+`;
