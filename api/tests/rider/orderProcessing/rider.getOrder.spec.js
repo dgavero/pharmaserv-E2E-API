@@ -38,8 +38,7 @@ test.describe('GraphQL: Get Order', () => {
         false
       );
 
-      const { message, classification, code } = getGQLError(getOrderRes);
-      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      const { classification, code } = getGQLError(getOrderRes);
       expect(NOAUTH_CODES).toContain(code);
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }

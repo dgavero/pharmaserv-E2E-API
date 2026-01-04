@@ -11,17 +11,17 @@ import {
 } from '../../../helpers/testUtilsAPI.js';
 
 // RiderID to getData
-const riderId = '1';
-const riderUUID = '9b538c11-2ec4-412d-ad84-9068e6a2dd19';
-const riderFirstName = 'User';
+const riderId = '8';
+const riderUUID = 'b56c95f8-7127-479c-a47f-a6742bcbd758';
+const riderFirstName = 'Dave';
 
-// Expected identity for id=31
+// Expected identity for id=8
 const EXPECTED_RIDER = {
-  id: 5,
-  username: 'master.rider',
-  email: 'master.rider@pharmaserv.express',
-  firstName: 'Master',
-  lastName: 'Rider',
+  id: 8,
+  username: 'dave.riderapi',
+  email: 'dave.rider.api@yopmail.com',
+  firstName: 'Dave',
+  lastName: 'RiderApi',
 };
 
 const GET_RIDER_MUTATION = /* GraphQL */ `

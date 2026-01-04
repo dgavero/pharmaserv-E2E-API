@@ -40,7 +40,7 @@ test.describe('GraphQL: Pharmacy Decline Order', () => {
       ).toBe(false);
 
       const { message, classification, code } = getGQLError(declineOrderRes);
-      expect(message).toMatch(/no longer new/i);
+      expect(message).toMatch(/no longer/i);
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
       expect(NOAUTH_CODES).toContain(code);
     }

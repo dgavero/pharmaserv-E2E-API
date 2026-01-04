@@ -7,6 +7,9 @@ export const CREATE_ADDRESS_QUERY = /* GraphQL */ `
           id
           addressName
           address
+          label
+          landmark
+          deliveryInstructions
           lat
           lng
         }

@@ -18,9 +18,10 @@ function newAddressInput() {
   const address = `123 Test St, Test City, TC ${randomNum(3)}`;
   const city = `Test City`;
   const province = `Test Province`;
+  const label = `Work`;
   const lat = 14.5995;
   const lng = 120.9842;
-  return { patientId, addressName, address, city, province, lat, lng };
+  return { patientId, addressName, address, city, province, label, lat, lng };
 }
 
 test.describe('GraphQL: Patient Create Address', () => {

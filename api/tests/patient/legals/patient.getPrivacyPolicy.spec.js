@@ -1,14 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  bearer,
-  adminLoginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL } from '../../../helpers/testUtilsAPI.js';
 
 const GET_PRIVACY_POLICY_QUERY = /* GraphQL */ `
   query {

@@ -13,7 +13,7 @@ import { PHARMACIST_UPDATE_MY_BRANCH_QUERY } from './pharmacy.profileQueries.js'
 
 //** This should be returned as is - only simulates update but nott actually updating data in DB */
 function buildBranchUpdate() {
-  const name = `Sta Ana Branch`;
+  const name = `PKC Branch 01`;
   const address = `Pedro Gil St. Sta Ana`;
   const city = `Manila`;
   const province = `Metro Manila`;
@@ -74,7 +74,7 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
       const updatedBranch = branchUpdateRes.body.data.pharmacy.branch.update;
       expect(updatedBranch).toBeTruthy();
       expect(typeof updatedBranch.id).toBe('string');
-      expect(updatedBranch.name).toBe('Sta Ana Branch');
+      expect(updatedBranch.name).toBe('PKC Branch 01');
     }
   );
 
