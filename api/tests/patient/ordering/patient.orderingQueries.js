@@ -105,3 +105,19 @@ export const GET_ORDER_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const SUBMIT_ORDER_QUERY = /* GraphQL */ `
+  mutation ($order: OrderRequest!) {
+    patient {
+      order {
+        book(order: $order) {
+          id
+          patient {
+            firstName
+            lastName
+          }
+        }
+      }
+    }
+  }
+`;

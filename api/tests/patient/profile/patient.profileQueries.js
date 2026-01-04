@@ -43,3 +43,38 @@ export const REMOVE_ADDRESS_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const UPDATE_ADDRESS_QUERY = /* GraphQL */ `
+  mutation ($addressId: ID!, $address: AddressRequest!) {
+    patient {
+      address {
+        update(addressId: $addressId, address: $address) {
+          id
+          addressName
+          address
+          label
+          landmark
+          deliveryInstructions
+          lat
+          lng
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
+  mutation ($discountCardId: ID!, $discountCard: DiscountCardRequest!) {
+    patient {
+      discountCard {
+        update(discountCardId: $discountCardId, discountCard: $discountCard) {
+          id
+          name
+          cardType
+          cardNumber
+          photo
+        }
+      }
+    }
+  }
+`;
