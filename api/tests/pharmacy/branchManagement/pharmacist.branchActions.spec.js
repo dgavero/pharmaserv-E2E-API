@@ -83,6 +83,8 @@ test.describe('GraphQL: Branch Management Actions', () => {
         },
         headers: bearer(accessToken),
       });
+
+      expect(getBranchByIdRes.ok).toBe(true);
     }
   );
 });
