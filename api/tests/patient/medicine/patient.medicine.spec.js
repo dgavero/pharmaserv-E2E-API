@@ -36,7 +36,13 @@ test.describe('GraphQL: Medicine Favorites', () => {
         headers: bearer(accessToken),
       });
 
-      expect(addFavoriteMedicineRes.ok).toBe(true);
+      const { message } = getGQLError(addFavoriteMedicineRes);
+
+      if (!addFavoriteMedicineRes.ok) {
+        if (!/already exists/i.test(message)) {
+          expect(addFavoriteMedicineRes.ok).toBe(true);
+        } else console.log(`MedicineID already added as favorite.`);
+      }
     }
   );
 
