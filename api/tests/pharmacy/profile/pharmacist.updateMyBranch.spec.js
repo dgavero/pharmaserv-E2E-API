@@ -156,8 +156,8 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
         branchUpdateResMissingNameRes.error || 'Expected branch update to fail due to missing name'
       ).toBe(false);
 
-      const { message, classification, code } = getGQLError(branchUpdateResMissingNameRes);
-      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
+      const { message, classification } = getGQLError(branchUpdateResMissingNameRes);
+      expect(message).toMatch(/cannot be empty/i);
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
