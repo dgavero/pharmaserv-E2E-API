@@ -41,7 +41,7 @@ test.describe('GraphQL: Patient Update Address', () => {
 
       // Update Address
       const updateAddress = updateAddressInput();
-      const patientAddressId = 5; // address id related to logged in user
+      const patientAddressId = process.env.USER_USERNAME_RELATED_ID; // address id related to logged in user
 
       const updateAddressRes = await safeGraphQL(api, {
         query: UPDATE_ADDRESS_QUERY,
