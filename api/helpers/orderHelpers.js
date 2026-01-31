@@ -9,8 +9,8 @@ export async function declineOrderAsPharmacist(api, orderId) {
   console.log('Attempting to delete orderId: ' + orderId);
   // Login as pharmacist
   const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-    username: process.env.PHARMACIST_USERNAME,
-    password: process.env.PHARMACIST_PASSWORD,
+    username: process.env.PHARMACIST_USERNAME_REG01,
+    password: process.env.PHARMACIST_PASSWORD_REG01,
   });
   expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -24,7 +24,5 @@ export async function declineOrderAsPharmacist(api, orderId) {
     headers: bearer(accessToken),
   });
 
-  expect(declineOrderRes.ok, declineOrderRes.error || 'Failed to decline order: ' + orderId).toBe(
-    true
-  );
+  expect(declineOrderRes.ok, declineOrderRes.error || 'Failed to decline order: ' + orderId).toBe(true);
 }

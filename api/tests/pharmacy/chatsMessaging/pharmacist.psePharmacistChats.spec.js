@@ -24,8 +24,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -45,8 +45,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -66,8 +66,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -91,8 +91,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -114,8 +114,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -137,8 +137,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -164,8 +164,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -191,8 +191,8 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 

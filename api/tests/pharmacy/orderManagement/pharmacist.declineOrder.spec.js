@@ -20,24 +20,23 @@ test.describe('GraphQL: Pharmacy Decline Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const declineOrderRes = await safeGraphQL(api, {
         query: DECLINE_ORDER_QUERY,
         variables: {
-          orderId: process.env.PHARMACIST_REUSABLE_ORDERID,
+          orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01,
           reason: 'Order is declined via API',
         },
         headers: bearer(accessToken),
       });
 
-      expect(
-        declineOrderRes.ok,
-        declineOrderRes.error || 'Expected decline order to fail for inactive orderId'
-      ).toBe(false);
+      expect(declineOrderRes.ok, declineOrderRes.error || 'Expected decline order to fail for inactive orderId').toBe(
+        false
+      );
 
       const { message, classification, code } = getGQLError(declineOrderRes);
       expect(message).toMatch(/no longer/i);

@@ -20,8 +20,8 @@ test.describe('GraphQL: Pharmacy Get DeliverX Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -33,10 +33,7 @@ test.describe('GraphQL: Pharmacy Get DeliverX Order', () => {
         headers: bearer(accessToken),
       });
 
-      expect(
-        getDeliverXOrderRes.ok,
-        getDeliverXOrderRes.error || 'Get DeliverX Orders Failed'
-      ).toBe(true);
+      expect(getDeliverXOrderRes.ok, getDeliverXOrderRes.error || 'Get DeliverX Orders Failed').toBe(true);
     }
   );
 
@@ -47,8 +44,8 @@ test.describe('GraphQL: Pharmacy Get DeliverX Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -60,10 +57,7 @@ test.describe('GraphQL: Pharmacy Get DeliverX Order', () => {
         headers: bearer(accessToken),
       });
 
-      expect(
-        getFindMyMedsOrderRes.ok,
-        getFindMyMedsOrderRes.error || 'Get Find My Meds Orders Failed'
-      ).toBe(true);
+      expect(getFindMyMedsOrderRes.ok, getFindMyMedsOrderRes.error || 'Get Find My Meds Orders Failed').toBe(true);
     }
   );
 
@@ -74,8 +68,8 @@ test.describe('GraphQL: Pharmacy Get DeliverX Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_PSE_USERNAME,
-        password: process.env.PHARMACIST_PSE_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_PSE01,
+        password: process.env.PHARMACIST_PASSWORD_PSE01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -87,9 +81,7 @@ test.describe('GraphQL: Pharmacy Get DeliverX Order', () => {
         headers: bearer(accessToken),
       });
 
-      expect(getPabiliOrderRes.ok, getPabiliOrderRes.error || 'Get Pabili Orders Failed').toBe(
-        true
-      );
+      expect(getPabiliOrderRes.ok, getPabiliOrderRes.error || 'Get Pabili Orders Failed').toBe(true);
     }
   );
 });

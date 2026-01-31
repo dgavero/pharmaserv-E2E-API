@@ -20,22 +20,20 @@ test.describe('GraphQL: Pharmacy Accept Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const acceptOrderRes = await safeGraphQL(api, {
         query: ACCEPT_ORDER_QUERY,
         variables: {
-          orderId: process.env.PHARMACIST_REUSABLE_ORDERID, // Already accepted orderId
+          orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01, // Already accepted orderId
         },
         headers: bearer(accessToken),
       });
 
-      expect(acceptOrderRes.ok, acceptOrderRes.error || 'Expected Accept Order to Fail').toBe(
-        false
-      );
+      expect(acceptOrderRes.ok, acceptOrderRes.error || 'Expected Accept Order to Fail').toBe(false);
     }
   );
 });

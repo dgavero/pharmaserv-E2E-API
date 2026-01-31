@@ -20,8 +20,8 @@ test.describe('GraphQL: Pharmacy Get Prescription by ID', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -33,10 +33,7 @@ test.describe('GraphQL: Pharmacy Get Prescription by ID', () => {
         headers: bearer(accessToken),
       });
 
-      expect(
-        getPrescriptionRes.ok,
-        getPrescriptionRes.error || 'Get Prescription by ID failed'
-      ).toBe(true);
+      expect(getPrescriptionRes.ok, getPrescriptionRes.error || 'Get Prescription by ID failed').toBe(true);
     }
   );
 });

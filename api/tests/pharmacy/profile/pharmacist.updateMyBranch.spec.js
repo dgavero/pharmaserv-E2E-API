@@ -54,8 +54,8 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -66,10 +66,7 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
         },
         headers: bearer(accessToken),
       });
-      expect(
-        branchUpdateRes.ok,
-        branchUpdateRes.error || 'Failed to update pharmacist branch'
-      ).toBe(true);
+      expect(branchUpdateRes.ok, branchUpdateRes.error || 'Failed to update pharmacist branch').toBe(true);
 
       const updatedBranch = branchUpdateRes.body.data.pharmacy.branch.update;
       expect(updatedBranch).toBeTruthy();
@@ -118,8 +115,7 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
       });
       expect(
         branchUpdateResInvalidAuth.ok,
-        branchUpdateResInvalidAuth.error ||
-          'Branch Update Request with invalid auth should not be successful'
+        branchUpdateResInvalidAuth.error || 'Branch Update Request with invalid auth should not be successful'
       ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
@@ -136,8 +132,8 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 

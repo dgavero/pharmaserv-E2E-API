@@ -15,17 +15,17 @@ test.describe('GraphQL: Branch Management Actions', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_ADMIN_USERNAME,
-        password: process.env.PHARMACIST_ADMIN_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_ADMIN,
+        password: process.env.PHARMACIST_PASSWORD_ADMIN,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
       const updateBranchRes = await safeGraphQL(api, {
         query: PHARMACIST_UPDATE_BRANCH_QUERY,
         variables: {
-          branchId: 32,
+          branchId: process.env.PHARMACIST_BRANCHID_REG02,
           branch: {
-            name: `DEVS Branch 02 INT`,
+            name: `Pharmacy API - Branch 02 Updated ${randomAlphanumeric(5)}`,
           },
         },
         headers: bearer(accessToken),
@@ -42,8 +42,8 @@ test.describe('GraphQL: Branch Management Actions', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_ADMIN_USERNAME,
-        password: process.env.PHARMACIST_ADMIN_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_ADMIN,
+        password: process.env.PHARMACIST_PASSWORD_ADMIN,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
@@ -71,8 +71,8 @@ test.describe('GraphQL: Branch Management Actions', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_ADMIN_USERNAME,
-        password: process.env.PHARMACIST_ADMIN_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 

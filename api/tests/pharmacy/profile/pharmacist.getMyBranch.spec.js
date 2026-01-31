@@ -19,8 +19,8 @@ test.describe('GraphQL: Get My Branch', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -48,10 +48,7 @@ test.describe('GraphQL: Get My Branch', () => {
       });
 
       // Main Assertions
-      expect(
-        myBranchResNoAuth.ok,
-        myBranchResNoAuth.error || 'Get Branch No Auth is expected to fail'
-      ).toBe(false);
+      expect(myBranchResNoAuth.ok, myBranchResNoAuth.error || 'Get Branch No Auth is expected to fail').toBe(false);
 
       const { message, classification, code } = getGQLError(myBranchResNoAuth);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);

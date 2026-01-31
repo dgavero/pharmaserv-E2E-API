@@ -19,8 +19,8 @@ test.describe('GraphQL: Get My Co-Branches as Pharmacist', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -28,10 +28,7 @@ test.describe('GraphQL: Get My Co-Branches as Pharmacist', () => {
         query: PHARMACIST_GET_MY_CO_BRANCHES_QUERY,
         headers: bearer(accessToken),
       });
-      expect(
-        myCoBranchesRes.ok,
-        myCoBranchesRes.error || 'Failed to get pharmacist co-branches'
-      ).toBe(true);
+      expect(myCoBranchesRes.ok, myCoBranchesRes.error || 'Failed to get pharmacist co-branches').toBe(true);
 
       const nodes = myCoBranchesRes.body.data.pharmacy.branches;
       expect(nodes).toBeTruthy();

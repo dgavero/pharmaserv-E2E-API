@@ -23,8 +23,8 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -34,9 +34,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       });
 
       // Main Assertion
-      expect(branchOpenRes.ok, branchOpenRes.error || 'Failed to open pharmacist branch').toBe(
-        true
-      );
+      expect(branchOpenRes.ok, branchOpenRes.error || 'Failed to open pharmacist branch').toBe(true);
 
       const node = branchOpenRes.body.data.pharmacy.branch.open;
       expect(node).toBeTruthy();
@@ -51,8 +49,8 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -62,9 +60,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       });
 
       // Main Assertion
-      expect(branchCloseRes.ok, branchCloseRes.error || 'Failed to close pharmacist branch').toBe(
-        true
-      );
+      expect(branchCloseRes.ok, branchCloseRes.error || 'Failed to close pharmacist branch').toBe(true);
 
       const node = branchCloseRes.body.data.pharmacy.branch.close;
       expect(node).toBeTruthy();
@@ -79,8 +75,8 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -95,10 +91,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       const { message } = getGQLError(branchPauseRes);
       if (!branchPauseRes.ok) {
         if (!/cannot pause a closed branch/i.test(message)) {
-          expect(
-            branchPauseRes.ok,
-            branchPauseRes.error || 'Failed to pause pharmacist branch'
-          ).toBe(true);
+          expect(branchPauseRes.ok, branchPauseRes.error || 'Failed to pause pharmacist branch').toBe(true);
         } else {
           console.log('Branch already closed — continuing.');
         }
@@ -113,8 +106,8 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_2,
-        password: process.env.PHARMACIST_PASSWORD_2,
+        username: process.env.PHARMACIST_USERNAME_REG02,
+        password: process.env.PHARMACIST_PASSWORD_REG02,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -123,14 +116,10 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
         query: PHARMACIST_CLOSE_MY_BRANCH_QUERY,
         headers: bearer(accessToken),
       });
-      expect(branchCloseRes.ok, branchCloseRes.error || 'Failed to close pharmacist branch').toBe(
-        true
-      );
+      expect(branchCloseRes.ok, branchCloseRes.error || 'Failed to close pharmacist branch').toBe(true);
 
       const closeNode = branchCloseRes.body.data.pharmacy.branch.close;
-      expect(closeNode.status, 'Precondition failed: not able to close the pharmacy branch').toBe(
-        'CLOSED'
-      );
+      expect(closeNode.status, 'Precondition failed: not able to close the pharmacy branch').toBe('CLOSED');
 
       // Try to Pause Branch
       const branchPauseRes = await safeGraphQL(api, {
@@ -141,10 +130,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
         },
       });
 
-      expect(
-        branchPauseRes.ok,
-        branchPauseRes.error || 'Pausing a Closed Branch should have failed'
-      ).toBe(false);
+      expect(branchPauseRes.ok, branchPauseRes.error || 'Pausing a Closed Branch should have failed').toBe(false);
 
       const { message, classification, code } = getGQLError(branchPauseRes);
       expect(message).toMatch(/cannot pause a closed branch/i);
@@ -189,8 +175,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
 
       expect(
         branchOpenResInvalidAuth.ok,
-        branchOpenResInvalidAuth.error ||
-          'Branch Open Request with invalid auth should not be successful'
+        branchOpenResInvalidAuth.error || 'Branch Open Request with invalid auth should not be successful'
       ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
@@ -236,8 +221,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
 
       expect(
         branchCloseResInvalidAuth.ok,
-        branchCloseResInvalidAuth.error ||
-          'Branch Close Request with invalid auth should not be successful'
+        branchCloseResInvalidAuth.error || 'Branch Close Request with invalid auth should not be successful'
       ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])

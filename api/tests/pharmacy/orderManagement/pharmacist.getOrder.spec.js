@@ -20,15 +20,15 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const getOrderByIdRes = await safeGraphQL(api, {
         query: GET_ORDER_BY_ID_QUERY,
         variables: {
-          orderId: process.env.PHARMACIST_REUSABLE_ORDERID,
+          orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01,
         },
         headers: bearer(accessToken),
       });
@@ -44,8 +44,8 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -57,10 +57,7 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
         headers: bearer(accessToken),
       });
 
-      expect(
-        getOrderByIdRes.ok,
-        getOrderByIdRes.error || 'Get order by ID is expected to fail on order:1'
-      ).toBe(false);
+      expect(getOrderByIdRes.ok, getOrderByIdRes.error || 'Get order by ID is expected to fail on order:1').toBe(false);
     }
   );
 });

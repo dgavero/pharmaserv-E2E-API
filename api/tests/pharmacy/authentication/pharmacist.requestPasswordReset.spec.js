@@ -20,7 +20,7 @@ test.describe('GraphQL: Password Reset', () => {
       const requestResetPasswordRes = await safeGraphQL(api, {
         query: RESET_PASSWORD_QUERY,
         variables: {
-          phoneNumber: process.env.PHARMACIST_PHONENUMBER,
+          phoneNumber: process.env.PHARMACIST_PHONENUMBER_REG01,
         },
         headers: noAuth,
       });

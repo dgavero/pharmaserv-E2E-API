@@ -19,8 +19,8 @@ test.describe('GraphQL: Get My Pharmacy', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -28,9 +28,7 @@ test.describe('GraphQL: Get My Pharmacy', () => {
         query: PHARMACIST_GET_MY_PHARMACY_QUERY,
         headers: bearer(accessToken),
       });
-      expect(myPharmacyRes.ok, myPharmacyRes.error || 'Failed to get pharmacist pharmacy').toBe(
-        true
-      );
+      expect(myPharmacyRes.ok, myPharmacyRes.error || 'Failed to get pharmacist pharmacy').toBe(true);
 
       const node = myPharmacyRes.body.data.pharmacy.myPharmacy;
       expect(node).toBeTruthy();

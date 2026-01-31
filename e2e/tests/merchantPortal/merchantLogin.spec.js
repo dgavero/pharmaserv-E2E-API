@@ -21,9 +21,9 @@ test.describe('Merchant Portal | Login', () => {
       const login = new MerchantPortalLoginPage(page);
 
       await login.open();
-      console.log('Logging in with merchant user:', process.env.PHARMACIST_USERNAME_2);
-      console.log('Using merchant password:', process.env.PHARMACIST_PASSWORD_2);
-      await login.login(process.env.PHARMACIST_USERNAME_2, process.env.PHARMACIST_PASSWORD_2);
+      console.log('Logging in with merchant user:', process.env.PHARMACIST_USERNAME_REG01_REG02);
+      console.log('Using merchant password:', process.env.PHARMACIST_PASSWORD_REG01_REG02);
+      await login.login(process.env.PHARMACIST_USERNAME_REG01_REG02, process.env.PHARMACIST_PASSWORD_REG01_REG02);
       await login.assertSuccessLogin();
     }
   );

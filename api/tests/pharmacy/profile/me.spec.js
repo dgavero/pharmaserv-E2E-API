@@ -20,8 +20,8 @@ test.describe('GraphQL: Pharmacist Profile', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -40,8 +40,8 @@ test.describe('GraphQL: Pharmacist Profile', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME,
-        password: process.env.PHARMACIST_PASSWORD,
+        username: process.env.PHARMACIST_USERNAME_REG01,
+        password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
@@ -65,10 +65,7 @@ test.describe('GraphQL: Pharmacist Profile', () => {
       });
 
       // Main Assertion
-      expect(
-        meResNoAuth.ok,
-        meResNoAuth.error || 'Get Pharmacist Profile request is expected to fail'
-      ).toBe(false);
+      expect(meResNoAuth.ok, meResNoAuth.error || 'Get Pharmacist Profile request is expected to fail').toBe(false);
 
       const { message, classification, code } = getGQLError(meResNoAuth);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
@@ -88,10 +85,9 @@ test.describe('GraphQL: Pharmacist Profile', () => {
         headers: invalidAuth,
       });
       // Main Assertion
-      expect(
-        meResInvalidAuth.ok,
-        meResInvalidAuth.error || 'Get Pharmacist Profile request is expected to fail'
-      ).toBe(false);
+      expect(meResInvalidAuth.ok, meResInvalidAuth.error || 'Get Pharmacist Profile request is expected to fail').toBe(
+        false
+      );
 
       // Transport-level 401 (no GraphQL errors[])
       expect(meResInvalidAuth.ok).toBe(false);
