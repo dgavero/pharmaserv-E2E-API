@@ -207,8 +207,7 @@ function readThreadId() {
  * - Schedules a flush (non-blocking) if not already flushing.
  */
 function enqueue(item) {
-  const normalized =
-    typeof item === 'string' ? { content: item } : item && item.content ? item : null;
+  const normalized = typeof item === 'string' ? { content: item } : item && item.content ? item : null;
   if (!normalized) return;
   messageQueue.push(normalized);
   scheduleFlush();
@@ -284,13 +283,20 @@ export function getLastError(page) {
 }
 
 /** Wait until an element is visible (boolean return). */
-export async function safeWaitForElementVisible(
-  page,
-  selector,
-  { timeout = Timeouts.standard } = {}
-) {
+export async function safeWaitForElementVisible(page, selector, { timeout = Timeouts.standard } = {}) {
   try {
     await page.locator(selector).waitFor({ state: 'visible', timeout });
+    return true;
+  } catch (error) {
+    setLastErrorForPage(page, error);
+    return false;
+  }
+}
+
+/** Wait until an element is present in the DOM (boolean return). */
+export async function safeWaitForElementPresent(page, selector, { timeout = Timeouts.standard } = {}) {
+  try {
+    await page.locator(selector).waitFor({ state: 'attached', timeout });
     return true;
   } catch (error) {
     setLastErrorForPage(page, error);
@@ -312,12 +318,7 @@ export async function safeClick(page, selector, { timeout = Timeouts.standard } 
 }
 
 /** Type into input/textarea with keystrokes (cross-platform select-all). */
-export async function safeInput(
-  page,
-  selector,
-  text,
-  { timeout = Timeouts.standard, delay = 15 } = {}
-) {
+export async function safeInput(page, selector, text, { timeout = Timeouts.standard, delay = 15 } = {}) {
   try {
     const loc = page.locator(selector);
     await loc.waitFor({ state: 'visible', timeout });
@@ -350,11 +351,7 @@ export async function safeHover(page, selector, { timeout = Timeouts.standard } 
 }
 
 /** Navigate to a given URL and confirm it loads. */
-export async function safeNavigateToUrl(
-  page,
-  url,
-  { timeout = Timeouts.extraLong, waitUntil = 'load' } = {}
-) {
+export async function safeNavigateToUrl(page, url, { timeout = Timeouts.extraLong, waitUntil = 'load' } = {}) {
   try {
     await page.goto(url, { timeout, waitUntil });
     return true;

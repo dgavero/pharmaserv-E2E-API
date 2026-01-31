@@ -10,8 +10,8 @@ import { defineConfig } from '@playwright/test';
 
 dotenv.config(); // Load .env file into process.env
 
-// Normalize TEST_ENV (default to LOCAL)
-const testEnv = (process.env.TEST_ENV || 'LOCAL').toUpperCase();
+// Normalize TEST_ENV (default to DEV)
+const testEnv = (process.env.TEST_ENV || 'DEV').toUpperCase();
 
 // Select URL based on TEST_ENV
 let baseURL;
@@ -20,7 +20,7 @@ if (testEnv === 'PROD') {
 } else if (testEnv === 'ORANGE') {
   baseURL = process.env.BASE_URL_ORANGE;
 } else {
-  baseURL = process.env.BASE_URL_LOCAL;
+  baseURL = process.env.BASE_URL_DEV;
 }
 
 // 🔹 Fail fast if the URL is missing
@@ -31,7 +31,7 @@ if (!baseURL) {
         ? 'BASE_URL_PROD'
         : testEnv === 'ORANGE'
           ? 'BASE_URL_ORANGE'
-          : 'BASE_URL_LOCAL'
+          : 'BASE_URL_DEV'
     } in your .env`
   );
 }
@@ -82,7 +82,7 @@ export default defineConfig({
   ],
   use: {
     baseURL, // ✅ Dynamic baseURL based on TEST_ENV
-    headless: true, // Always run headless in CI
+    headless: false, // Always run headless in CI
   },
   workers: threads, // Concurrency controlled by THREADS env
 
