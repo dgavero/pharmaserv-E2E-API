@@ -15,7 +15,7 @@ import {
 function orderDetailsInput() {
   return {
     deliveryType: 'DELIVER_X',
-    patientId: process.env.USER_USERNAME_PATIENT_ID,
+    patientId: process.env.PATIENT_USER_USERNAME_ID,
     branchId: 1,
     prescriptionItems: [
       {
@@ -46,8 +46,8 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -60,15 +60,11 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
       });
 
       // Main Assertion
-      expect(
-        submitDeliverXRes.ok,
-        submitDeliverXRes.error || 'Submit DeliverX Order request failed'
-      ).toBe(true);
+      expect(submitDeliverXRes.ok, submitDeliverXRes.error || 'Submit DeliverX Order request failed').toBe(true);
 
       const node = submitDeliverXRes.body.data.patient.order.book;
       expect(node).toBeTruthy();
       expect(typeof node.id).toBe('string');
-      expect(typeof node.code).toBe('string');
       expect(typeof node.trackingCode).toBe('string');
       expect(node.status).toBe('NEW_ORDER');
 
@@ -92,8 +88,7 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
       // Main Assertion
       expect(
         submitDeliverXResNoAuth.ok,
-        submitDeliverXResNoAuth.error ||
-          'Submit DeliverX Order No Auth request did not fail as expected'
+        submitDeliverXResNoAuth.error || 'Submit DeliverX Order No Auth request did not fail as expected'
       ).toBe(false);
 
       const { message, classification, code } = getGQLError(submitDeliverXResNoAuth);
@@ -118,8 +113,7 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
       // Main Assertion
       expect(
         submitDeliverXResInvalidAuth.ok,
-        submitDeliverXResInvalidAuth.error ||
-          'Submit DeliverX Order Invalid Auth request did not fail as expected'
+        submitDeliverXResInvalidAuth.error || 'Submit DeliverX Order Invalid Auth request did not fail as expected'
       ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])

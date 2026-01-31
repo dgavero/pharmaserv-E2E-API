@@ -20,12 +20,12 @@ test.describe('GraphQL: Patient Get Address', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
-      const patientId = process.env.USER_USERNAME_PATIENT_ID;
+      const patientId = process.env.PATIENT_USER_USERNAME_ID;
       const getAddressRes = await safeGraphQL(api, {
         query: GET_ADDRESS_QUERY,
         variables: { patientId },
@@ -57,8 +57,8 @@ test.describe('GraphQL: Patient Get Address', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -70,10 +70,7 @@ test.describe('GraphQL: Patient Get Address', () => {
       });
 
       // Main Assertion
-      expect(
-        getAddressRes.ok,
-        getAddressRes.error || 'Get Address request is expected to failed'
-      ).toBe(false);
+      expect(getAddressRes.ok, getAddressRes.error || 'Get Address request is expected to failed').toBe(false);
     }
   );
 
@@ -85,15 +82,14 @@ test.describe('GraphQL: Patient Get Address', () => {
     async ({ api, noAuth }) => {
       const getAddressResNoAuth = await safeGraphQL(api, {
         query: GET_ADDRESS_QUERY,
-        variables: { patientId: process.env.USER_USERNAME_PATIENT_ID },
+        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
         headers: noAuth,
       });
 
       // Main Assertion
-      expect(
-        getAddressResNoAuth.ok,
-        getAddressResNoAuth.error || 'Get Address request is expected to fail'
-      ).toBe(false);
+      expect(getAddressResNoAuth.ok, getAddressResNoAuth.error || 'Get Address request is expected to fail').toBe(
+        false
+      );
 
       const { message, classification, code } = getGQLError(getAddressResNoAuth);
       expect.soft(message).toMatch(NOAUTH_MESSAGE_PATTERN);
@@ -110,7 +106,7 @@ test.describe('GraphQL: Patient Get Address', () => {
     async ({ api, invalidAuth }) => {
       const getAddressResInvalidAuth = await safeGraphQL(api, {
         query: GET_ADDRESS_QUERY,
-        variables: { patientId: process.env.USER_USERNAME_PATIENT_ID },
+        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
         headers: invalidAuth,
       });
 

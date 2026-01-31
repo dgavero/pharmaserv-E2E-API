@@ -15,7 +15,7 @@ import {
 function orderDetailsInput() {
   return {
     deliveryType: 'FIND_MY_MEDS',
-    patientId: process.env.USER_USERNAME_PATIENT_ID,
+    patientId: process.env.PATIENT_USER_USERNAME_ID,
     prescriptionItems: [
       {
         medicineId: 1,
@@ -45,8 +45,8 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -59,10 +59,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
       });
 
       // Main Assertion
-      expect(
-        submitFindMyMedsRes.ok,
-        submitFindMyMedsRes.error || 'Submit FindMyMeds Order request failed'
-      ).toBe(true);
+      expect(submitFindMyMedsRes.ok, submitFindMyMedsRes.error || 'Submit FindMyMeds Order request failed').toBe(true);
 
       const node = submitFindMyMedsRes.body.data.patient.order.book;
       expect(node).toBeTruthy();
@@ -90,8 +87,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
       // Main Assertion
       expect(
         submitFindMyMedsResNoAuth.ok,
-        submitFindMyMedsResNoAuth.error ||
-          'Submit FindMyMeds Order No Auth request did not fail as expected'
+        submitFindMyMedsResNoAuth.error || 'Submit FindMyMeds Order No Auth request did not fail as expected'
       ).toBe(false);
 
       const { message, classification, code } = getGQLError(submitFindMyMedsResNoAuth);
@@ -116,8 +112,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
       // Main Assertion
       expect(
         submitFindMyMedsResInvalidAuth.ok,
-        submitFindMyMedsResInvalidAuth.error ||
-          'Submit FindMyMeds Order Invalid Auth request did not fail as expected'
+        submitFindMyMedsResInvalidAuth.error || 'Submit FindMyMeds Order Invalid Auth request did not fail as expected'
       ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])

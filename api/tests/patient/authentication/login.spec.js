@@ -17,8 +17,8 @@ const LOGIN_MUTATION = `
 // Valid creds (env-backed with local fallbacks)
 function buildValidCreds() {
   return {
-    username: process.env.USER_USERNAME || 'daveg123.patient',
-    password: process.env.USER_PASSWORD || 'Test1234!',
+    username: process.env.PATIENT_USER_USERNAME || 'daveg123.patient',
+    password: process.env.PATIENT_USER_PASSWORD || 'Test1234!',
   };
 }
 
@@ -72,9 +72,7 @@ test.describe('GraphQL: Patient Login', () => {
       });
 
       await test.step('Login should fail', async () => {
-        expect(loginAttempt.ok, 'API accepted invalid credentials (expected rejection)').toBe(
-          false
-        );
+        expect(loginAttempt.ok, 'API accepted invalid credentials (expected rejection)').toBe(false);
       });
 
       await test.step('Assert error details', async () => {

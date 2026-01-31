@@ -1,8 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  ADD_FAVORITE_MEDICINE_QUERY,
-  GET_FAVORITE_MEDICINE_QUERY,
-} from './patient.medicineQueries.js';
+import { ADD_FAVORITE_MEDICINE_QUERY, GET_FAVORITE_MEDICINE_QUERY } from './patient.medicineQueries.js';
 import {
   safeGraphQL,
   bearer,
@@ -21,8 +18,8 @@ test.describe('GraphQL: Medicine Favorites', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -30,7 +27,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
       const addFavoriteMedicineRes = await safeGraphQL(api, {
         query: ADD_FAVORITE_MEDICINE_QUERY,
         variables: {
-          patientId: process.env.USER_USERNAME_PATIENT_ID,
+          patientId: process.env.PATIENT_USER_USERNAME_ID,
           medicineId: medicineId,
         },
         headers: bearer(accessToken),
@@ -53,8 +50,8 @@ test.describe('GraphQL: Medicine Favorites', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -84,15 +81,15 @@ test.describe('GraphQL: Medicine Favorites', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getFavoriteMedicineRes = await safeGraphQL(api, {
         query: GET_FAVORITE_MEDICINE_QUERY,
         variables: {
-          patientId: process.env.USER_USERNAME_PATIENT_ID,
+          patientId: process.env.PATIENT_USER_USERNAME_ID,
         },
         headers: bearer(accessToken),
       });

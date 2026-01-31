@@ -17,7 +17,7 @@
 //   }
 // `;
 
-// const patientId = process.env.USER_USERNAME_RELATED_ID; // Existing patient ID related to user
+// const patientId = process.env.PATIENT_USER_USERNAME_RELATED_ID; // Existing patient ID related to user
 // const unrelatedPatientId = 20; // Patient ID NOT related to user
 
 //  --DISABLED > NOT NEEDED ATM  <-- //
@@ -30,8 +30,8 @@
 //     },
 //     async ({ api }) => {
 //       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-//         username: process.env.USER_USERNAME,
-//         password: process.env.USER_PASSWORD,
+//         username: process.env.PATIENT_USER_USERNAME,
+//         password: process.env.PATIENT_USER_PASSWORD,
 //       });
 //       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -59,8 +59,8 @@
 //     },
 //     async ({ api }) => {
 //       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-//         username: process.env.USER_USERNAME,
-//         password: process.env.USER_PASSWORD,
+//         username: process.env.PATIENT_USER_USERNAME,
+//         password: process.env.PATIENT_USER_PASSWORD,
 //       });
 //       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -89,8 +89,8 @@
 //     },
 //     async ({ api, noAuth }) => {
 //       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-//         username: process.env.USER_USERNAME,
-//         password: process.env.USER_PASSWORD,
+//         username: process.env.PATIENT_USER_USERNAME,
+//         password: process.env.PATIENT_USER_PASSWORD,
 //       });
 //       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 

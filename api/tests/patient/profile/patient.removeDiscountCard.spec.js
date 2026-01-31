@@ -42,7 +42,7 @@ const unownedDiscountCardId = 9999;
 
 // Will be used to create and then remove the discount card
 function discountCardInput() {
-  const patientId = process.env.USER_USERNAME_PATIENT_ID; // Existing patient ID for testing
+  const patientId = process.env.PATIENT_USER_USERNAME_ID; // Existing patient ID for testing
   const cardType = `Discount Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `Wats-${randomAlphanumeric(8)}`;
@@ -58,8 +58,8 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -84,10 +84,7 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
       });
 
       // Main Assertion
-      expect(
-        removeDiscountCardRes.ok,
-        removeDiscountCardRes.error || 'Remove Discount Card request failed'
-      ).toBe(true);
+      expect(removeDiscountCardRes.ok, removeDiscountCardRes.error || 'Remove Discount Card request failed').toBe(true);
 
       const removeDiscountCardNode = removeDiscountCardRes.body.data.patient.discountCard;
       expect(removeDiscountCardNode.remove).toContain('removed successfully');
@@ -101,8 +98,8 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const removeDiscountCardRes = await safeGraphQL(api, {
@@ -112,10 +109,9 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
       });
 
       // Main Assertion
-      expect(
-        removeDiscountCardRes.ok,
-        'Remove Discount Card request for NOT FOUND CARD should have failed'
-      ).toBe(false);
+      expect(removeDiscountCardRes.ok, 'Remove Discount Card request for NOT FOUND CARD should have failed').toBe(
+        false
+      );
 
       const { message, code, classification } = getGQLError(removeDiscountCardRes);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);

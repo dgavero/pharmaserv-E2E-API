@@ -22,8 +22,8 @@ test.describe('GraphQL: Me', () => {
       tag: ['@api', '@patient', '@positive', '@login', '@pharma-3'],
     },
     async ({ api }) => {
-      const username = process.env.USER_USERNAME;
-      const password = process.env.USER_PASSWORD;
+      const username = process.env.PATIENT_USER_USERNAME;
+      const password = process.env.PATIENT_USER_PASSWORD;
 
       const { accessToken, raw: login } = await loginAndGetTokens(api, { username, password });
 

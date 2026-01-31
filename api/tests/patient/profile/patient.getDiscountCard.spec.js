@@ -25,7 +25,7 @@ const GET_DC_CARD = /* GraphQL */ `
   }
 `;
 
-const patientId = process.env.USER_USERNAME_PATIENT_ID; // Existing patient ID
+const patientId = process.env.PATIENT_USER_USERNAME_ID; // Existing patient ID
 const incorrectPatientId = 999; // Non-existing patient ID
 
 test.describe('GraphQL: Patient Get Discount Card Details', () => {
@@ -36,8 +36,8 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -59,8 +59,8 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const getDCRes = await safeGraphQL(api, {
@@ -114,9 +114,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       });
 
       // Main Assertion
-      expect(getDCInvalidAuthRes.ok, 'Get Discount Card invalid auth request should fail').toBe(
-        false
-      );
+      expect(getDCInvalidAuthRes.ok, 'Get Discount Card invalid auth request should fail').toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
       expect(getDCInvalidAuthRes.ok).toBe(false);

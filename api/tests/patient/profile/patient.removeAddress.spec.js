@@ -13,7 +13,7 @@ import {
 } from '../../../helpers/testUtilsAPI.js';
 
 function newAddressInput() {
-  const patientId = process.env.USER_USERNAME_PATIENT_ID;
+  const patientId = process.env.PATIENT_USER_USERNAME_ID;
   const addressName = `addressName${randomAlphanumeric(4)}`;
   const address = `123 Test St, Test City, TC ${randomNum(3)}`;
   const city = `Test City`;
@@ -32,8 +32,8 @@ test.describe('GraphQL: Patient Remove Address', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -62,9 +62,7 @@ test.describe('GraphQL: Patient Remove Address', () => {
       });
 
       // Main Assertion
-      expect(removeAddressRes.ok, removeAddressRes.error || 'Remove Address request failed').toBe(
-        true
-      );
+      expect(removeAddressRes.ok, removeAddressRes.error || 'Remove Address request failed').toBe(true);
 
       const node = removeAddressRes.body.data.patient.address.remove;
       expect.soft(node).toBeTruthy();
@@ -79,8 +77,8 @@ test.describe('GraphQL: Patient Remove Address', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 

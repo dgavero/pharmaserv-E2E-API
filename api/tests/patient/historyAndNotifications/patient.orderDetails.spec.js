@@ -1,8 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  GET_ACTIVE_ORDER_QUERY,
-  GET_ORDER_HISTORY_QUERY,
-} from './patient.getHistoryNotificationQueries.js';
+import { GET_ACTIVE_ORDER_QUERY, GET_ORDER_HISTORY_QUERY } from './patient.getHistoryNotificationQueries.js';
 import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
 
 test.describe('GraphQL: Order Details Patient', () => {
@@ -13,8 +10,8 @@ test.describe('GraphQL: Order Details Patient', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -34,8 +31,8 @@ test.describe('GraphQL: Order Details Patient', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 

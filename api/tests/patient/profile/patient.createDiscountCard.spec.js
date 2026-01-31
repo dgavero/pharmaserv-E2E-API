@@ -29,7 +29,7 @@ const CREATE_DC_CARD = /* GraphQL */ `
 `;
 
 function discountCardInput() {
-  const patientId = process.env.USER_USERNAME_PATIENT_ID;
+  const patientId = process.env.PATIENT_USER_USERNAME_ID;
   const cardType = `Discount Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `Wats-${randomAlphanumeric(8)}`;
@@ -45,8 +45,8 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -105,10 +105,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
       });
 
       // Main Assertion
-      expect(
-        createDCInvalidAuthRes.ok,
-        'Create Discount Card with invalid auth request should fail'
-      ).toBe(false);
+      expect(createDCInvalidAuthRes.ok, 'Create Discount Card with invalid auth request should fail').toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
       expect(createDCInvalidAuthRes.ok).toBe(false);

@@ -13,7 +13,7 @@ import {
 } from '../../../helpers/testUtilsAPI.js';
 
 function newAddressInput() {
-  const patientId = process.env.USER_USERNAME_PATIENT_ID;
+  const patientId = process.env.PATIENT_USER_USERNAME_ID;
   const addressName = `addressName${randomAlphanumeric(4)}`;
   const address = `123 Test St, Test City, TC ${randomNum(3)}`;
   const city = `Test City`;
@@ -32,8 +32,8 @@ test.describe('GraphQL: Patient Create Address', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -46,9 +46,7 @@ test.describe('GraphQL: Patient Create Address', () => {
       });
 
       // Main Assertion
-      expect(createAddressRes.ok, createAddressRes.error || 'Create Address request failed').toBe(
-        true
-      );
+      expect(createAddressRes.ok, createAddressRes.error || 'Create Address request failed').toBe(true);
 
       const node = createAddressRes.body.data.patient.address.create;
       expect.soft(node.addressName).toBe(newAddress.addressName);
@@ -64,8 +62,8 @@ test.describe('GraphQL: Patient Create Address', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 

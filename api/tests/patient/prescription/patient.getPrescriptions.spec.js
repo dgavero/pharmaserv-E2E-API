@@ -13,15 +13,15 @@ test.describe('GraphQL: Get Prescription', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getPrescriptionRes = await safeGraphQL(api, {
         query: GET_PRESCRIPTION_QUERY,
         variables: {
-          patientId: process.env.USER_USERNAME_PATIENT_ID,
+          patientId: process.env.PATIENT_USER_USERNAME_ID,
         },
         headers: bearer(accessToken),
       });

@@ -22,8 +22,8 @@ test.describe('GraphQL: Find Pharmacies', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const findPharmaciesRes = await safeGraphQL(api, {
@@ -33,10 +33,7 @@ test.describe('GraphQL: Find Pharmacies', () => {
       });
 
       // Main Assertions
-      expect(
-        findPharmaciesRes.ok,
-        findPharmaciesRes.error || 'Find Pharmacies request failed'
-      ).toBe(true);
+      expect(findPharmaciesRes.ok, findPharmaciesRes.error || 'Find Pharmacies request failed').toBe(true);
 
       const node = findPharmaciesRes.body.data.patient.pharmacies;
       expect(Array.isArray(node), 'Pharmacies should be an array').toBe(true);

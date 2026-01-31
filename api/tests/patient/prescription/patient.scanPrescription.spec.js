@@ -10,8 +10,8 @@ test.describe('GraphQL: Scan Prescription', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -20,7 +20,7 @@ test.describe('GraphQL: Scan Prescription', () => {
         query: SCAN_PRESCRIPTION_QUERY,
         variables: {
           prescription: {
-            patientId: process.env.USER_USERNAME_PATIENT_ID,
+            patientId: process.env.PATIENT_USER_USERNAME_ID,
             photoToScan: photo,
           },
         },

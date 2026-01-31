@@ -31,7 +31,7 @@ const UPDATE_DEPENDENT_QUERY = /* GraphQL */ `
 `;
 
 const notDependentId = 999999; // assuming this ID does not belong to any dependent of the patient
-const dependentId = process.env.USER_USERNAME_RELATED_ID; // hardcoded and linked to used patient
+const dependentId = process.env.PATIENT_USER_USERNAME_RELATED_ID; // hardcoded and linked to used patient
 function updateDependentInput() {
   const height = randomNum(3);
   const weight = randomNum(3);
@@ -48,8 +48,8 @@ test.describe('GraphQL: Patient Update Dependent', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
@@ -61,10 +61,7 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       });
 
       // Main Assertion
-      expect(
-        updateDependentRes.ok,
-        updateDependentRes.error || 'Update Dependent request failed'
-      ).toBe(true);
+      expect(updateDependentRes.ok, updateDependentRes.error || 'Update Dependent request failed').toBe(true);
 
       const updateDependentNode = updateDependentRes.body.data.patient.updateDependent;
       expect.soft(updateDependentNode.height).toBe(updateDependentData.height);
@@ -115,8 +112,7 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       // Main Assertion
       expect(
         updateDependentInvalidAuthRes.ok,
-        updateDependentInvalidAuthRes.error ||
-          'Update Dependent with invalid Auth request should have failed'
+        updateDependentInvalidAuthRes.error || 'Update Dependent with invalid Auth request should have failed'
       ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])

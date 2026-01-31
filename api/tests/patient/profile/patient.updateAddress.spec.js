@@ -34,14 +34,14 @@ test.describe('GraphQL: Patient Update Address', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       // Update Address
       const updateAddress = updateAddressInput();
-      const patientAddressId = process.env.USER_USERNAME_RELATED_ID; // address id related to logged in user
+      const patientAddressId = process.env.PATIENT_USER_USERNAME_RELATED_ID; // address id related to logged in user
 
       const updateAddressRes = await safeGraphQL(api, {
         query: UPDATE_ADDRESS_QUERY,

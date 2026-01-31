@@ -32,8 +32,8 @@ test.describe('GraphQL: Patient Get Dependent', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
@@ -43,9 +43,7 @@ test.describe('GraphQL: Patient Get Dependent', () => {
       });
 
       // Main Assertion
-      expect(getDependentRes.ok, getDependentRes.error || 'Get Dependents request failed').toBe(
-        true
-      );
+      expect(getDependentRes.ok, getDependentRes.error || 'Get Dependents request failed').toBe(true);
 
       const getDependentsNode = getDependentRes.body.data.patient.dependents;
       expect.soft(getDependentsNode).toBeTruthy();

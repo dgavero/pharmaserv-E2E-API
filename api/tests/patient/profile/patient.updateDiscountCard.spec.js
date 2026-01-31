@@ -13,7 +13,7 @@ import {
 } from '../../../helpers/testUtilsAPI.js';
 
 function updateDiscountCardInput() {
-  const patientId = process.env.USER_USERNAME_PATIENT_ID; // Existing patient ID for testing
+  const patientId = process.env.PATIENT_USER_USERNAME_ID; // Existing patient ID for testing
   const cardType = `Watsons Club Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `${randomAlphanumeric(8)}`;
@@ -29,8 +29,8 @@ test.describe('GraphQL: Update Discount Card Patient', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 

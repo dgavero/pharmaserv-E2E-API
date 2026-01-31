@@ -15,7 +15,7 @@ import {
 function orderDetailsInput() {
   return {
     deliveryType: 'DELIVER_X',
-    patientId: process.env.USER_USERNAME_PATIENT_ID,
+    patientId: process.env.PATIENT_USER_USERNAME_ID,
     branchId: process.env.PHARMACIST_BRANCH_ID,
     prescriptionItems: [
       {
@@ -46,8 +46,8 @@ test.describe('GraphQL: Submit Specific Orders', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -79,8 +79,8 @@ test.describe('GraphQL: Submit Specific Orders', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -110,8 +110,8 @@ test.describe('GraphQL: Submit Specific Orders', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 

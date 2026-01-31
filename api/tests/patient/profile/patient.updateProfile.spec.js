@@ -45,8 +45,8 @@ test.describe('GraphQL: Patient Update Profile', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -58,9 +58,7 @@ test.describe('GraphQL: Patient Update Profile', () => {
       });
 
       // Main Assertion
-      expect(updatePatientRes.ok, updatePatientRes.error || 'Update Patient Profile failed').toBe(
-        true
-      );
+      expect(updatePatientRes.ok, updatePatientRes.error || 'Update Patient Profile failed').toBe(true);
 
       // Get updated patient data
       const patientNode = updatePatientRes.body.data.patient.update;
@@ -86,9 +84,7 @@ test.describe('GraphQL: Patient Update Profile', () => {
       });
 
       // Main Assertion
-      expect(updatePatientNoAuthRes.ok, 'Update Patient Profile without Auth should fail').toBe(
-        false
-      );
+      expect(updatePatientNoAuthRes.ok, 'Update Patient Profile without Auth should fail').toBe(false);
 
       const { message, code, classification } = getGQLError(updatePatientNoAuthRes);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
@@ -110,10 +106,7 @@ test.describe('GraphQL: Patient Update Profile', () => {
       });
 
       // Main Assertion
-      expect(
-        updatePatientNoAuthRes.ok,
-        'Update Patient Profile with Invalid Auth should fail'
-      ).toBe(false);
+      expect(updatePatientNoAuthRes.ok, 'Update Patient Profile with Invalid Auth should fail').toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
       expect(updatePatientNoAuthRes.ok).toBe(false);

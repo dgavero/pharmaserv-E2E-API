@@ -40,8 +40,8 @@ test.describe('GraphQL: Patient Add Dependent', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -53,9 +53,7 @@ test.describe('GraphQL: Patient Add Dependent', () => {
       });
 
       // Main Assertion
-      expect(addDependentRes.ok, addDependentRes.error || 'Add Dependent request failed').toBe(
-        true
-      );
+      expect(addDependentRes.ok, addDependentRes.error || 'Add Dependent request failed').toBe(true);
 
       const addDependentNode = addDependentRes.body.data.patient.addDependent;
       expect.soft(addDependentNode.firstName).toBe(dependentInput.firstName);
@@ -101,10 +99,7 @@ test.describe('GraphQL: Patient Add Dependent', () => {
       });
 
       // Main Assertion
-      expect(
-        addDependentInvalidAuthRes.ok,
-        'Expecting to fail Add Dependent with Invalid Auth'
-      ).toBe(false);
+      expect(addDependentInvalidAuthRes.ok, 'Expecting to fail Add Dependent with Invalid Auth').toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
       expect(addDependentInvalidAuthRes.ok).toBe(false);

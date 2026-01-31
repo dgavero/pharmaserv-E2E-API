@@ -129,12 +129,8 @@ These are the **source of truth** for writing API tests in this repo. Keep tests
 Make debugging easy without polluting output:
 
 ```js
-await test
-  .info()
-  .attach('payload', { body: JSON.stringify(input, null, 2), contentType: 'application/json' });
-await test
-  .info()
-  .attach('node', { body: JSON.stringify(node, null, 2), contentType: 'application/json' });
+await test.info().attach('payload', { body: JSON.stringify(input, null, 2), contentType: 'application/json' });
+await test.info().attach('node', { body: JSON.stringify(node, null, 2), contentType: 'application/json' });
 ```
 
 ---
@@ -159,7 +155,7 @@ await test
 
 - `API_BASE_URL` – consumed by `globalConfig.api.js` for the `api` fixture.
 - Credentials (examples; set in `.env` or CI secrets):
-  - `USER_USERNAME`, `USER_PASSWORD` (patient)
+  - `PATIENT_USER_USERNAME`, `PATIENT_USER_PASSWORD` (patient)
   - `ADMIN_USERNAME`, `ADMIN_PASSWORD` (admin)
 - For GraphQL pathing, your client (`graphqlClient.js`) uses the configured base; do not hardcode hostnames in tests.
 

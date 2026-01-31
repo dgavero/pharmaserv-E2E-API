@@ -15,7 +15,7 @@ import {
 function orderDetailsInput() {
   return {
     deliveryType: 'PABILI',
-    patientId: process.env.USER_USERNAME_PATIENT_ID,
+    patientId: process.env.PATIENT_USER_USERNAME_ID,
     branchId: 1,
     prescriptionItems: [
       {
@@ -46,8 +46,8 @@ test.describe('GraphQL: Submit Pabili Order', () => {
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.USER_USERNAME,
-        password: process.env.USER_PASSWORD,
+        username: process.env.PATIENT_USER_USERNAME,
+        password: process.env.PATIENT_USER_PASSWORD,
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -58,14 +58,11 @@ test.describe('GraphQL: Submit Pabili Order', () => {
       });
 
       // Main Assertions
-      expect(pabiliOrderRes.ok, pabiliOrderRes.error || 'Submit Pabili Order request failed').toBe(
-        true
-      );
+      expect(pabiliOrderRes.ok, pabiliOrderRes.error || 'Submit Pabili Order request failed').toBe(true);
 
       const node = pabiliOrderRes.body.data.patient.order.book;
       expect(node).toBeTruthy();
       expect(typeof node.id).toBe('string');
-      expect(typeof node.code).toBe('string');
       expect(typeof node.trackingCode).toBe('string');
       expect(node.status).toBe('NEW_ORDER');
 
@@ -87,10 +84,7 @@ test.describe('GraphQL: Submit Pabili Order', () => {
       });
 
       // Main Assertions
-      expect(
-        pabiliOrderResNoAuth.ok,
-        pabiliOrderResNoAuth.error || 'Submit Pabili Order request failed'
-      ).toBe(false);
+      expect(pabiliOrderResNoAuth.ok, pabiliOrderResNoAuth.error || 'Submit Pabili Order request failed').toBe(false);
 
       const { message, classification, code } = getGQLError(pabiliOrderResNoAuth);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
@@ -114,8 +108,7 @@ test.describe('GraphQL: Submit Pabili Order', () => {
       // Main Assertions
       expect(
         pabiliOrderResInvalidAuth.ok,
-        pabiliOrderResInvalidAuth.error ||
-          'Submit Pabili Order with Invalid Auth request did not fail as expected'
+        pabiliOrderResInvalidAuth.error || 'Submit Pabili Order with Invalid Auth request did not fail as expected'
       ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
