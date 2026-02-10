@@ -21,6 +21,9 @@ class DiscordReporter {
     // Progress counters for header updates.
     this.total = 0; // set once at start (planned tests after filters)
     this.completed = 0; // incremented on each test end (pass/fail/skip)
+
+    // Track failed PHARMA IDs for rerun convenience.
+    this.failedPharmaIds = new Set();
   }
 
   /**
@@ -31,6 +34,8 @@ class DiscordReporter {
   async onBegin(config, suite) {
     const all = suite.allTests();
     this.total = all.length;
+    const projectNames = (config?.projects || []).map((p) => p.name).filter(Boolean);
+    this.projectName = projectNames.length === 1 ? projectNames[0] : null;
 
     await editRunningHeader({ completed: 0, total: this.total, passed: 0, failed: 0, skipped: 0 });
   }
@@ -50,6 +55,8 @@ class DiscordReporter {
     else if (result.status === 'skipped') this.skipped += 1;
     else {
       this.failed += 1;
+      const matches = (test.title || '').match(/PHARMA-\d+/g) || [];
+      for (const id of matches) this.failedPharmaIds.add(id);
       // Post compact API failure snippet (only for API project)
       const isApi = (test.parent?.project()?.name || '').toLowerCase() === 'api';
       if (isApi) {
@@ -97,6 +104,8 @@ class DiscordReporter {
        passed: this.passed,
        failed: this.failed,
        skipped: this.skipped,
+       failedPharmaIds: Array.from(this.failedPharmaIds),
+       projectName: this.projectName,
        reportUrl, // let the bot render a direct link if available
      });
      await shutdownBot();
