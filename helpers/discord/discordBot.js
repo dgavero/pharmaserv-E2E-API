@@ -93,18 +93,46 @@ export function readRunMeta() {
  * Replace the header content with the final summary.
  * Uses the Gateway client (not REST) so it works even if we need richer capabilities later.
  */
-export async function appendSummary({ passed, failed, skipped, reportUrl }) {
+export async function appendSummary({ passed, failed, skipped, reportUrl, failedPharmaIds = [], projectName = null }) {
   const meta = readRunMeta();
   if (!meta || !rest) return;
 
   const total = (passed || 0) + (failed || 0) + (skipped || 0);
-  const content = `${meta.suiteLabel}
+  let content = `${meta.suiteLabel}
 Tests completed ✅ 100% [${total}/${total}]
 
 📊 Test Summary
 ✅ Passed: ${passed}
 ❌ Failed: ${failed}
 ⚪ Skipped: ${skipped}`;
+
+  if ((failed || 0) === 0) {
+    content += `\n\nYay. No failures! 🎉`;
+  } else {
+    const uniqueIds = Array.from(new Set(failedPharmaIds)).sort((a, b) => {
+      const na = parseInt(a.split('-')[1], 10);
+      const nb = parseInt(b.split('-')[1], 10);
+      if (Number.isNaN(na) || Number.isNaN(nb)) return a.localeCompare(b);
+      return na - nb;
+    });
+
+    if (uniqueIds.length) {
+      const grep = uniqueIds.join('|');
+      const testEnv = process.env.TEST_ENV || 'DEV';
+      const threads = process.env.THREADS || '4';
+      const projectArg = projectName ? ` PROJECT=${projectName}` : '';
+      const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}"${projectArg} npx playwright test`;
+      const baseUrl =
+        process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
+      const rerunUrl = `${baseUrl}${encodeURIComponent(grep)}`;
+
+      content += `\n\n🔁 Rerun the failures [here](${rerunUrl})
+🛠️ Rerun the failures manually:
+\`${grepCmd}\``;
+    } else {
+      content += `\n\n❗ Failed tests found, but no PHARMA IDs were detected in titles.`;
+    }
+  }
 
   // Embed link to message for the HTML Report
   const embeds = reportUrl
