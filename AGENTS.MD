@@ -1,4 +1,44 @@
-# Agents – API Testing Guidelines (v2)
+# Agents – API Testing Guidelines (v3)
+
+---START OF QUICK GUIDE---
+
+Use this when creating or updating API tests.
+
+Required imports (pick the login helper for the role under test):
+
+```js
+import { test, expect } from '../../globalConfig.api.js';
+import { safeGraphQL, bearer, getGQLError, loginAndGetTokens } from '../../helpers/testUtilsAPI.js';
+// or adminLoginAndGetTokens / riderLoginAndGetTokens / pharmacistLoginAndGetTokens
+```
+
+Query file convention:
+
+- Define GraphQL queries/mutations in a sibling `*.queries.js` or `*.orderingQueries.js` file.
+- Import the query into the spec. Do not inline long GQL strings in the test.
+
+Happy path flow:
+
+1. Login for the required role.
+2. Call `safeGraphQL` with `bearer(accessToken)` and a descriptive result name (e.g., `getOrderDetailRes`).
+3. `expect(getOrderDetailRes.ok).toBe(true)` then assert the node.
+4. Cleanup if the test creates data.
+
+Negative auth flow:
+
+1. Call `safeGraphQL` using `noAuth` or `invalidAuth` with a descriptive result name (e.g., `getOrderDetailNoAuthRes`).
+2. `expect(getOrderDetailNoAuthRes.ok).toBe(false)`
+3. If `!getOrderDetailNoAuthRes.httpOk`, assert transport status (usually 401).
+4. Else use `getGQLError(getOrderDetailNoAuthRes)` for `message`, `code`, `classification`.
+5. Keep positives and negatives in the same `test.describe()` block, separated by individual `test()` cases (preferred). Example: `api/tests/admin/riderManagement/rider.getDocumentToken.spec.js`.
+
+Naming rules:
+
+- Use descriptive names: `loginRes`, `submitOrderRes`, `noBearerRes`, `invalidAuthRes`.
+- Use `Res` only as a suffix (e.g., `getOrderDetailRes`), never `res` alone.
+- Avoid generic `res`, `result`, `x`.
+
+---END QUICK GUIDE---
 
 These are the **source of truth** for writing API tests in this repo. Keep tests short, readable, and consistent.
 
@@ -7,33 +47,37 @@ These are the **source of truth** for writing API tests in this repo. Keep tests
 ## 1) Project layout & runner
 
 - **Directories**
-  - API tests live in: `/root/api/tests`
-  - E2E tests live in: `/root/e2e/tests`
+  - API tests live in: `api/tests`
+  - E2E tests live in: `e2e/tests`
 - **Runner & fixtures**
   - Always import the custom API test harness:
     ```js
     import { test, expect } from '../../globalConfig.api.js';
     ```
   - This provides a fresh `api` client per test, **plus auth fixtures**:
-    - `noAuth` → empty headers (simulate _missing bearer_)
+    - `noAuth` → empty headers (simulate missing bearer)
     - `invalidAuth` → syntactically valid but invalid JWT (predictable **401**)
 - **Base URL**
   - The `api` fixture reads `API_BASE_URL` from env and normalizes `localhost` → `127.0.0.1`.
+  - This avoids the IPv6 `::1` resolution issue on some systems.
 
 ---
 
 ## 2) Canonical helpers (from `api/helpers/testUtilsAPI.js`)
 
-- `safeGraphQL(api, { query, variables, headers })`  
-  Wraps a GraphQL call and normalizes the result:
-  - `ok` (boolean), `httpOk` (boolean), `httpStatus` (number)
-  - `body` (parsed JSON) on success
-  - Structured error fields on resolver errors: `errorCode`, `errorClass`, `errorMessage`
+- `safeGraphQL(api, { query, variables, headers })`
+  - Normalizes results:
+    - `ok`, `httpOk`, `httpStatus`
+    - `body` on success
+    - `errorCode`, `errorClass`, `errorMessage`, `errorPath` on resolver errors
 - `bearer(token)` → `{ Authorization: 'Bearer <token>' }`
 - `loginAndGetTokens(api, { username, password })`
 - `adminLoginAndGetTokens(api, { username, password })`
+- `riderLoginAndGetTokens(api, { username, password })`
+- `pharmacistLoginAndGetTokens(api, { username, password })`
 - `getGQLError(resOrBody)` → `{ message, code, classification, path }` from `errors[0]`
-- Random data (from `helpers/globalTestUtils.js`): `randomAlphanumeric(len)`, `randomNum(len)`, `randomLetters(len)`, `randomEmail(prefix, domain)`, `randomUsername(prefix)`
+- Random data (from `helpers/globalTestUtils.js`):
+  - `randomAlphanumeric(len)`, `randomNum(len)`, `randomLetters(len)`, `randomEmail(prefix, domain)`, `randomUsername(prefix)`
 
 > ❌ Do **not** use legacy `uniqueSuffix()`; use the random helpers instead.
 
@@ -44,7 +88,9 @@ These are the **source of truth** for writing API tests in this repo. Keep tests
 - Use **descriptive consts** that say _what_ they hold:
   - ✅ `loginRes`, `meRes`, `registerRider`, `dupeRegRider`, `pagedPatientsRes`
   - ❌ `res`, `result`, `x`
-- Keep GQL **document strings at test level** and **input builders outside** the test when reused.
+- Use `Res` only as a suffix (e.g., `getOrderDetailRes`), never `res` alone.
+- Keep GQL **document strings in a dedicated queries file** and **input builders outside** the test when reused.
+  - Example: `api/tests/patient/ordering/patient.orderingQueries.js`
 
 ---
 
@@ -76,15 +122,15 @@ These are the **source of truth** for writing API tests in this repo. Keep tests
 - **Always** call via `safeGraphQL`. Then branch:
 
   ```js
-  const res = await safeGraphQL(api, args);
-  expect(res.ok).toBe(false);
+  const getOrderDetailNoAuthRes = await safeGraphQL(api, args);
+  expect(getOrderDetailNoAuthRes.ok).toBe(false);
 
   // Transport-level rejection (gateway): no GraphQL errors[]
-  if (!res.httpOk) {
-    expect(res.httpStatus).toBe(401); // or other expected transport code
+  if (!getOrderDetailNoAuthRes.httpOk) {
+    expect(getOrderDetailNoAuthRes.httpStatus).toBe(401); // or other expected transport code
   } else {
     // Resolver-level error (HTTP 200 + errors[])
-    const { message, code, classification, path } = getGQLError(res);
+    const { message, code, classification, path } = getGQLError(getOrderDetailNoAuthRes);
     expect(message.toLowerCase()).toContain('unauthorized access'); // or 'not found', etc.
     expect.soft(code).toBe('401'); // or '404', '500' per API
     expect.soft(classification).toBe('UNAUTHORIZED'); // or 'NOT_FOUND', etc.
@@ -95,11 +141,13 @@ These are the **source of truth** for writing API tests in this repo. Keep tests
 
   ```js
   // Missing bearer
-  const resNoBearer = await safeGraphQL(api, { query: Q, variables: V, headers: noAuth });
+  const getOrderDetailNoAuthRes = await safeGraphQL(api, { query: Q, variables: V, headers: noAuth });
 
   // Invalid bearer (syntactically valid → stable 401)
-  const resBadBearer = await safeGraphQL(api, { query: Q, variables: V, headers: invalidAuth });
+  const getOrderDetailInvalidAuthRes = await safeGraphQL(api, { query: Q, variables: V, headers: invalidAuth });
   ```
+
+Keep positives and negatives in the same `test.describe()` block, separated by individual `test()` cases (preferred). Example: `api/tests/admin/riderManagement/rider.getDocumentToken.spec.js`.
 
 > **Rule of thumb:** unauthorized may appear as **transport 401** _or_ GraphQL **200 + errors[]**. Handle both as above.
 
@@ -154,6 +202,7 @@ await test.info().attach('node', { body: JSON.stringify(node, null, 2), contentT
 ## 9) Environment & config quick ref
 
 - `API_BASE_URL` – consumed by `globalConfig.api.js` for the `api` fixture.
+- `GRAPHQL_PATH` – optional override for GraphQL path (defaults to `/api/v1/pharmaserv/graphql` in `api/helpers/graphqlClient.js`).
 - Credentials (examples; set in `.env` or CI secrets):
   - `PATIENT_USER_USERNAME`, `PATIENT_USER_PASSWORD` (patient)
   - `ADMIN_USERNAME`, `ADMIN_PASSWORD` (admin)
@@ -161,16 +210,57 @@ await test.info().attach('node', { body: JSON.stringify(node, null, 2), contentT
 
 ---
 
-## 10) Tiny snippets you can copy
+## 10) Test structure reference (based on `patient.submitFindMyMeds.spec.js`)
+
+Use this flow when creating or updating tests:
+
+1. **Define the GraphQL query/mutation in a sibling queries file** (reusable).
+2. **Login** with the appropriate role and build headers.
+3. **Call** via `safeGraphQL`.
+4. **Main assertion**: verify `ok`, then assert the node.
+5. **Cleanup** if the test creates data (e.g., cancel/decline order).
+
+Minimal skeleton:
+
+```js
+import { test, expect } from '../../../globalConfig.api.js';
+import { SOME_QUERY } from './patient.orderingQueries.js';
+import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+
+test('...', async ({ api }) => {
+  const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
+    username: process.env.PATIENT_USER_USERNAME,
+    password: process.env.PATIENT_USER_PASSWORD,
+  });
+  expect(loginRes.ok, loginRes.error || 'Login failed').toBe(true);
+
+  const gql = await safeGraphQL(api, {
+    query: SOME_QUERY,
+    variables: {
+      /* input */
+    },
+    headers: bearer(accessToken),
+  });
+  expect(gql.ok, gql.error || 'Request failed').toBe(true);
+
+  const node = gql.body?.data?.patient?.order?.book;
+  expect(node).toBeTruthy();
+  expect.soft(typeof node.id).toBe('string');
+});
+```
+
+---
+
+## 11) Tiny snippets you can copy
 
 - **Unauthorized (no bearer)**
 
   ```js
-  const res = await safeGraphQL(api, { query: Q, variables: V, headers: noAuth });
-  expect(res.ok).toBe(false);
-  if (!res.httpOk) expect(res.httpStatus).toBe(401);
+  const noBearerRes = await safeGraphQL(api, { query: Q, variables: V, headers: noAuth });
+  expect(noBearerRes.ok).toBe(false);
+  if (!noBearerRes.httpOk) expect(noBearerRes.httpStatus).toBe(401);
   else {
-    const { code, classification, message } = getGQLError(res);
+    const { code, classification, message } = getGQLError(noBearerRes);
     expect(message.toLowerCase()).toContain('unauthorized');
     expect.soft(code).toBe('401');
     expect.soft(classification).toBe('UNAUTHORIZED');
@@ -180,20 +270,18 @@ await test.info().attach('node', { body: JSON.stringify(node, null, 2), contentT
 - **Invalid token (transport 401)**
 
   ```js
-  const res = await safeGraphQL(api, { query: Q, variables: V, headers: invalidAuth });
-  expect(res.ok).toBe(false);
-  expect(res.httpOk).toBe(false);
-  expect(res.httpStatus).toBe(401);
+  const invalidAuthRes = await safeGraphQL(api, { query: Q, variables: V, headers: invalidAuth });
+  expect(invalidAuthRes.ok).toBe(false);
+  expect(invalidAuthRes.httpOk).toBe(false);
+  expect(invalidAuthRes.httpStatus).toBe(401);
   ```
 
 - **Happy path skeleton**
   ```js
   const { accessToken, raw: loginRes } = await loginAndGetTokens(api, creds);
   expect(loginRes.ok, loginRes.error || 'Login failed').toBe(true);
-  const gql = await safeGraphQL(api, { query: Q, variables: V, headers: bearer(accessToken) });
-  expect(gql.ok, gql.error || 'Query failed').toBe(true);
-  const node = gql.body?.data?.foo?.bar;
-  expect(node).toBeTruthy();
+  const getOrderDetailRes = await safeGraphQL(api, { query: Q, variables: V, headers: bearer(accessToken) });
+  expect(getOrderDetailRes.ok, getOrderDetailRes.error || 'Query failed').toBe(true);
   ```
 
 ---
