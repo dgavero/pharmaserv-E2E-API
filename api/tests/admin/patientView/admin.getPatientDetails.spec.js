@@ -1,4 +1,4 @@
-import { test, expect } from '../../globalConfig.api.js';
+import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   adminLoginAndGetTokens,
@@ -7,36 +7,8 @@ import {
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CODES,
   NOAUTH_CLASSIFICATIONS,
-} from '../../helpers/testUtilsAPI.js';
-
-const GET_PATIENT_QUERY = `
-  query ($by: IdentifierRequest!) {
-    administrator {
-      patient {
-        detail(by: $by) {
-          uuid
-          username
-          email
-          firstName
-          lastName
-        }
-      }
-    }
-  }
-`;
-
-const GET_PAGED_PATIENTS_QUERY = `
-  query ($filter: FilterRequest!) {
-    administrator {
-      patient {
-        pagedPatients(filter: $filter) {
-          page { totalSize }
-          items { id username firstName lastName }
-        }
-      }
-    }
-  }
-`;
+} from '../../../helpers/testUtilsAPI.js';
+import { GET_PATIENT_QUERY, GET_PAGED_PATIENTS_QUERY } from './admin.patientViewQueries.js';
 
 // Expected identity for the fixed email
 const EXPECTED_PATIENT = {

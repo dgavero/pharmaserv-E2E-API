@@ -1,4 +1,4 @@
-import { test, expect } from '../../globalConfig.api.js';
+import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   adminLoginAndGetTokens,
@@ -7,8 +7,8 @@ import {
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CODES,
   NOAUTH_CLASSIFICATIONS,
-} from '../../helpers/testUtilsAPI.js';
-import { randomAlphanumeric } from '../../../helpers/globalTestUtils.js';
+} from '../../../helpers/testUtilsAPI.js';
+import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 const CREATE_BRANCH_MUTATION = `
 mutation ($pharmacyId: ID!, $branch: BranchCreateRequest!) 
