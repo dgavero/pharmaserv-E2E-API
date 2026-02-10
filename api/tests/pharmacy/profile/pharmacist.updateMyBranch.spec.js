@@ -13,18 +13,18 @@ import { PHARMACIST_UPDATE_MY_BRANCH_QUERY } from './pharmacy.profileQueries.js'
 
 //** This should be returned as is - only simulates update but nott actually updating data in DB */
 function buildBranchUpdate() {
-  const name = `PKC Branch 01`;
-  const address = `Pedro Gil St. Sta Ana`;
-  const city = `Manila`;
-  const province = `Metro Manila`;
+  const name = `API Branch`;
+  const address = `Just`;
+  const city = `API my`;
+  const province = `Location Sir`;
   const zipCode = `1009`;
-  const email = `staana@mercury.com`;
-  const phoneNumber = `09171234567`;
+  const email = `apimylocationsir@api.com`;
+  const phoneNumber = `09171234569`;
   const contactName = `John Starks`;
-  const openingTime = `08:00:00.000+08:00`;
-  const closingTime = `17:00:00.000+08:00`;
-  const weekEndOpeningTime = `07:00:00.000+08:00`;
-  const weekEndClosingTime = `20:00:00.000+08:00`;
+  const openingTime = `00:00:00.000+08:00`;
+  const closingTime = `23:59:00.000+08:00`;
+  const weekEndOpeningTime = `00:00:00.000+08:00`;
+  const weekEndClosingTime = `23:59:00.000+08:00`;
   const lat = 14.582019317323562;
   const lng = 121.01251092551259;
 
@@ -71,7 +71,7 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
       const updatedBranch = branchUpdateRes.body.data.pharmacy.branch.update;
       expect(updatedBranch).toBeTruthy();
       expect(typeof updatedBranch.id).toBe('string');
-      expect(updatedBranch.name).toBe('PKC Branch 01');
+      expect(updatedBranch.name).toBe('API Branch');
     }
   );
 
