@@ -1,10 +1,10 @@
-import { test, expect } from '../../globalConfig.api.js';
+import { test, expect } from '../../../globalConfig.api.js';
 import {
   safeGraphQL,
   adminLoginAndGetTokens,
   bearer,
   getGQLError,
-} from '../../helpers/testUtilsAPI.js';
+} from '../../../helpers/testUtilsAPI.js';
 
 const GET_PAGED_BRANCHES_QUERY = `
   query ($pharmacyId: ID!, $filter: FilterRequest!) {
