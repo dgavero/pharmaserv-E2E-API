@@ -16,7 +16,7 @@ function orderDetailsInput() {
   return {
     deliveryType: 'DELIVER_X',
     patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: 1,
+    branchId: process.env.PHARMACIST_BRANCHID_REG01,
     prescriptionItems: [
       {
         medicineId: 1,

@@ -106,10 +106,7 @@ test.describe('GraphQL: Admin Create Branch', () => {
         variables: { pharmacyId, branch },
         headers: bearer(accessToken),
       });
-      expect(
-        createBranchRes.ok,
-        createBranchRes.error || 'administrator.pharmacy.branch.create failed'
-      ).toBe(true);
+      expect(createBranchRes.ok, createBranchRes.error || 'administrator.pharmacy.branch.create failed').toBe(true);
 
       // 4) Payload
       const branchNode = createBranchRes.body?.data?.administrator?.pharmacy?.branch?.create;
@@ -118,7 +115,7 @@ test.describe('GraphQL: Admin Create Branch', () => {
       // 5) Assertions
       expect.soft(typeof branchNode.id).toBe('string'); // id present
       expect.soft(branchNode.name).toBe(meta.expectedName); // echoes randomized name
-      expect.soft(branchNode.pharmacyName).toBe('Mercury Drug'); // fixed by pharmacyId=4
+      expect.soft(branchNode.pharmacyName).toBe('QA Mercury Drug'); // fixed by pharmacyId=4
 
       // lat/lng should be numbers (ints are numbers in JS) and within our integer bounds
       expect.soft(typeof branchNode.lat).toBe('number');

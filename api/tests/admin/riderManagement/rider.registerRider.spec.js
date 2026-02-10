@@ -193,9 +193,9 @@ test.describe('GraphQL: Rider Register', () => {
 
   // Missing required field (password = empty) → INTERNAL_SERVER_ERROR (500)
   test(
-    'PHARMA-34 | Should Reject Rider Registration with Missing Password',
+    'PHARMA-34 | Should Accept Rider Registration without Password',
     {
-      tag: ['@api', '@admin', '@negative', '@pharma-34'],
+      tag: ['@api', '@admin', '@positive', '@pharma-34'],
     },
     async ({ api }) => {
       // Admin login
@@ -210,19 +210,13 @@ test.describe('GraphQL: Rider Register', () => {
 
       const regRiderNoPass = await test.step('Register rider with empty password', async () =>
         safeGraphQL(api, {
-          query: REGISTER_RIDER_MUTATION, // ← reuse test-level mutation
+          query: REGISTER_RIDER_MUTATION,
           variables: { rider: riderInput },
           headers: bearer(accessToken),
         }));
 
-      // Expect failure
-      expect(regRiderNoPass.ok).toBe(false);
-
-      // Resolver error path: fuzzy message + soft code/classification
-      const { message, classification } = getGQLError(regRiderNoPass);
-
-      expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
-      expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
+      // Expect success (temp password will be sent to email)
+      expect(regRiderNoPass.ok).toBe(true);
     }
   );
 });
