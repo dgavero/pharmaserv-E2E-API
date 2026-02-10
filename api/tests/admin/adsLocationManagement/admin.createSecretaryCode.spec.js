@@ -44,11 +44,11 @@ test.describe('GraphQL: Admin Create Secretary Code', () => {
 
       expect(
         createSecretaryCodeRes.ok,
-        createSecretaryCodeRes.error || 'administrator.secretaryCode.create failed'
+        createSecretaryCodeRes.error || 'Create secretary code endpoint failed'
       ).toBe(true);
 
       const node = createSecretaryCodeRes.body?.data?.administrator?.secretaryCode?.create;
-      expect(node, 'Missing data.administrator.secretaryCode.create').toBeTruthy();
+      expect(node, 'Create secretary code endpoint returned no data').toBeTruthy();
 
       expect.soft(node.code).toBe(secretaryCodeInput.code);
       expect.soft(node.firstName).toBe(secretaryCodeInput.firstName);

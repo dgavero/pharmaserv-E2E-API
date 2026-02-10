@@ -45,11 +45,11 @@ test.describe('GraphQL: Admin Create Ads Location', () => {
 
       expect(
         createAdsLocationRes.ok,
-        createAdsLocationRes.error || 'administrator.adsLocation.create failed'
+        createAdsLocationRes.error || 'Create ads location endpoint failed'
       ).toBe(true);
 
       const node = createAdsLocationRes.body?.data?.administrator?.adsLocation?.create;
-      expect(node, 'Missing data.administrator.adsLocation.create').toBeTruthy();
+      expect(node, 'Create ads location endpoint returned no data').toBeTruthy();
 
       expect.soft(node.locationCode).toBe(locationInput.locationCode);
       expect.soft(node.location).toBe(locationInput.location);
