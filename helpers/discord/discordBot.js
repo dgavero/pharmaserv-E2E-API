@@ -135,9 +135,10 @@ Tests completed ✅ 100% [${total}/${total}]
   }
 
   // Embed link to message for the HTML Report
-  const embeds = reportUrl
-    ? [{ description: `🔗 [Playwright HTML report is here](${reportUrl})` }]
-    : [];
+  if (reportUrl) {
+    content += `\n\n🔗 Playwright HTML report is [here](${reportUrl})`;
+  }
+  const embeds = [];
 
   // Edit the same header message we created at setup time
   await rest.patch(Routes.channelMessage(meta.channelId, meta.headerMessageId), {

@@ -94,7 +94,7 @@ function suiteNameFromProjects(projectsSet) {
  * - Closes the Gateway client (we’ll use REST for live progress during the run).
  */
 async function discordSetup() {
-  const testEnv = process.env.TEST_ENV || 'LOCAL';
+  const testEnv = process.env.TEST_ENV || 'DEV';
 
   // Prefer env TAGS for clarity (e.g., "samples|smoke"); fallback to CLI --grep if absent.
   const raw =
