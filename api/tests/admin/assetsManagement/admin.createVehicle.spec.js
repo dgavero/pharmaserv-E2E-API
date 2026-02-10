@@ -12,7 +12,7 @@ import {
 import { randomAlphanumeric, randomLetters } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_VEHICLE_MUTATION } from './admin.assetsManagementQueries.js';
 
-const VEHICLE_TYPES = ['MOTORCYCLE', 'CAR', 'BIKE'];
+const VEHICLE_TYPES = ['MOTORCYCLE', 'CAR', 'BICYCLE'];
 
 function buildVehicleInput() {
   const vehicleType = VEHICLE_TYPES[Math.floor(Math.random() * VEHICLE_TYPES.length)];
