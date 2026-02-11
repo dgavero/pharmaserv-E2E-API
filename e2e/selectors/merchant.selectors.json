@@ -8,6 +8,6 @@
     "ErrorMessageCredsValidation": "//p[contains(text(),'must be at least')]"
   },
   "Apps": {
-    "NewOrdersBtn": "//*[@data-testid='new-orders-link']"
+    "SidebarHomeLink": "//a[@href='/' and (.//*[normalize-space()='Home'] or normalize-space()='Home')]"
   }
 }

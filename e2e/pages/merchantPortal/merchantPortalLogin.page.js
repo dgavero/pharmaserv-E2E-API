@@ -35,10 +35,10 @@ export default class MerchantPortalLoginPage {
   }
 
   async assertSuccessLogin() {
-    const newOrderBtn = getSelector(this.sel, 'Apps.NewOrdersBtn');
-    const newOrderBtnVisible = await safeWaitForElementPresent(this.page, newOrderBtn);
-    if (!newOrderBtnVisible) {
-      markFailed('Expected new order button not visible');
+    const sidebarHomeLink = getSelector(this.sel, 'Apps.SidebarHomeLink');
+    const sidebarHomeLinkVisible = await safeWaitForElementVisible(this.page, sidebarHomeLink);
+    if (!sidebarHomeLinkVisible) {
+      markFailed('Expected Home sidebar link to be visible after login');
     }
   }
 
