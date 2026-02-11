@@ -1,109 +1,68 @@
-# 🎭 Playwright Automation Template
+# Playwright E2E + API Automation
 
-End-to-end testing framework powered by **Playwright** with **Discord integration** for real-time reporting and screenshots on failures.
+Playwright test framework for Pharmaserv with:
+- UI (`e2e`) and API (`api`) projects
+- Discord live reporting
+- HTML report publishing to GitHub Pages
+- Tag/project/env-driven execution
 
----
+## Features
 
-## 🚀 Features
+- `PROJECT` selector support: `api`, `e2e`, or `e2e,api` (default runs both)
+- `TEST_ENV` routing with default `DEV`
+- Tokenized, case-insensitive `TAGS` filtering
+- Discord run header + thread logs + final summary
+- Rerun failed PHARMA IDs helper in summary
+- Optional report publishing (`REPORT_PUBLISH=0` disables publish)
 
-- Run Playwright E2E tests with **multi-env** support (`LOCAL` / `PROD` / `ORANGE`).
-- **Discord integration**:
-  - Suite headers with environment + tags.
-  - Live progress bar with ✅/❌/⚪ summary.
-  - Dedicated Discord **thread per run**.
-  - ❌ **E2E**: Failures log screenshots inline (with context image).
-  - ❌ **API**: Failures post clean **Error / Expected / Received** snippets (no file paths).
-  - Optional ✅ pass logging.
-- **Case-insensitive, tokenized tags**: `TAGS='smoke|regression'` matches `@smoke` / `@regression` regardless of case; won’t match `smoke1`.
-- **Project selection via env**: `PROJECT=api` or `PROJECT=e2e,api` (unset = run both).
-- **Safe helpers** that return booleans instead of throwing.
-- **Timeouts** centralized (`short`, `standard`, `long`, `extraLong`).
-- Full `.env` support for configuration.
-- Always generates an **HTML report** (`npx playwright show-report`).
-- Test-level timeout defaults to **60s** (configurable).
-- Pre-run cleanup of reports/screenshots/test-results.
-- Auto-publish HTML reports to GitHub Pages with direct link in Discord summary.
-
----
-
-## 📦 Installation
+## Installation
 
 ```bash
 npm install
 ```
 
----
-
-## 🛠 Quick Start
-
-### 1. Configure `.env`
-
-Copy `.env.example` to `.env` and fill in your values.
-
-### 2. Run Sample Test
+## Quick Start
 
 ```bash
-TAGS='samples' npx playwright test
+# Run all projects (default)
+TEST_ENV=DEV THREADS=4 TAGS= PROJECT= npx playwright test
+
+# API only
+TEST_ENV=DEV THREADS=4 TAGS=PHARMA-160 PROJECT=api npx playwright test
+
+# E2E only
+TEST_ENV=DEV THREADS=4 TAGS=samples PROJECT=e2e npx playwright test
 ```
 
----
+## Core Docs
 
-## 📘 Documentation
+- Usage and run patterns: [USAGE.md](./USAGE.md)
+- Testing vision and engineering principles: [PROJECTVISIONS.md](./PROJECTVISIONS.md)
+- API test authoring source-of-truth: [AGENTS.MD](./AGENTS.MD)
+- Version history: [CHANGELOG.md](./CHANGELOG.md)
 
-See **[USAGE.md](./USAGE.md)** for:
+## Project Structure
 
-- Detailed usage examples
-- Safe helper reference
-- Tagging strategies
-- Discord reporting flow
-- Upcoming enhancements
-
-> Looking for version history? See **[CHANGELOG.md](./CHANGELOG.md)**.
-
----
-
-## 🧩 Project Structure
-
-```
-e2e-project/
-├── e2e/                     # UI / browser tests
-│   ├── pages/
-│   ├── tests/
-│   ├── globalConfig.ui.js   # UI-only hooks (uses page)
-│   └── Timeouts.js
-│   └── helpers/
-│       └── testUtilsUI.js   # UI-only safe helpers
-├── api/                     # API tests (scaffold)
+```text
+pharmaserv-E2E-API/
+├── api/
+│   ├── globalConfig.api.js
+│   ├── helpers/
 │   └── tests/
-│   └── helpers/
-│       └── testUtilsAPI.js  # API-only safe helpers
-├── helpers/
-│   └── discord/
-│       ├── discordBot.js
-│       ├── discordReporter.js
-│       └── discordSetup.js
-├── scripts/
-│   └── publish-report.js
-├── reports/                 # generated; published to gh-pages (gitignored)
+├── e2e/
+│   ├── globalConfig.ui.js
+│   ├── helpers/
+│   ├── pages/
+│   └── tests/
+├── helpers/discord/
+├── scripts/publish-report.js
+├── playwright.config.js
 ├── globalSetup.js
-├── playwright.config.js     # defines projects: e2e, api (with PROJECT filter)
-├── .env / .env.example
-├── README.md / USAGE.md / CHANGELOG.md / PROJECTVISIONS.md
-└── package.json
+└── AGENTS.MD
 ```
 
----
+## Notes
 
-## Testing Guidelines
-
-See [AGENTS.MD](./agents.md) for how we write API tests (GraphQL + Playwright).
-
-- **Capitalize** test titles for clean Discord/HTML output
-- **Default tags**: `@api` + domain (e.g., `@patient`) + `@positive` or `@negative`
-- **Group related tests** in one suite (e.g., login success + login failure)
-
----
-
-## 📄 License
-
-MIT — Use, modify, and enjoy 🚀
+- API test creation/update rules are maintained in `AGENTS.MD`.
+- Keep GraphQL operations in sibling query files for reuse.
+- Prefer descriptive response variable naming with `Res` suffix only.

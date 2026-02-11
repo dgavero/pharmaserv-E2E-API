@@ -1,155 +1,80 @@
-# 📘 Usage Guide — E2E Playwright + Discord Reporter
+# Usage Guide
 
-> **Version**: v3.0.1  
-> **Purpose**: Automated Playwright tests + Discord integration for real-time reporting with screenshots on failure.
+Operational guide for running Playwright tests in this repo.
 
----
-
-## 1️⃣ Running Tests
-
-### Run Specific Environment
+## Run Commands
 
 ```bash
-TEST_ENV=PROD npx playwright test
+# Default behavior: TEST_ENV falls back to DEV, runs both projects
+TEST_ENV= THREADS=4 TAGS= PROJECT= npx playwright test
+
+# API project only
+TEST_ENV=DEV THREADS=4 TAGS=PHARMA-160 PROJECT=api npx playwright test
+
+# E2E project only
+TEST_ENV=DEV THREADS=4 TAGS=samples PROJECT=e2e npx playwright test
+
+# Multiple projects
+TEST_ENV=STG THREADS=8 TAGS=smoke|regression PROJECT=e2e,api npx playwright test
 ```
 
-### Run Specific Tags
+## Environment Behavior
+
+- `TEST_ENV`: environment selector used by config routing. Empty means `DEV`.
+- `THREADS`: Playwright workers count (default `4`).
+- `TAGS`: grep pattern used by the config; empty means no grep filter.
+- `PROJECT`: `api`, `e2e`, `e2e,api`; empty means both.
+
+## Tag Filtering
+
+This repo uses tokenized, case-insensitive tag matching.
 
 ```bash
-TAGS='samples' npx playwright test
+TAGS=samples npx playwright test
+TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 ```
 
-### Run by Project (via env)
+## Discord Reporting Flow
+
+1. Global setup posts suite header and creates run thread.
+2. Header updates with live progress and pass/fail/skip summary.
+3. API assertion failures are posted as compact snippets.
+4. Final summary includes:
+- pass/fail/skip totals
+- rerun helper when failures include `PHARMA-<id>` in test titles
+- report link (`Playwright HTML report is [here](...)`) when publishing succeeds
+
+## Failure Rerun Helpers
+
+When failures exist and PHARMA IDs are present, summary includes:
+
+- CI placeholder link: `Rerun the failures [here](...)`
+- Manual command preserving active env/threads/project:
 
 ```bash
-# Only API
-PROJECT=api npx playwright test
-# Only E2E
-PROJECT=e2e npx playwright test
-# Multiple
-PROJECT=e2e,api npx playwright test
+TEST_ENV=DEV THREADS=4 TAGS="PHARMA-160|PHARMA-243|PHARMA-244" PROJECT=api npx playwright test
 ```
 
-### Run with Configs
+If no failures exist, summary shows: `Yay. No failures!`
+
+## Report Publishing
+
+- Publisher script: `scripts/publish-report.js`
+- Default: publish is enabled
+- Disable publishing with:
 
 ```bash
-TEST_ENV=ORANGE THREADS=4 TAGS='all' PROJECT=e2e,api  npx playwright test
+REPORT_PUBLISH=0 npx playwright test
 ```
 
-### Filter by Tags
+## API Authoring Rules
 
-Tag tests with `@tags` in `describe` or `test` titles:
+For API test creation/update conventions, follow:
 
-```js
-test.describe('positive @samples @regression', () => {
-  test('positive test case 1 @pos1', async ({ page }) => { ... });
-});
-```
+- [AGENTS.MD](./AGENTS.MD)
 
-Examples:
-
-```bash
-TAGS='samples' npx playwright test        # run all @samples tests
-TAGS='pos1|neg2' npx playwright test    # run specific tags
-TAGS='(?!.*@secret)' npx playwright test  # run everything except @secret
-```
-
----
-
-## 2️⃣ Environment Setup
-
-### `.env`
-
-```env
-Copy the provided `.env.example` file to `.env` in the project root and update it with your own values.
-```
-
----
-
-## 3️⃣ Discord Reporting Flow
-
-### What Happens During a Run
-
-1. **Suite Start**
-   - Posts header message (project-aware title & icon, e.g., `🧭 End2End Test Suite` or `🔌 API Test Suite`): `ENV | tags`.
-   - Creates a dedicated thread for test logs.
-   - Shows `0% [0/N]` progress bar + empty summary.
-
-2. **While Running**
-   - Each test updates the live header with:
-     - Progress bar (`▰▱▱▱▱`)
-     - Percentage done
-     - Running summary:
-       ```
-       📊 Test Summary
-       ✅ Passed: 2
-       ❌ Failed: 1
-       ⚪ Skipped: 0
-       ```
-
-3. **Per-Test**
-   - `markPassed()` → ✅ optional (only if DISCORD_LOG_PASSED=1).
-   - `markFailed(reason)` → ❌ always posted, with screenshot attached.
-   - **API**:
-     - On any failed assertion (hard or soft), a ❌ is posted **immediately** with a **clean Error/Expected/Received snippet**
-   - Whole-test timeouts are logged as: **“Test timed-out after {N}s.”**
-
-4. **Final Summary**
-   - Header replaced with final counts.
-   - Adds a direct link:
-     - If published → 🔗 Playwright HTML report on GitHub Pages
-
----
-
-## 4️⃣ Helper Functions
-
-### `markPassed(reason?)`
-
-Logs ✅ to Discord (if enabled).
-
-```js
-markPassed();
-markPassed('All checks passed successfully');
-```
-
-### `markFailed(reason)`
-
-Logs ❌ to Discord with a screenshot and stops test immediately.
-
-```js
-if (!(await safeWaitForElementVisible(page, '#loginBtn'))) {
-  markFailed('Login button not found');
-}
-```
-
----
-
-## 5️⃣ Safe Helpers
-
-### UI Helpers `e2e/helpers/testUtilsUI.js`
-
-All return `true/false` instead of throwing.  
-If `false`, call `markFailed()` with your human context.
-
-- `safeClick(page, selector, { timeout })`
-- `safeInput(page, selector, text, { timeout, delay })`
-- `safeHover(page, selector, { timeout })`
-- `safeWaitForElementVisible(page, selector, { timeout })`
-- `safeNavigateToUrl(page, url, { timeout })`
-- `safeWaitForPageLoad(page, url, { timeout })`
-- `safeScreenshot(page)` (internal, used on failures)
-
-Timeouts default to `Timeouts.standard` (15s).  
-Override with `Timeouts.short`, `long`, `extraLong`.
-
-### API Helpers (`api/helpers/testUtilsAPI.js`)
-
-Use Playwright’s native assertions (`expect` / `expect.soft`) for API tests.
-For GraphQL, use the provided **`safeGraphQL`** wrapper in `api/helpers/testUtilsAPI.js`
-to normalize transport (HTTP) vs GraphQL resolver errors without throwing.
-
----
-
-## 6️⃣ More
-
-> For version history, see **[CHANGELOG.md](./CHANGELOG.md)**.
+That file is the source-of-truth for:
+- required imports/fixtures
+- GraphQL query file separation
+- happy path and negative auth patterns
+- naming rules (`Res` suffix, no generic `res`)
