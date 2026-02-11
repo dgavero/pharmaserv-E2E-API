@@ -12,7 +12,7 @@ TEST_ENV= THREADS=4 TAGS= PROJECT= npx playwright test
 TEST_ENV=DEV THREADS=4 TAGS=PHARMA-160 PROJECT=api npx playwright test
 
 # E2E project only
-TEST_ENV=DEV THREADS=4 TAGS=samples PROJECT=e2e npx playwright test
+TEST_ENV=DEV THREADS=4 TAGS=merchant PROJECT=e2e npx playwright test
 
 # Multiple projects
 TEST_ENV=STG THREADS=8 TAGS=smoke|regression PROJECT=e2e,api npx playwright test
@@ -30,7 +30,7 @@ TEST_ENV=STG THREADS=8 TAGS=smoke|regression PROJECT=e2e,api npx playwright test
 This repo uses tokenized, case-insensitive tag matching.
 
 ```bash
-TAGS=samples npx playwright test
+TAGS=merchant npx playwright test
 TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 ```
 

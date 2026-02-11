@@ -31,7 +31,7 @@ TEST_ENV=DEV THREADS=4 TAGS= PROJECT= npx playwright test
 TEST_ENV=DEV THREADS=4 TAGS=PHARMA-160 PROJECT=api npx playwright test
 
 # E2E only
-TEST_ENV=DEV THREADS=4 TAGS=samples PROJECT=e2e npx playwright test
+TEST_ENV=DEV THREADS=4 TAGS=merchant PROJECT=e2e npx playwright test
 ```
 
 ## Core Docs

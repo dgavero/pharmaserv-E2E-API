@@ -17,21 +17,17 @@ const testEnv = (process.env.TEST_ENV || 'DEV').toUpperCase();
 let baseURL;
 if (testEnv === 'PROD') {
   baseURL = process.env.BASE_URL_PROD;
-} else if (testEnv === 'ORANGE') {
-  baseURL = process.env.BASE_URL_ORANGE;
-} else {
+} else if (testEnv === 'DEV') {
   baseURL = process.env.BASE_URL_DEV;
+} else {
+  throw new Error(`❌ Unsupported TEST_ENV=${testEnv}. Valid values: DEV, PROD`);
 }
 
 // 🔹 Fail fast if the URL is missing
 if (!baseURL) {
   throw new Error(
     `❌ Missing baseURL for TEST_ENV=${testEnv}. Please set ${
-      testEnv === 'PROD'
-        ? 'BASE_URL_PROD'
-        : testEnv === 'ORANGE'
-          ? 'BASE_URL_ORANGE'
-          : 'BASE_URL_DEV'
+      testEnv === 'PROD' ? 'BASE_URL_PROD' : 'BASE_URL_DEV'
     } in your .env`
   );
 }
