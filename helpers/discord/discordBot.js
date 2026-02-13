@@ -93,7 +93,15 @@ export function readRunMeta() {
  * Replace the header content with the final summary.
  * Uses the Gateway client (not REST) so it works even if we need richer capabilities later.
  */
-export async function appendSummary({ passed, failed, skipped, reportUrl, failedPharmaIds = [], projectName = null }) {
+export async function appendSummary({
+  passed,
+  failed,
+  skipped,
+  reportUrl,
+  traceIndexUrl,
+  failedPharmaIds = [],
+  projectName = null,
+}) {
   const meta = readRunMeta();
   if (!meta || !rest) return;
 
@@ -137,6 +145,9 @@ Tests completed ✅ 100% [${total}/${total}]
   // Embed link to message for the HTML Report
   if (reportUrl) {
     content += `\n\n🔗 Playwright HTML report is [here](${reportUrl})`;
+  }
+  if (traceIndexUrl) {
+    content += `\n🔎 Playwright trace index is [here](${traceIndexUrl})`;
   }
   const embeds = [];
 

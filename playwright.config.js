@@ -38,7 +38,13 @@ const threads = parseInt(process.env.THREADS || '4', 10); // Default to 4 thread
 
 // PROJECT selector via env (e.g., PROJECT=api or PROJECT=e2e,api). Empty/unset = run both.
 const allProjects = [
-  { name: 'e2e', testDir: './e2e/tests' },
+  {
+    name: 'e2e',
+    testDir: './e2e/tests',
+    use: {
+      trace: 'retain-on-failure',
+    },
+  },
   { name: 'api', testDir: './api/tests' },
 ];
 const projectEnv = (process.env.PROJECT || process.env.PROJECTS || '').trim();
