@@ -332,8 +332,13 @@ export async function safeInput(page, selector, text, { timeout = Timeouts.stand
     if (text) await page.keyboard.type(String(text), { delay });
     return true;
   } catch (error) {
-    setLastErrorForPage(page, error);
-    return false;
+    // Fallback path: when keystroke-based input fails, try direct fill.
+    try {
+      return await safeFill(page, selector, text, { timeout });
+    } catch (fallbackError) {
+      setLastErrorForPage(page, fallbackError);
+      return false;
+    }
   }
 }
 
@@ -369,6 +374,57 @@ export async function safeWaitForPageLoad(
 ) {
   try {
     await page.waitForURL(expectedUrl, { timeout, waitUntil });
+    return true;
+  } catch (error) {
+    setLastErrorForPage(page, error);
+    return false;
+  }
+}
+
+/** Fill input/textarea directly (faster path when key events are not required). */
+export async function safeFill(page, selector, text, { timeout = Timeouts.standard } = {}) {
+  try {
+    const loc = page.locator(selector);
+    await loc.waitFor({ state: 'visible', timeout });
+    await loc.fill(text == null ? '' : String(text), { timeout });
+    return true;
+  } catch (error) {
+    setLastErrorForPage(page, error);
+    return false;
+  }
+}
+
+/** Select an option from a native <select> element. */
+export async function safeSelectOption(page, selector, value, { timeout = Timeouts.standard } = {}) {
+  try {
+    const loc = page.locator(selector);
+    await loc.waitFor({ state: 'visible', timeout });
+    await loc.selectOption(value, { timeout });
+    return true;
+  } catch (error) {
+    setLastErrorForPage(page, error);
+    return false;
+  }
+}
+
+/** Upload one or more files into a file input element. */
+export async function safeUploadFile(page, selector, files, { timeout = Timeouts.standard } = {}) {
+  try {
+    const loc = page.locator(selector);
+    // File inputs are often hidden, so "attached" is a safer readiness check.
+    await loc.waitFor({ state: 'attached', timeout });
+    await loc.setInputFiles(files, { timeout });
+    return true;
+  } catch (error) {
+    setLastErrorForPage(page, error);
+    return false;
+  }
+}
+
+/** Wait until an element is hidden or removed from view. */
+export async function safeWaitForElementHidden(page, selector, { timeout = Timeouts.standard } = {}) {
+  try {
+    await page.locator(selector).waitFor({ state: 'hidden', timeout });
     return true;
   } catch (error) {
     setLastErrorForPage(page, error);

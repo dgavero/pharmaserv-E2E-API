@@ -4,6 +4,7 @@ import { test } from '../../../e2e/globalConfig.ui.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import {
   safeClick,
+  safeFill,
   safeInput,
   safeNavigateToUrl,
   safeWaitForPageLoad,
@@ -13,7 +14,7 @@ import {
 
 test.describe('Merchant Portal | Login', () => {
   test(
-    'MP-001 | Merchant Should be able to Login Successfully',
+    'E2E-1 | Merchant Should be able to Login Successfully',
     {
       tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal'],
     },
@@ -29,31 +30,31 @@ test.describe('Merchant Portal | Login', () => {
   );
 
   test(
-    'MP-002 | Merchant Should NOT be able login with incorrect credentials',
+    'E2E-2 | Merchant Should NOT be able login with incorrect credentials',
     { tag: ['@ui', '@merchant', '@login', '@negative', '@merchant-portal'] },
     async ({ page }) => {
       const sel = loadSelectors('merchant');
-      await page.goto('/');
+      const login = new MerchantPortalLoginPage(page);
+      await login.open();
 
-      if (!(await safeInput(page, getSelector(sel, 'Login.Username'), 'wronguser'))) {
-        markFailed('Failed to input invalid username');
+      if (!(await safeFill(page, getSelector(sel, 'Login.Username'), 'wronguser'))) {
+        markFailed('Failed to fill invalid username');
       }
 
-      if (!(await safeInput(page, getSelector(sel, 'Login.Password'), 'wrongpass'))) {
-        markFailed('Failed to input invalid password');
+      if (!(await safeFill(page, getSelector(sel, 'Login.Password'), 'wrongpass'))) {
+        markFailed('Failed to fill invalid password');
       }
 
       if (!(await safeClick(page, getSelector(sel, 'Login.Submit')))) {
         markFailed('Could not click login submit');
       }
 
-      const login = new MerchantPortalLoginPage(page);
       await login.assertFailedLogin();
     }
   );
 
   test(
-    'MP-003 | Merchant Should NOT be able login with empty credentials',
+    'E2E-3 | Merchant Should NOT be able login with empty credentials',
     {
       tag: ['@ui', '@merchant', '@login', '@negative', '@merchant-portal'],
     },
