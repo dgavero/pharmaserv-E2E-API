@@ -145,6 +145,8 @@ Tests completed ✅ 100% [${total}/${total}]
   // Embed link to message for the HTML Report
   if (reportUrl) {
     content += `\n\n🔗 Playwright HTML report is [here](${reportUrl})`;
+  } else {
+    content += `\n\nReport link unavailable (publish disabled or failed).`;
   }
   if (traceIndexUrl) {
     content += `\n🔎 Playwright trace index is [here](${traceIndexUrl})`;
