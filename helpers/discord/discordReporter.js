@@ -22,8 +22,8 @@ class DiscordReporter {
     this.total = 0; // set once at start (planned tests after filters)
     this.completed = 0; // incremented on each test end (pass/fail/skip)
 
-    // Track failed PHARMA IDs for rerun convenience.
-    this.failedPharmaIds = new Set();
+    // Track failed test IDs (e.g., PHARMA-123, E2E-2) for rerun convenience.
+    this.failedCaseIds = new Set();
   }
 
   /**
@@ -55,8 +55,8 @@ class DiscordReporter {
     else if (result.status === 'skipped') this.skipped += 1;
     else {
       this.failed += 1;
-      const matches = (test.title || '').match(/PHARMA-\d+/g) || [];
-      for (const id of matches) this.failedPharmaIds.add(id);
+      const matches = (test.title || '').match(/(?:PHARMA|E2E)-\d+/g) || [];
+      for (const id of matches) this.failedCaseIds.add(id);
       // Post compact API failure snippet (only for API project)
       const isApi = (test.parent?.project()?.name || '').toLowerCase() === 'api';
       if (isApi) {
@@ -107,7 +107,7 @@ class DiscordReporter {
        passed: this.passed,
        failed: this.failed,
        skipped: this.skipped,
-       failedPharmaIds: Array.from(this.failedPharmaIds),
+       failedCaseIds: Array.from(this.failedCaseIds),
        projectName: this.projectName,
        reportUrl, // let the bot render a direct link if available
        traceIndexUrl,

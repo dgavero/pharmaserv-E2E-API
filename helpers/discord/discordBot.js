@@ -99,7 +99,7 @@ export async function appendSummary({
   skipped,
   reportUrl,
   traceIndexUrl,
-  failedPharmaIds = [],
+  failedCaseIds = [],
   projectName = null,
 }) {
   const meta = readRunMeta();
@@ -117,7 +117,7 @@ Tests completed ✅ 100% [${total}/${total}]
   if ((failed || 0) === 0) {
     content += `\n\nYay. No failures! 🎉`;
   } else {
-    const uniqueIds = Array.from(new Set(failedPharmaIds)).sort((a, b) => {
+    const uniqueIds = Array.from(new Set(failedCaseIds)).sort((a, b) => {
       const na = parseInt(a.split('-')[1], 10);
       const nb = parseInt(b.split('-')[1], 10);
       if (Number.isNaN(na) || Number.isNaN(nb)) return a.localeCompare(b);
@@ -130,15 +130,14 @@ Tests completed ✅ 100% [${total}/${total}]
       const threads = process.env.THREADS || '4';
       const projectArg = projectName ? ` PROJECT=${projectName}` : '';
       const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}"${projectArg} npx playwright test`;
-      const baseUrl =
-        process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
+      const baseUrl = process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
       const rerunUrl = `${baseUrl}${encodeURIComponent(grep)}`;
 
       content += `\n\n🔁 Rerun the failures [here](${rerunUrl})
 🛠️ Rerun the failures manually:
 \`${grepCmd}\``;
     } else {
-      content += `\n\n❗ Failed tests found, but no PHARMA IDs were detected in titles.`;
+      content += `\n\n❗ Failed tests found, but no PHARMA-/E2E- IDs were detected in test titles.`;
     }
   }
 
@@ -256,8 +255,6 @@ export async function shutdownBot() {
  *    - Revisit this list once you approach ~200+ tests or see 429s / flaky counts.
  */
 
-
-
 // =============================================================
 // ========== API Specific Helpers (for test failure logs) =====
 // =============================================================
@@ -269,12 +266,7 @@ export async function sendAPIFailure({ title, where, snippet }) {
   const meta = readRunMeta();
   if (!meta || !rest || !meta.threadId) return; // bail if no thread yet
 
-  const content = [
-    `❌ **${title}**`,
-    '```',
-    (snippet || '').trim().slice(0, 1400),
-    '```',
-  ].join('\n');
+  const content = [`❌ **${title}**`, '```', (snippet || '').trim().slice(0, 1400), '```'].join('\n');
 
   await rest.post(Routes.channelMessages(meta.threadId), { body: { content } });
 }
