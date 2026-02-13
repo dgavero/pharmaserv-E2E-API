@@ -89,11 +89,32 @@ export function readRunMeta() {
   }
 }
 
+// Infer rerun project from failed ID patterns.
+// - E2E-only failures  -> project "e2e"
+// - PHARMA-only failures -> project "api"
+// - Mixed/unknown -> null (run both)
+function inferProjectFromFailedIds(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return null;
+  const allE2E = ids.every((id) => /^E2E-\d+$/i.test(id));
+  if (allE2E) return 'e2e';
+  const allPharma = ids.every((id) => /^PHARMA-\d+$/i.test(id));
+  if (allPharma) return 'api';
+  return null;
+}
+
 /**
  * Replace the header content with the final summary.
  * Uses the Gateway client (not REST) so it works even if we need richer capabilities later.
  */
-export async function appendSummary({ passed, failed, skipped, reportUrl, failedPharmaIds = [], projectName = null }) {
+export async function appendSummary({
+  passed,
+  failed,
+  skipped,
+  reportUrl,
+  traceIndexUrl,
+  failedCaseIds = [],
+  projectName = null,
+}) {
   const meta = readRunMeta();
   if (!meta || !rest) return;
 
@@ -109,7 +130,7 @@ Tests completed ✅ 100% [${total}/${total}]
   if ((failed || 0) === 0) {
     content += `\n\nYay. No failures! 🎉`;
   } else {
-    const uniqueIds = Array.from(new Set(failedPharmaIds)).sort((a, b) => {
+    const uniqueIds = Array.from(new Set(failedCaseIds)).sort((a, b) => {
       const na = parseInt(a.split('-')[1], 10);
       const nb = parseInt(b.split('-')[1], 10);
       if (Number.isNaN(na) || Number.isNaN(nb)) return a.localeCompare(b);
@@ -120,23 +141,29 @@ Tests completed ✅ 100% [${total}/${total}]
       const grep = uniqueIds.join('|');
       const testEnv = process.env.TEST_ENV || 'DEV';
       const threads = process.env.THREADS || '4';
-      const projectArg = projectName ? ` PROJECT=${projectName}` : '';
+      const inferredProject = inferProjectFromFailedIds(uniqueIds);
+      const rerunProject = inferredProject || projectName || null;
+      const projectArg = rerunProject ? ` PROJECT=${rerunProject}` : '';
       const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}"${projectArg} npx playwright test`;
-      const baseUrl =
-        process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
+      const baseUrl = process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
       const rerunUrl = `${baseUrl}${encodeURIComponent(grep)}`;
 
       content += `\n\n🔁 Rerun the failures [here](${rerunUrl})
 🛠️ Rerun the failures manually:
 \`${grepCmd}\``;
     } else {
-      content += `\n\n❗ Failed tests found, but no PHARMA IDs were detected in titles.`;
+      content += `\n\n❗ Failed tests found, but no PHARMA-/E2E- IDs were detected in test titles.`;
     }
   }
 
   // Embed link to message for the HTML Report
   if (reportUrl) {
     content += `\n\n🔗 Playwright HTML report is [here](${reportUrl})`;
+  } else {
+    content += `\n\nReport link unavailable (publish disabled or failed).`;
+  }
+  if (traceIndexUrl) {
+    content += `\n🔎 Playwright trace index is [here](${traceIndexUrl})`;
   }
   const embeds = [];
 
@@ -243,8 +270,6 @@ export async function shutdownBot() {
  *    - Revisit this list once you approach ~200+ tests or see 429s / flaky counts.
  */
 
-
-
 // =============================================================
 // ========== API Specific Helpers (for test failure logs) =====
 // =============================================================
@@ -256,12 +281,7 @@ export async function sendAPIFailure({ title, where, snippet }) {
   const meta = readRunMeta();
   if (!meta || !rest || !meta.threadId) return; // bail if no thread yet
 
-  const content = [
-    `❌ **${title}**`,
-    '```',
-    (snippet || '').trim().slice(0, 1400),
-    '```',
-  ].join('\n');
+  const content = [`❌ **${title}**`, '```', (snippet || '').trim().slice(0, 1400), '```'].join('\n');
 
   await rest.post(Routes.channelMessages(meta.threadId), { body: { content } });
 }

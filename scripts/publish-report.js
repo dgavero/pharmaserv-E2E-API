@@ -6,9 +6,11 @@ const fs = require('fs');
 // === CONFIG ===
 const REPORTS_DIR = path.resolve('reports'); // local folder that accumulates all runs
 const SOURCE_DIR = path.resolve('.playwright-report'); // Playwright output
+const TEST_RESULTS_DIR = path.resolve('test-results'); // Playwright test artifacts (trace.zip on failures)
 const KEEP_DAYS = 15; // retention window
 const REPO = 'dgavero/pharmaserv-E2E-API';
 const BASE_URL = `https://${REPO.split('/')[0]}.github.io/${REPO.split('/')[1]}/reports`;
+const TRACE_VIEWER_BASE = 'https://trace.playwright.dev/?trace=';
 
 // === HELPERS ===
 function timestampFolderName() {
@@ -30,6 +32,104 @@ function pruneOldReports() {
   }
 }
 
+function walkDir(rootDir) {
+  const out = [];
+  if (!fs.existsSync(rootDir)) return out;
+  const stack = [rootDir];
+  while (stack.length) {
+    const curr = stack.pop();
+    const entries = fs.readdirSync(curr, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(curr, entry.name);
+      if (entry.isDirectory()) stack.push(full);
+      else out.push(full);
+    }
+  }
+  return out;
+}
+
+function safeSlug(input) {
+  const raw = String(input || '').toLowerCase();
+  return (
+    raw
+      .replace(/[^a-z0-9-_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 90) || 'trace'
+  );
+}
+
+function escapeHtml(input) {
+  return String(input)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function prepareTraceArtifacts(destDir, folderName) {
+  const traceZips = walkDir(TEST_RESULTS_DIR).filter((file) => path.basename(file) === 'trace.zip');
+  if (traceZips.length === 0) return null;
+
+  const tracesDir = path.join(destDir, 'traces');
+  const filesDir = path.join(tracesDir, 'files');
+  fs.mkdirSync(filesDir, { recursive: true });
+
+  const items = traceZips.map((srcPath, idx) => {
+    const relCaseDir = path.relative(TEST_RESULTS_DIR, path.dirname(srcPath)) || 'root';
+    const name = `${String(idx + 1).padStart(2, '0')}-${safeSlug(relCaseDir)}.zip`;
+    const destPath = path.join(filesDir, name);
+    fs.copyFileSync(srcPath, destPath);
+
+    const zipUrl = `${BASE_URL}/${folderName}/traces/files/${name}`;
+    const viewerUrl = `${TRACE_VIEWER_BASE}${encodeURIComponent(zipUrl)}`;
+
+    return {
+      name,
+      relCaseDir,
+      zipUrl,
+      viewerUrl,
+    };
+  });
+
+  const listItems = items
+    .map(
+      (item) => `<li>
+  <strong>${escapeHtml(item.relCaseDir)}</strong><br/>
+  <a href="${item.viewerUrl}">Open in Playwright Trace Viewer</a> |
+  <a href="${item.zipUrl}">Download trace.zip</a>
+</li>`
+    )
+    .join('\n');
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Playwright Traces - ${folderName}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 24px; line-height: 1.5; }
+    h1 { margin-bottom: 6px; }
+    p { color: #444; margin-top: 0; }
+    li { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Playwright Traces</h1>
+  <p>Run: <code>${escapeHtml(folderName)}</code></p>
+  <ul>
+    ${listItems}
+  </ul>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join(tracesDir, 'index.html'), html, 'utf-8');
+  console.log(`🧵 Prepared ${items.length} trace file(s) in ${tracesDir}`);
+  return `${BASE_URL}/${folderName}/traces/index.html`;
+}
+
 // === MAIN ===
 (async () => {
   try {
@@ -41,6 +141,7 @@ function pruneOldReports() {
     const destDir = path.join(REPORTS_DIR, folderName);
     fs.cpSync(SOURCE_DIR, destDir, { recursive: true });
     console.log(`📦 Copied report to ${destDir}`);
+    const traceIndexUrl = prepareTraceArtifacts(destDir, folderName);
 
     // 3) Prune old runs
     pruneOldReports();
@@ -69,6 +170,9 @@ function pruneOldReports() {
           console.log(`✅ Report published: ${url}`);
           // will be used to parse the url and pass to discord reporter
           console.log(`REPORT_URL=${url}`);
+          if (traceIndexUrl) {
+            console.log(`TRACE_INDEX_URL=${traceIndexUrl}`);
+          }
         }
       }
     );

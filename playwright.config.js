@@ -34,11 +34,22 @@ if (!baseURL) {
 
 // Optional filters from env
 const tags = process.env.TAGS || ''; // e.g., "smoke|samples"
+const normalizedTags = tags
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .join('|'); // supports comma-separated input, keeps regex OR behavior
 const threads = parseInt(process.env.THREADS || '4', 10); // Default to 4 threads
 
 // PROJECT selector via env (e.g., PROJECT=api or PROJECT=e2e,api). Empty/unset = run both.
 const allProjects = [
-  { name: 'e2e', testDir: './e2e/tests' },
+  {
+    name: 'e2e',
+    testDir: './e2e/tests',
+    use: {
+      trace: 'retain-on-failure',
+    },
+  },
   { name: 'api', testDir: './api/tests' },
 ];
 const projectEnv = (process.env.PROJECT || process.env.PROJECTS || '').trim();
@@ -86,5 +97,5 @@ export default defineConfig({
   // - tolerates @ (optional)
   // - matches whole tokens only (no "smoke1" when TAGS=smoke)
   // - supports OR patterns, e.g., TAGS='smoke|regression'
-  grep: tags ? new RegExp(`(^|\\s)@?(?:${tags})(?=\\s|$)`, 'i') : undefined,
+  grep: normalizedTags ? new RegExp(`(^|\\s)@?(?:${normalizedTags})(?=\\s|$)`, 'i') : undefined,
 });
