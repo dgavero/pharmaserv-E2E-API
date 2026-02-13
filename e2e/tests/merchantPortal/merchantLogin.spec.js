@@ -7,6 +7,7 @@ import {
   safeFill,
   safeInput,
   safeNavigateToUrl,
+  safeOpenNewContextPage,
   safeWaitForPageLoad,
   safeWaitForElementVisible,
   getLastError,
@@ -65,6 +66,32 @@ test.describe('Merchant Portal | Login', () => {
       await login.open();
       await login.login('', '');
       await login.assertFailedLogin();
+    }
+  );
+
+  test(
+    'E2E-4 | Merchant Can Re-Login After Opening A Fresh Context',
+    {
+      tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal'],
+    },
+    async ({ page, browser }) => {
+      const firstLogin = new MerchantPortalLoginPage(page);
+
+      await firstLogin.open();
+      await firstLogin.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await firstLogin.assertSuccessLogin();
+
+      await page.waitForTimeout(1000);
+      console.log('closing browser to open a new one');
+
+      const opened = await safeOpenNewContextPage(browser, '/login');
+      if (!opened) {
+        markFailed(`Failed to open fresh context for second login: ${getLastError(page)}`);
+      }
+
+      const secondLogin = new MerchantPortalLoginPage(opened.page);
+      await secondLogin.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await secondLogin.assertSuccessLogin();
     }
   );
 });

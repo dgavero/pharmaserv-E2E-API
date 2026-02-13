@@ -431,3 +431,33 @@ export async function safeWaitForElementHidden(page, selector, { timeout = Timeo
     return false;
   }
 }
+
+/**
+ * Close the currently tracked context, then open a fresh context/page and navigate to URL.
+ * Returns { context, page } on success, or null on failure.
+ */
+export async function safeOpenNewContextPage(
+  browser,
+  url,
+  { contextOptions = {}, timeout = Timeouts.extraLong, waitUntil = 'load' } = {}
+) {
+  let previousPage = currentPage;
+  let nextPage = null;
+  try {
+    // Close current tracked context first to ensure a clean session boundary.
+    if (previousPage && !previousPage.isClosed()) {
+      await previousPage.context().close();
+      clearCurrentPage();
+    }
+
+    const context = await browser.newContext(contextOptions);
+    nextPage = await context.newPage();
+    await nextPage.goto(url, { timeout, waitUntil });
+    setCurrentPage(nextPage);
+    return { context, page: nextPage };
+  } catch (error) {
+    const errorPage = nextPage || previousPage;
+    if (errorPage) setLastErrorForPage(errorPage, error);
+    return null;
+  }
+}
