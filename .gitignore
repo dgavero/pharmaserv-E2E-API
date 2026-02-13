@@ -16,6 +16,7 @@ blob-report/
 trace.zip
 screenshots/
 reports/
+postmanCollections/
 
 # Discord runtime state
 .discord-run.json
