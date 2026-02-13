@@ -19,3 +19,11 @@ export const GET_FAVORITE_MEDICINE_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const REMOVE_FAVORITE_MEDICINE_QUERY = /* GraphQL */ `
+  mutation ($patientId: ID!, $medicineId: ID!) {
+    patient {
+      removeFavoriteMedicine(patientId: $patientId, medicineId: $medicineId)
+    }
+  }
+`;
