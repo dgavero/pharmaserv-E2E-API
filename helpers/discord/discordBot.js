@@ -89,6 +89,19 @@ export function readRunMeta() {
   }
 }
 
+// Infer rerun project from failed ID patterns.
+// - E2E-only failures  -> project "e2e"
+// - PHARMA-only failures -> project "api"
+// - Mixed/unknown -> null (run both)
+function inferProjectFromFailedIds(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return null;
+  const allE2E = ids.every((id) => /^E2E-\d+$/i.test(id));
+  if (allE2E) return 'e2e';
+  const allPharma = ids.every((id) => /^PHARMA-\d+$/i.test(id));
+  if (allPharma) return 'api';
+  return null;
+}
+
 /**
  * Replace the header content with the final summary.
  * Uses the Gateway client (not REST) so it works even if we need richer capabilities later.
@@ -128,7 +141,9 @@ Tests completed ✅ 100% [${total}/${total}]
       const grep = uniqueIds.join('|');
       const testEnv = process.env.TEST_ENV || 'DEV';
       const threads = process.env.THREADS || '4';
-      const projectArg = projectName ? ` PROJECT=${projectName}` : '';
+      const inferredProject = inferProjectFromFailedIds(uniqueIds);
+      const rerunProject = inferredProject || projectName || null;
+      const projectArg = rerunProject ? ` PROJECT=${rerunProject}` : '';
       const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}"${projectArg} npx playwright test`;
       const baseUrl = process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
       const rerunUrl = `${baseUrl}${encodeURIComponent(grep)}`;
