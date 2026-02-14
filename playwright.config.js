@@ -40,6 +40,22 @@ const normalizedTags = tags
   .filter(Boolean)
   .join('|'); // supports comma-separated input, keeps regex OR behavior
 const threads = parseInt(process.env.THREADS || '4', 10); // Default to 4 threads
+const isCI = String(process.env.CI || '').toLowerCase() === 'true';
+
+function parseHeadlessOverride(raw) {
+  if (!raw) return null;
+  const normalized = String(raw).trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return null;
+}
+
+// Default behavior:
+// - CI: headless=true
+// - local: headless=false
+// You can intentionally override with HEADLESS=true/false.
+const headlessOverride = parseHeadlessOverride(process.env.HEADLESS);
+const headless = headlessOverride ?? isCI;
 
 // PROJECT selector via env (e.g., PROJECT=api or PROJECT=e2e,api). Empty/unset = run both.
 const allProjects = [
@@ -89,7 +105,7 @@ export default defineConfig({
   ],
   use: {
     baseURL, // ✅ Dynamic baseURL based on TEST_ENV
-    headless: false, // Always run headless in CI
+    headless,
   },
   workers: threads, // Concurrency controlled by THREADS env
 
