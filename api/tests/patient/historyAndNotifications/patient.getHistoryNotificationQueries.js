@@ -82,3 +82,23 @@ export const SEEN_ALL_NOTIF_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const SEEN_NOTIFICATION_QUERY = /* GraphQL */ `
+  mutation ($notificationId: ID!) {
+    patient {
+      notification {
+        seen(notificationId: $notificationId)
+      }
+    }
+  }
+`;
+
+export const REMOVE_NOTIFICATION_QUERY = /* GraphQL */ `
+  mutation ($notificationId: ID!) {
+    patient {
+      notification {
+        remove(notificationId: $notificationId)
+      }
+    }
+  }
+`;
