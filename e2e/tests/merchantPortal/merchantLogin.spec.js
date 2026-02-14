@@ -23,8 +23,6 @@ test.describe('Merchant Portal | Login', () => {
       const login = new MerchantPortalLoginPage(page);
 
       await login.open();
-      console.log('Logging in with merchant user:', process.env.MERCHANT_USERNAME);
-      console.log('Using merchant password:', process.env.MERCHANT_PASSWORD);
       await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
       await login.assertSuccessLogin();
     }
