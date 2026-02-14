@@ -42,13 +42,21 @@ const GET_RIDER_MUTATION = /* GraphQL */ `
   }
 `;
 
-const GET_PAGED_RIDERS_QUERY = `
-  query ($filter: FilterRequest!) {
+const GET_PAGED_RIDERS_QUERY = /* GraphQL */ `
+  query ($filter: RiderFilterRequest!) {
     administrator {
       rider {
         pagedRiders(filter: $filter) {
-          page { totalSize }
-          items { id firstName lastName status }
+          page {
+            totalSize
+          }
+          items {
+            id
+            firstName
+            lastName
+            username
+            status
+          }
         }
       }
     }
