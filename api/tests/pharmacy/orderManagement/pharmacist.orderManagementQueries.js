@@ -174,3 +174,26 @@ export const GET_DISCOUNT_CARD_BY_ID_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const FIND_NEAREST_BRANCHES_QUERY = /* GraphQL */ `
+  query ($finder: FindBranchRequest!) {
+    pharmacy {
+      branch {
+        nearestBranches(finder: $finder) {
+          id
+          pharmacyName
+          name
+          address
+          city
+          province
+          zipCode
+          onboarded
+          openingTime
+          closingTime
+          status
+          distance
+        }
+      }
+    }
+  }
+`;
