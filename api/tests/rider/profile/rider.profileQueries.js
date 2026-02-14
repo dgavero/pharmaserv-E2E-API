@@ -56,3 +56,29 @@ export const RIDER_SET_SHIFT_END_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const RIDER_GET_RATING_SUMMARY_QUERY = /* GraphQL */ `
+  query {
+    rider {
+      ratingSummary {
+        five
+        four
+        three
+        two
+        one
+        average
+      }
+    }
+  }
+`;
+
+export const RIDER_GET_DOCUMENTS_QUERY = /* GraphQL */ `
+  query {
+    rider {
+      documents {
+        type
+        photo
+      }
+    }
+  }
+`;

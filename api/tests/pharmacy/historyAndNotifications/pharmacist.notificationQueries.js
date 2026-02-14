@@ -51,3 +51,23 @@ export const PHARMACIST_SEEN_ALL_NOTIFICATIONS_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const PHARMACIST_SEEN_NOTIFICATION_QUERY = /* GraphQL */ `
+  mutation ($notificationId: ID!) {
+    pharmacy {
+      notification {
+        seen(notificationId: $notificationId)
+      }
+    }
+  }
+`;
+
+export const PHARMACIST_REMOVE_NOTIFICATION_QUERY = /* GraphQL */ `
+  mutation ($notificationId: ID!) {
+    pharmacy {
+      notification {
+        remove(notificationId: $notificationId)
+      }
+    }
+  }
+`;

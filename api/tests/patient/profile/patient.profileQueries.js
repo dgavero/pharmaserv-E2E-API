@@ -78,3 +78,30 @@ export const UPDATE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const SET_DEFAULT_ADDRESS_QUERY = /* GraphQL */ `
+  mutation ($patientId: ID!, $addressId: ID!) {
+    patient {
+      address {
+        setDefault(patientId: $patientId, addressId: $addressId)
+      }
+    }
+  }
+`;
+
+export const GET_DEFAULT_ADDRESS_QUERY = /* GraphQL */ `
+  query ($patientId: ID!) {
+    patient {
+      defaultAddress(patientId: $patientId) {
+        id
+        addressName
+        address
+        label
+        landmark
+        deliveryInstructions
+        lat
+        lng
+      }
+    }
+  }
+`;

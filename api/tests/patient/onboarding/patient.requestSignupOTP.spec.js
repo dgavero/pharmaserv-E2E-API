@@ -1,9 +1,8 @@
 import { randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { REQ_OTP_QUERY } from '../authentication/patient.authenticationQueries.js';
+import { REQUEST_SIGNUP_OTP_QUERY } from './patient.onboardingQueries.js';
 import {
   safeGraphQL,
-  bearer,
   getGQLError,
   NOAUTH_CLASSIFICATIONS,
   NOAUTH_CODES,
@@ -23,7 +22,7 @@ test.describe('GraphQL: Patient Request Signup OTP', () => {
     async ({ api, noAuth }) => {
       const phoneNumber = buildPhoneNumberInput();
       const requestSignupOTPRes = await safeGraphQL(api, {
-        query: REQ_OTP_QUERY,
+        query: REQUEST_SIGNUP_OTP_QUERY,
         variables: { phoneNumber: phoneNumber },
         headers: noAuth,
       });
@@ -46,7 +45,7 @@ test.describe('GraphQL: Patient Request Signup OTP', () => {
     async ({ api, noAuth }) => {
       const phoneNumber = '639123'; // invalid phone number
       const requestSignupOTPResNoAuth = await safeGraphQL(api, {
-        query: REQ_OTP_QUERY,
+        query: REQUEST_SIGNUP_OTP_QUERY,
         variables: { phoneNumber: phoneNumber },
         headers: noAuth,
       });

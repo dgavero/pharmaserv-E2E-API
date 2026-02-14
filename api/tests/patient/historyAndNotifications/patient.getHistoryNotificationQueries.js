@@ -61,14 +61,7 @@ export const GET_NOTIFICATIONS_QUERY = /* GraphQL */ `
 export const GET_NOTIFICATIONS_COUNT_QUERY = /* GraphQL */ `
   query {
     patient {
-      notifications {
-        id
-        type
-        title
-        body
-        seen
-        createdAt
-      }
+      notificationCount
     }
   }
 `;
@@ -78,6 +71,26 @@ export const SEEN_ALL_NOTIF_QUERY = /* GraphQL */ `
     patient {
       notification {
         seenAll
+      }
+    }
+  }
+`;
+
+export const SEEN_NOTIFICATION_QUERY = /* GraphQL */ `
+  mutation ($notificationId: ID!) {
+    patient {
+      notification {
+        seen(notificationId: $notificationId)
+      }
+    }
+  }
+`;
+
+export const REMOVE_NOTIFICATION_QUERY = /* GraphQL */ `
+  mutation ($notificationId: ID!) {
+    patient {
+      notification {
+        remove(notificationId: $notificationId)
       }
     }
   }

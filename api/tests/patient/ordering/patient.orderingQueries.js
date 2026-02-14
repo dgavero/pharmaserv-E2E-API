@@ -121,3 +121,37 @@ export const SUBMIT_ORDER_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const FIND_NEAREST_BRANCHES_QUERY = /* GraphQL */ `
+  query ($finder: FindBranchRequest!) {
+    patient {
+      nearestBranches(finder: $finder) {
+        id
+        pharmacyName
+        name
+        address
+        city
+        province
+        zipCode
+        onboarded
+        medExCode
+        openingTime
+        closingTime
+        status
+        distance
+      }
+    }
+  }
+`;
+
+export const FIND_MEDICINES_QUERY = /* GraphQL */ `
+  query ($query: String!) {
+    medicines(query: $query) {
+      id
+      brand
+      strength
+      genericName
+      manufacturer
+    }
+  }
+`;
