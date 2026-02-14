@@ -70,6 +70,9 @@ test.describe('GraphQL: Notification Details Patient', () => {
       });
 
       expect(getNotificationsCountRes.ok).toBe(true);
+      const notificationCountNode = getNotificationsCountRes.body?.data?.patient?.notificationCount;
+      expect.soft(typeof notificationCountNode).toBe('number');
+      expect.soft(notificationCountNode).toBeGreaterThanOrEqual(0);
     }
   );
 

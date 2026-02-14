@@ -61,14 +61,7 @@ export const GET_NOTIFICATIONS_QUERY = /* GraphQL */ `
 export const GET_NOTIFICATIONS_COUNT_QUERY = /* GraphQL */ `
   query {
     patient {
-      notifications {
-        id
-        type
-        title
-        body
-        seen
-        createdAt
-      }
+      notificationCount
     }
   }
 `;
