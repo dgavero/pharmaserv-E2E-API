@@ -87,7 +87,14 @@ class DiscordReporter {
     // - Passes link into appendSummary so it appears in final Discord message
      let reportUrl = null;
      let traceIndexUrl = null;
-     if (process.env.REPORT_PUBLISH !== '0') {
+     const isCI = String(process.env.CI || '').toLowerCase() === 'true';
+     const reportPublishRaw = process.env.REPORT_PUBLISH;
+     const shouldPublish =
+       reportPublishRaw == null || reportPublishRaw === ''
+         ? isCI
+         : reportPublishRaw !== '0';
+
+     if (shouldPublish) {
        try {
          const res = spawnSync(process.execPath, ['scripts/publish-report.js'], { encoding: 'utf-8' });
          const out = (res.stdout || '') + (res.stderr || '');

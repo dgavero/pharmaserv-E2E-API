@@ -7,6 +7,9 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: tests-${{ github.ref }}
   cancel-in-progress: true
@@ -66,3 +69,4 @@ jobs:
         with:
           name: api-playwright-report
           path: .playwright-report
+          include-hidden-files: true
