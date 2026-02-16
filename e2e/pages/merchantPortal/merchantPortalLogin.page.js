@@ -1,4 +1,4 @@
-import { markFailed, markPassed } from '../../helpers/testUtilsUI.js';
+import { markFailed } from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import {
   safeClick,
