@@ -1,7 +1,8 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { safeGraphQL, bearer, loginAndGetTokens, pharmacistLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
 import { buildDeliverXDeclinedOrderInput } from './deliverx.testData.js';
-import { SUBMIT_DELIVERX_ORDER_QUERY, DECLINE_ORDER_QUERY } from './deliverx.workflowQueries.js';
+import { PATIENT_SUBMIT_ORDER_QUERY } from '../shared/queries/patient.queries.js';
+import { PHARMACY_DECLINE_ORDER_QUERY } from '../shared/queries/pharmacist.queries.js';
 
 test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
   test(
@@ -19,7 +20,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
 
       // Submit DeliverX order as patient.
       const submitOrderRes = await safeGraphQL(api, {
-        query: SUBMIT_DELIVERX_ORDER_QUERY,
+        query: PATIENT_SUBMIT_ORDER_QUERY,
         variables: { order: buildDeliverXDeclinedOrderInput() },
         headers: bearer(patientAccessToken),
       });
@@ -42,7 +43,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
 
       // Decline the same order as pharmacist.
       const declineOrderRes = await safeGraphQL(api, {
-        query: DECLINE_ORDER_QUERY,
+        query: PHARMACY_DECLINE_ORDER_QUERY,
         variables: {
           orderId,
           reason: 'Declined via workflow test PHARMA-333',
