@@ -68,6 +68,24 @@ function escapeHtml(input) {
     .replace(/'/g, '&#39;');
 }
 
+function buildPublishOptions(folderName) {
+  const options = {
+    branch: 'gh-pages',
+    dest: 'reports', // put contents under /reports on the branch
+    message: `publish: ${folderName}`,
+    dotfiles: true,
+    add: false, // overwrite the 'reports' folder each time (we already manage retention)
+  };
+
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || process.env.GH_PAGES_TOKEN;
+  const isCI = String(process.env.CI || '').toLowerCase() === 'true';
+  if (isCI && token) {
+    // Ensure CI pushes via token even when git credentials are not propagated
+    options.repo = `https://x-access-token:${token}@github.com/${REPO}.git`;
+  }
+  return options;
+}
+
 function prepareTraceArtifacts(destDir, folderName) {
   const traceZips = walkDir(TEST_RESULTS_DIR).filter((file) => path.basename(file) === 'trace.zip');
   if (traceZips.length === 0) return null;
@@ -154,13 +172,7 @@ function prepareTraceArtifacts(destDir, folderName) {
     // 5) Publish the local REPORTS_DIR, but place it under 'reports' on gh-pages
     ghpages.publish(
       REPORTS_DIR,
-      {
-        branch: 'gh-pages',
-        dest: 'reports', // <-- put contents under /reports on the branch
-        message: `publish: ${folderName}`,
-        dotfiles: true,
-        add: false, // overwrite the 'reports' folder each time (we already manage retention)
-      },
+      buildPublishOptions(folderName),
       (err) => {
         if (err) {
           console.error('❌ Report publish failed:', err);

@@ -10,6 +10,13 @@ import { spawnSync } from 'node:child_process';
 import { appendSummary, shutdownBot, editRunningHeader } from './discordBot.js';
 import { flushApiReports, extractApiFailureSnippet, enqueueApiFailure } from '../../api/helpers/testUtilsAPI.js';
 
+function sanitizePublishLogs(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/(x-access-token:)[^@]+@/gi, '$1***@')
+    .replace(/(ghp_[a-z0-9_]+)/gi, '***')
+    .replace(/(github_pat_[a-z0-9_]+)/gi, '***');
+}
 
 class DiscordReporter {
   constructor() {
@@ -97,13 +104,22 @@ class DiscordReporter {
      if (shouldPublish) {
        try {
          const res = spawnSync(process.execPath, ['scripts/publish-report.js'], { encoding: 'utf-8' });
-         const out = (res.stdout || '') + (res.stderr || '');
+         const out = sanitizePublishLogs((res.stdout || '') + (res.stderr || ''));
          const m = out.match(/REPORT_URL=(\S+)/);
          if (m) reportUrl = m[1];
          const t = out.match(/TRACE_INDEX_URL=(\S+)/);
          if (t) traceIndexUrl = t[1];
+         if (res.status !== 0 || !reportUrl) {
+           console.error(
+             `[DiscordReporter] report publish issue (status=${res.status}, signal=${res.signal || 'none'})`
+           );
+           if (out.trim()) {
+             console.error('[DiscordReporter] publish logs:\n' + out.trim());
+           }
+         }
        } catch (_) {
          // ignore; we'll just fall back to local path in the summary
+         console.error('[DiscordReporter] publish-report.js threw unexpectedly');
        }
      }
 
