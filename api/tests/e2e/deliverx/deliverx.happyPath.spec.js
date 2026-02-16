@@ -7,7 +7,10 @@ import {
   adminLoginAndGetTokens,
   riderLoginAndGetTokens,
 } from '../../../helpers/testUtilsAPI.js';
-import { buildDeliverXDeclinedOrderInput, buildDeliverXAttachmentNoPrescriptionOrderInput } from './deliverx.testData.js';
+import {
+  buildDeliverXDeclinedOrderInput,
+  buildDeliverXAttachmentNoPrescriptionOrderInput,
+} from './deliverx.testData.js';
 import {
   PATIENT_SUBMIT_ORDER_QUERY,
   PATIENT_ACCEPT_QUOTE_QUERY,
@@ -42,9 +45,11 @@ import {
   acceptOrderAsPharmacist,
   addPrescriptionItemAsPharmacist,
   replaceMedicineAsPharmacist,
+  updatePricesAsPharmacist,
   sendQuoteAsPharmacist,
   prepareOrderAsPharmacist,
   setOrderForPickupAsPharmacist,
+  confirmPickupAsPharmacist,
 } from '../shared/steps/pharmacist.steps.js';
 import { loginAdmin, confirmPaymentAsAdmin, assignRiderToOrderAsAdmin } from '../shared/steps/admin.steps.js';
 import {
@@ -61,7 +66,17 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
   test(
     'PHARMA-334 | DeliverX happy path from patient order to rider completion and patient rating',
     {
-      tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@rider', '@admin', '@positive', '@pharma-334'],
+      tag: [
+        '@api',
+        '@workflow',
+        '@deliverx',
+        '@patient',
+        '@pharmacist',
+        '@rider',
+        '@admin',
+        '@positive',
+        '@pharma-334',
+      ],
     },
     async ({ api }) => {
       // Login as patient.
@@ -287,7 +302,17 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
   test(
     'PHARMA-335 | DeliverX with attachment and no prescription items using shared role steps',
     {
-      tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@rider', '@admin', '@positive', '@pharma-335'],
+      tag: [
+        '@api',
+        '@workflow',
+        '@deliverx',
+        '@patient',
+        '@pharmacist',
+        '@rider',
+        '@admin',
+        '@positive',
+        '@pharma-335',
+      ],
     },
     async ({ api }) => {
       // Login as patient.
@@ -405,6 +430,67 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
         rating: 4,
+      });
+    }
+  );
+
+  test(
+    'PHARMA-336 | DeliverX pickup order fulfillment happy path',
+    {
+      tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@admin', '@positive', '@pharma-336'],
+    },
+    async ({ api }) => {
+      // Login as patient.
+      const { patientAccessToken } = await loginPatient(api);
+      // Submit order as patient.
+      const { orderId } = await submitOrderAsPatient(api, {
+        patientAccessToken,
+        order: buildDeliverXDeclinedOrderInput(),
+      });
+
+      // Login as pharmacist.
+      const { pharmacistAccessToken } = await loginPharmacist(api);
+      // Accept order as pharmacist.
+      await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+      // Update prices as pharmacist.
+      await updatePricesAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prices: [
+          { medicineId: 1, quantity: 1, unitPrice: 10 },
+          { medicineId: 2, quantity: 1, unitPrice: 12 },
+        ],
+      });
+      // Send quote as pharmacist.
+      await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
+
+      // Accept quote as patient.
+      await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
+      // Pay order as patient (pickup mode).
+      await payOrderAsPatient(api, {
+        patientAccessToken,
+        orderId,
+        proof: {
+          fulfillmentMode: 'PICKUP',
+          photo: 'pp-123456-8888-5643.png',
+        },
+      });
+
+      // Login as rider admin.
+      const { adminAccessToken } = await loginAdmin(api);
+      // Confirm payment as rider admin.
+      await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
+
+      // Prepare order as pharmacist.
+      await prepareOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+      // Set order for pickup as pharmacist.
+      const { patientQR } = await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken, orderId });
+      expect(patientQR, 'Missing patientQR from setForPickup response').toBeTruthy();
+      // Confirm pickup as pharmacist.
+      await confirmPickupAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        qrCode: patientQR,
       });
     }
   );

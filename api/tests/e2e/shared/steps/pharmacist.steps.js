@@ -8,6 +8,7 @@ import {
   PHARMACY_SEND_QUOTE_QUERY,
   PHARMACY_PREPARE_ORDER_QUERY,
   PHARMACY_SET_FOR_PICKUP_QUERY,
+  PHARMACY_CONFIRM_PICKUP_QUERY,
 } from '../queries/pharmacist.queries.js';
 
 export async function loginPharmacist(api) {
@@ -124,4 +125,16 @@ export async function setOrderForPickupAsPharmacist(api, { pharmacistAccessToken
   });
   expect(setForPickupRes.ok, setForPickupRes.error || 'Pharmacist set for pickup failed').toBe(true);
   expect(setForPickupRes.body?.data?.pharmacy?.order?.setForPickup?.id).toBe(orderId);
+  const patientQR = setForPickupRes.body?.data?.pharmacy?.order?.setForPickup?.legs?.[0]?.patientQR;
+  return { patientQR };
+}
+
+export async function confirmPickupAsPharmacist(api, { pharmacistAccessToken, orderId, qrCode }) {
+  const confirmPickupRes = await safeGraphQL(api, {
+    query: PHARMACY_CONFIRM_PICKUP_QUERY,
+    variables: { orderId, qrCode },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(confirmPickupRes.ok, confirmPickupRes.error || 'Pharmacist confirm pickup failed').toBe(true);
+  expect(confirmPickupRes.body?.data?.pharmacy?.order?.confirmPickup?.id).toBe(orderId);
 }

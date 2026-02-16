@@ -119,6 +119,23 @@ export const PHARMACY_SET_FOR_PICKUP_QUERY = /* GraphQL */ `
           id
           status
           legs {
+            patientQR
+            status
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const PHARMACY_CONFIRM_PICKUP_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $qrCode: String!) {
+    pharmacy {
+      order {
+        confirmPickup(orderId: $orderId, qrCode: $qrCode) {
+          id
+          status
+          legs {
             status
           }
         }

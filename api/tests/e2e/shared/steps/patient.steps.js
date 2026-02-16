@@ -40,12 +40,12 @@ export async function acceptQuoteAsPatient(api, { patientAccessToken, orderId })
   expect(acceptQuoteRes.body?.data?.patient?.order?.acceptQuote?.id).toBe(orderId);
 }
 
-export async function payOrderAsPatient(api, { patientAccessToken, orderId }) {
+export async function payOrderAsPatient(api, { patientAccessToken, orderId, proof }) {
   const payOrderRes = await safeGraphQL(api, {
     query: PATIENT_PAY_ORDER_QUERY,
     variables: {
       orderId,
-      proof: {
+      proof: proof || {
         fulfillmentMode: 'DELIVERY',
         photo: 'pp-2cba3c7a-6985-46c3-a666-bbcef03367c7.png',
       },
