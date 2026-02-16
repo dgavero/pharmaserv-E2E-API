@@ -32,6 +32,53 @@ export const PHARMACY_UPDATE_PRICES_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PHARMACY_ADD_PRESCRIPTION_ITEM_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $prescriptionItem: OrderPrescriptionItemRequest!) {
+    pharmacy {
+      order {
+        addPrescriptionItem(orderId: $orderId, prescriptionItem: $prescriptionItem) {
+          id
+          medicine {
+            id
+            brand
+            genericName
+          }
+          quantity
+          unitPrice
+          vatExempt
+          discounted
+        }
+      }
+    }
+  }
+`;
+
+export const PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $prescriptionItemId: ID!, $prescriptionItem: OrderPrescriptionItemRequest!) {
+    pharmacy {
+      order {
+        updatePrescriptionItem(
+          orderId: $orderId
+          prescriptionItemId: $prescriptionItemId
+          prescriptionItem: $prescriptionItem
+        ) {
+          id
+          medicine {
+            id
+            brand
+            genericName
+          }
+          quantity
+          unitPrice
+          vatExempt
+          discounted
+          outOfStock
+        }
+      }
+    }
+  }
+`;
+
 export const PHARMACY_SEND_QUOTE_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!) {
     pharmacy {
