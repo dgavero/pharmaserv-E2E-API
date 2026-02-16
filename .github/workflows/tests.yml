@@ -28,6 +28,10 @@ jobs:
       DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
       DISCORD_LOG_PASSED: ${{ secrets.DISCORD_LOG_PASSED }}
       GITHUB_TOKEN: ${{ github.token }}
+      GIT_AUTHOR_NAME: github-actions[bot]
+      GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+      GIT_COMMITTER_NAME: github-actions[bot]
+      GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
       GRAPHQL_PATH: ${{ secrets.GRAPHQL_PATH }}
       MERCHANT_PASSWORD: ${{ secrets.MERCHANT_PASSWORD }}
       MERCHANT_USERNAME: ${{ secrets.MERCHANT_USERNAME }}
@@ -62,6 +66,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - name: Configure git identity for report publish
+        run: |
+          git config --global user.name "${GIT_COMMITTER_NAME}"
+          git config --global user.email "${GIT_COMMITTER_EMAIL}"
       - run: npm ci
       - run: npx playwright install --with-deps
       - run: npx playwright test api/tests
