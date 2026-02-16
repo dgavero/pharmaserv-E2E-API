@@ -494,4 +494,91 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
     }
   );
+
+  test(
+    'PHARMA-337 | DeliverX scheduled fulfillment happy path',
+    {
+      tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@rider', '@admin', '@positive', '@pharma-337'],
+    },
+    async ({ api }) => {
+      // Login as patient.
+      const { patientAccessToken } = await loginPatient(api);
+      // Submit order as patient.
+      const { orderId } = await submitOrderAsPatient(api, {
+        patientAccessToken,
+        order: buildDeliverXDeclinedOrderInput(),
+      });
+
+      // Login as pharmacist.
+      const { pharmacistAccessToken } = await loginPharmacist(api);
+      // Accept order as pharmacist.
+      await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+      // Update prices as pharmacist.
+      await updatePricesAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prices: [
+          { medicineId: 1, quantity: 1, unitPrice: 10 },
+          { medicineId: 2, quantity: 1, unitPrice: 12 },
+        ],
+      });
+      // Send quote as pharmacist.
+      await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
+
+      // Accept quote as patient.
+      await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
+      // Pay order as patient.
+      await payOrderAsPatient(api, { patientAccessToken, orderId });
+
+      // Login as rider admin.
+      const { adminAccessToken } = await loginAdmin(api);
+      // Confirm payment as rider admin.
+      await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
+
+      // Prepare order as pharmacist.
+      await prepareOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+      // Set order for pickup as pharmacist.
+      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken, orderId });
+
+      // Assign rider to order as rider admin.
+      await assignRiderToOrderAsAdmin(api, {
+        adminAccessToken,
+        orderId,
+        riderId: process.env.RIDER_USERID,
+      });
+
+      // Login as rider.
+      const { riderAccessToken } = await loginRider(api);
+      // Start pickup order as rider.
+      await startPickupOrderAsRider(api, { riderAccessToken, orderId });
+
+      // Mark arrived at pharmacy as rider.
+      const { branchQR } = await arrivedAtPharmacyAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+      });
+
+      // Set pickup proof as rider.
+      await setPickupProofAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        proof: { photo: 'pp-123456-8888-5643.png' },
+      });
+
+      // Pickup order as rider.
+      await pickupOrderAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchQR,
+      });
+
+      // Mark arrived at drop off as rider.
+      await arrivedAtDropOffAsRider(api, { riderAccessToken, orderId });
+      // Complete order as rider.
+      await completeOrderAsRider(api, { riderAccessToken, orderId });
+    }
+  );
 });
