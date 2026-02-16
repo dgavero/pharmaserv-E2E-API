@@ -97,18 +97,6 @@ export function clearCurrentPage() {
 }
 
 /**
- * ✅ Mark a test as PASSED.
- * Enqueues "✅ <title>\nReason: <reason>" only when DISCORD_LOG_PASSED === "1".
- * No-op if currentTestTitle isn't set (guard).
- */
-export function markPassed(reason) {
-  if (!currentTestTitle) return;
-  if (process.env.DISCORD_LOG_PASSED === '1') {
-    enqueue(formatMsg('✅', currentTestTitle, reason));
-  }
-}
-
-/**
  * ❌ Mark a test as FAILED.
  * Enqueues a single failure message per test (de-duped by title).
  * Immediately throws to fail fast with a consistent error message.

@@ -26,7 +26,6 @@ jobs:
       BASE_URL_DEV: ${{ secrets.BASE_URL_DEV }}
       DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
       DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
-      DISCORD_LOG_PASSED: ${{ secrets.DISCORD_LOG_PASSED }}
       GITHUB_TOKEN: ${{ github.token }}
       GIT_AUTHOR_NAME: github-actions[bot]
       GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
