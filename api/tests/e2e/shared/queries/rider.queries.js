@@ -31,6 +31,17 @@ export const RIDER_ARRIVED_AT_PHARMACY_QUERY = /* GraphQL */ `
   }
 `;
 
+export const RIDER_GET_PICKUP_PROOF_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    rider {
+      proofOfPickupUploadURL(ext: $ext) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
 export const RIDER_SET_PICKUP_PROOF_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!, $branchId: ID!, $proof: ProofRequest!) {
     rider {
@@ -38,6 +49,17 @@ export const RIDER_SET_PICKUP_PROOF_QUERY = /* GraphQL */ `
         setPickupProof(orderId: $orderId, branchId: $branchId, proof: $proof) {
           photo
         }
+      }
+    }
+  }
+`;
+
+export const RIDER_GET_DELIVERY_PROOF_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    rider {
+      proofOfDeliveryUploadURL(ext: $ext) {
+        blobName
+        url
       }
     }
   }
@@ -85,6 +107,18 @@ export const RIDER_ARRIVED_AT_DROPOFF_QUERY = /* GraphQL */ `
           legs {
             status
           }
+        }
+      }
+    }
+  }
+`;
+
+export const RIDER_SET_DELIVERY_PROOF_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $proof: ProofRequest!) {
+    rider {
+      order {
+        setDeliveryProof(orderId: $orderId, proof: $proof) {
+          photo
         }
       }
     }

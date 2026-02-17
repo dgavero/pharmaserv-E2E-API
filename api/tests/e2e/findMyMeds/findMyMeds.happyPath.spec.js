@@ -5,6 +5,7 @@ import {
   loginPatient,
   submitOrderAsPatient,
   acceptQuoteAsPatient,
+  getProofOfPaymentUploadUrlAsPatient,
   payOrderAsPatient,
   uploadImageToSignedUrl,
 } from '../shared/steps/patient.steps.js';
@@ -25,9 +26,12 @@ import {
   loginRider,
   startPickupOrderAsRider,
   arrivedAtPharmacyAsRider,
+  getPickupProofUploadUrlAsRider,
   setPickupProofAsRider,
   pickupOrderAsRider,
   arrivedAtDropOffAsRider,
+  getDeliveryProofUploadUrlAsRider,
+  setDeliveryProofAsRider,
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
 
@@ -49,6 +53,9 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
     },
     async ({ api }) => {
       const paymentQrImagePath = path.resolve('upload/images/qr1.png');
+      const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
+      const pickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
+      const deliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
       // Patient: Login.
       const { patientAccessToken } = await loginPatient(api);
       // Patient: Submit Order.
@@ -101,11 +108,20 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
 
       // Patient: Accept Quote.
       await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
+      // Patient: Get Proof of Payment Upload URL.
+      const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
+        patientAccessToken,
+      });
+      // Patient: Upload Proof of Payment.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: proofOfPaymentUploadUrl,
+        imagePath: patientProofPaymentImagePath,
+      });
       // Patient: Pay Order.
       await payOrderAsPatient(api, {
         patientAccessToken,
         orderId,
-        proof: { photo: 'pp-123456-8888-5643.png' },
+        proof: { photo: proofOfPaymentBlobName },
       });
 
       // Rider Admin: Login.
@@ -137,12 +153,21 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
         branchId: process.env.PHARMACIST_BRANCHID_REG02,
         requireBranchQR: false,
       });
+      // Rider: Get Pickup Proof Upload URL.
+      const { pickupProofUploadUrl, pickupProofBlobName } = await getPickupProofUploadUrlAsRider(api, {
+        riderAccessToken,
+      });
+      // Rider: Upload Pickup Proof.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: pickupProofUploadUrl,
+        imagePath: pickupProofImagePath,
+      });
       // Rider: Set Pickup Proof.
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
         branchId: process.env.PHARMACIST_BRANCHID_REG02,
-        proof: { photo: 'pp-123456-8888-5643.png' },
+        proof: { photo: pickupProofBlobName },
       });
       // Rider: Pickup Order.
       await pickupOrderAsRider(api, {
@@ -154,6 +179,21 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
       });
       // Rider: Arrived at Drop Off.
       await arrivedAtDropOffAsRider(api, { riderAccessToken, orderId });
+      // Rider: Get Delivery Proof Upload URL.
+      const { deliveryProofUploadUrl, deliveryProofBlobName } = await getDeliveryProofUploadUrlAsRider(api, {
+        riderAccessToken,
+      });
+      // Rider: Upload Delivery Proof.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: deliveryProofUploadUrl,
+        imagePath: deliveryProofImagePath,
+      });
+      // Rider: Set Delivery Proof.
+      await setDeliveryProofAsRider(api, {
+        riderAccessToken,
+        orderId,
+        proof: { photo: deliveryProofBlobName },
+      });
       // Rider: Complete Order.
       await completeOrderAsRider(api, { riderAccessToken, orderId });
     }

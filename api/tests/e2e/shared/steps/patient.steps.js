@@ -7,6 +7,7 @@ import {
   PATIENT_GET_DISCOUNT_UPLOAD_URL_QUERY,
   PATIENT_SAVE_DISCOUNT_CARD_QUERY,
   PATIENT_GET_ATTACHMENT_UPLOAD_URL_QUERY,
+  PATIENT_GET_PROOF_OF_PAYMENT_UPLOAD_URL_QUERY,
   PATIENT_ACCEPT_QUOTE_QUERY,
   PATIENT_REQUEST_REQUOTE_QUERY,
   PATIENT_PAY_ORDER_QUERY,
@@ -124,6 +125,22 @@ export async function getAttachmentUploadUrlAsPatient(api, { patientAccessToken,
   return { attachmentUploadUrl: node.url, attachmentBlobName: node.blobName };
 }
 
+export async function getProofOfPaymentUploadUrlAsPatient(api, { patientAccessToken, ext = 'png' }) {
+  const getProofOfPaymentUploadUrlRes = await safeGraphQL(api, {
+    query: PATIENT_GET_PROOF_OF_PAYMENT_UPLOAD_URL_QUERY,
+    variables: { ext },
+    headers: bearer(patientAccessToken),
+  });
+  expect(
+    getProofOfPaymentUploadUrlRes.ok,
+    getProofOfPaymentUploadUrlRes.error || 'Get proof of payment upload URL failed'
+  ).toBe(true);
+  const node = getProofOfPaymentUploadUrlRes.body?.data?.patient?.proofOfPaymentUploadURL;
+  expect(node?.url, 'Missing proof of payment upload URL').toBeTruthy();
+  expect(node?.blobName, 'Missing proof of payment blobName').toBeTruthy();
+  return { proofOfPaymentUploadUrl: node.url, proofOfPaymentBlobName: node.blobName };
+}
+
 export async function acceptQuoteAsPatient(api, { patientAccessToken, orderId }) {
   const acceptQuoteRes = await safeGraphQL(api, {
     query: PATIENT_ACCEPT_QUOTE_QUERY,
@@ -160,14 +177,14 @@ export async function payOrderAsPatient(api, { patientAccessToken, orderId, proo
   expect(payOrderRes.body?.data?.patient?.order?.pay?.id).toBe(orderId);
 }
 
-export async function payOrderAsPatientForPickupOrder(api, { patientAccessToken, orderId }) {
+export async function payOrderAsPatientForPickupOrder(api, { patientAccessToken, orderId, proofPhoto }) {
   const payOrderRes = await safeGraphQL(api, {
     query: PATIENT_PAY_ORDER_QUERY,
     variables: {
       orderId,
       proof: {
         fulfillmentMode: 'PICKUP',
-        photo: 'pp-123456-8888-5643.png',
+        photo: proofPhoto || 'pp-123456-8888-5643.png',
       },
     },
     headers: bearer(patientAccessToken),
@@ -176,7 +193,7 @@ export async function payOrderAsPatientForPickupOrder(api, { patientAccessToken,
   expect(payOrderRes.body?.data?.patient?.order?.pay?.id).toBe(orderId);
 }
 
-export async function payOrderAsPatientForScheduledDelivery(api, { patientAccessToken, orderId }) {
+export async function payOrderAsPatientForScheduledDelivery(api, { patientAccessToken, orderId, proofPhoto }) {
   const manilaHour = Number(
     new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Manila',
@@ -204,7 +221,7 @@ export async function payOrderAsPatientForScheduledDelivery(api, { patientAccess
         windowDay: 'TODAY',
         windowStartTime,
         windowEndTime,
-        photo: 'pp-2cba3c7a-6985-46c3-a666-bbcef03367c7.png',
+        photo: proofPhoto || 'pp-2cba3c7a-6985-46c3-a666-bbcef03367c7.png',
       },
     },
     headers: bearer(patientAccessToken),

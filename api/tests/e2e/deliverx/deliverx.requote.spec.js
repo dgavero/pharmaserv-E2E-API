@@ -9,6 +9,7 @@ import {
   getDiscountUploadUrlAsPatient,
   saveDiscountCardAsPatient,
   getAttachmentUploadUrlAsPatient,
+  getProofOfPaymentUploadUrlAsPatient,
   acceptQuoteAsPatient,
   requestReQuoteAsPatient,
   payOrderAsPatient,
@@ -30,9 +31,12 @@ import {
   loginRider,
   startPickupOrderAsRider,
   arrivedAtPharmacyAsRider,
+  getPickupProofUploadUrlAsRider,
   setPickupProofAsRider,
   pickupOrderAsRider,
   arrivedAtDropOffAsRider,
+  getDeliveryProofUploadUrlAsRider,
+  setDeliveryProofAsRider,
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
 
@@ -47,6 +51,8 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       const discountImagePath = path.resolve('upload/images/prescription2.png');
       const attachmentImagePath = path.resolve('upload/images/prescription1.png');
       const proofPaymentImagePath = path.resolve('upload/images/proof1.png');
+      const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
+      const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
       const firstAddedMedicineId = 3;
       const replacedMedicineId = 4;
 
@@ -209,13 +215,22 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
 
       // Patient: Accept Quote (re-quote path).
       await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
+      // Patient: Get Proof of Payment Upload URL.
+      const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
+        patientAccessToken,
+      });
+      // Patient: Upload Proof of Payment.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: proofOfPaymentUploadUrl,
+        imagePath: proofPaymentImagePath,
+      });
       // Patient: Pay Order.
       await payOrderAsPatient(api, {
         patientAccessToken,
         orderId,
         proof: {
           fulfillmentMode: 'DELIVERY',
-          photo: path.basename(proofPaymentImagePath),
+          photo: proofOfPaymentBlobName,
         },
       });
 
@@ -246,12 +261,21 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
         orderId,
         branchId: process.env.PHARMACIST_BRANCHID_REG01,
       });
+      // Rider: Get Pickup Proof Upload URL.
+      const { pickupProofUploadUrl, pickupProofBlobName } = await getPickupProofUploadUrlAsRider(api, {
+        riderAccessToken,
+      });
+      // Rider: Upload Pickup Proof.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: pickupProofUploadUrl,
+        imagePath: riderPickupProofImagePath,
+      });
       // Rider: Set Pickup Proof.
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
         branchId: process.env.PHARMACIST_BRANCHID_REG01,
-        proof: { photo: path.basename(proofPaymentImagePath) },
+        proof: { photo: pickupProofBlobName },
       });
       // Rider: Pickup Order.
       await pickupOrderAsRider(api, {
@@ -262,6 +286,21 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       });
       // Rider: Arrived at Drop Off.
       await arrivedAtDropOffAsRider(api, { riderAccessToken, orderId });
+      // Rider: Get Delivery Proof Upload URL.
+      const { deliveryProofUploadUrl, deliveryProofBlobName } = await getDeliveryProofUploadUrlAsRider(api, {
+        riderAccessToken,
+      });
+      // Rider: Upload Delivery Proof.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: deliveryProofUploadUrl,
+        imagePath: riderDeliveryProofImagePath,
+      });
+      // Rider: Set Delivery Proof.
+      await setDeliveryProofAsRider(api, {
+        riderAccessToken,
+        orderId,
+        proof: { photo: deliveryProofBlobName },
+      });
       // Rider: Complete Order.
       await completeOrderAsRider(api, { riderAccessToken, orderId });
 

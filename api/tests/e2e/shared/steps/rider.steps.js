@@ -3,10 +3,13 @@ import { safeGraphQL, bearer, riderLoginAndGetTokens } from '../../../../helpers
 import {
   RIDER_START_PICKUP_ORDER_QUERY,
   RIDER_ARRIVED_AT_PHARMACY_QUERY,
+  RIDER_GET_PICKUP_PROOF_UPLOAD_URL_QUERY,
   RIDER_SET_PICKUP_PROOF_QUERY,
   RIDER_PICKUP_ORDER_QUERY,
   RIDER_PICKUP_ORDER_NO_QR_QUERY,
+  RIDER_GET_DELIVERY_PROOF_UPLOAD_URL_QUERY,
   RIDER_ARRIVED_AT_DROPOFF_QUERY,
+  RIDER_SET_DELIVERY_PROOF_QUERY,
   RIDER_COMPLETE_ORDER_QUERY,
 } from '../queries/rider.queries.js';
 
@@ -56,6 +59,22 @@ export async function setPickupProofAsRider(api, { riderAccessToken, orderId, br
   expect(setPickupProofRes.body?.data?.rider?.order?.setPickupProof?.photo).toBeTruthy();
 }
 
+export async function getPickupProofUploadUrlAsRider(api, { riderAccessToken, ext = 'png' }) {
+  const getPickupProofUploadUrlRes = await safeGraphQL(api, {
+    query: RIDER_GET_PICKUP_PROOF_UPLOAD_URL_QUERY,
+    variables: { ext },
+    headers: bearer(riderAccessToken),
+  });
+  expect(
+    getPickupProofUploadUrlRes.ok,
+    getPickupProofUploadUrlRes.error || 'Rider get pickup proof upload URL failed'
+  ).toBe(true);
+  const node = getPickupProofUploadUrlRes.body?.data?.rider?.proofOfPickupUploadURL;
+  expect(node?.url, 'Missing pickup proof upload URL').toBeTruthy();
+  expect(node?.blobName, 'Missing pickup proof blobName').toBeTruthy();
+  return { pickupProofUploadUrl: node.url, pickupProofBlobName: node.blobName };
+}
+
 export async function pickupOrderAsRider(api, { riderAccessToken, orderId, branchId, branchQR, requireBranchQR = true }) {
   if (requireBranchQR && !branchQR) {
     throw new Error('Missing branchQR for pickup when requireBranchQR is true');
@@ -77,6 +96,32 @@ export async function arrivedAtDropOffAsRider(api, { riderAccessToken, orderId }
   });
   expect(arrivedAtDropOffRes.ok, arrivedAtDropOffRes.error || 'Rider arrived at drop off failed').toBe(true);
   expect(arrivedAtDropOffRes.body?.data?.rider?.order?.arrivedAtDropOff?.id).toBe(orderId);
+}
+
+export async function getDeliveryProofUploadUrlAsRider(api, { riderAccessToken, ext = 'png' }) {
+  const getDeliveryProofUploadUrlRes = await safeGraphQL(api, {
+    query: RIDER_GET_DELIVERY_PROOF_UPLOAD_URL_QUERY,
+    variables: { ext },
+    headers: bearer(riderAccessToken),
+  });
+  expect(
+    getDeliveryProofUploadUrlRes.ok,
+    getDeliveryProofUploadUrlRes.error || 'Rider get delivery proof upload URL failed'
+  ).toBe(true);
+  const node = getDeliveryProofUploadUrlRes.body?.data?.rider?.proofOfDeliveryUploadURL;
+  expect(node?.url, 'Missing delivery proof upload URL').toBeTruthy();
+  expect(node?.blobName, 'Missing delivery proof blobName').toBeTruthy();
+  return { deliveryProofUploadUrl: node.url, deliveryProofBlobName: node.blobName };
+}
+
+export async function setDeliveryProofAsRider(api, { riderAccessToken, orderId, proof }) {
+  const setDeliveryProofRes = await safeGraphQL(api, {
+    query: RIDER_SET_DELIVERY_PROOF_QUERY,
+    variables: { orderId, proof },
+    headers: bearer(riderAccessToken),
+  });
+  expect(setDeliveryProofRes.ok, setDeliveryProofRes.error || 'Rider set delivery proof failed').toBe(true);
+  expect(setDeliveryProofRes.body?.data?.rider?.order?.setDeliveryProof?.photo).toBeTruthy();
 }
 
 export async function completeOrderAsRider(api, { riderAccessToken, orderId }) {

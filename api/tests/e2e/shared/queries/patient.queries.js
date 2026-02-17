@@ -64,6 +64,17 @@ export const PATIENT_GET_ATTACHMENT_UPLOAD_URL_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PATIENT_GET_PROOF_OF_PAYMENT_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    patient {
+      proofOfPaymentUploadURL(ext: $ext) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
 export const PATIENT_ACCEPT_QUOTE_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!) {
     patient {
