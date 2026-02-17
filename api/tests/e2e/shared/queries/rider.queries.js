@@ -42,6 +42,44 @@ export const RIDER_GET_PICKUP_PROOF_UPLOAD_URL_QUERY = /* GraphQL */ `
   }
 `;
 
+export const RIDER_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    rider {
+      paymentQRCodeUploadURL(ext: $ext) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
+export const RIDER_SAVE_PAYMENT_QR_CODE_QUERY = /* GraphQL */ `
+  mutation ($qrCode: RiderPaymentQRCodeRequest!) {
+    rider {
+      order {
+        savePaymentQRCode(qrCode: $qrCode) {
+          id
+          branchId
+          photo
+        }
+      }
+    }
+  }
+`;
+
+export const RIDER_SEND_PAYMENT_QR_CODE_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $branchId: ID!, $paymentQRCodeId: ID) {
+    rider {
+      order {
+        sendPaymentQRCode(orderId: $orderId, branchId: $branchId, paymentQRCodeId: $paymentQRCodeId) {
+          id
+          paymentQRCodeId
+        }
+      }
+    }
+  }
+`;
+
 export const RIDER_SET_PICKUP_PROOF_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!, $branchId: ID!, $proof: ProofRequest!) {
     rider {

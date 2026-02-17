@@ -3,6 +3,9 @@ import { safeGraphQL, bearer, riderLoginAndGetTokens } from '../../../../helpers
 import {
   RIDER_START_PICKUP_ORDER_QUERY,
   RIDER_ARRIVED_AT_PHARMACY_QUERY,
+  RIDER_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY,
+  RIDER_SAVE_PAYMENT_QR_CODE_QUERY,
+  RIDER_SEND_PAYMENT_QR_CODE_QUERY,
   RIDER_GET_PICKUP_PROOF_UPLOAD_URL_QUERY,
   RIDER_SET_PICKUP_PROOF_QUERY,
   RIDER_PICKUP_ORDER_QUERY,
@@ -57,6 +60,45 @@ export async function setPickupProofAsRider(api, { riderAccessToken, orderId, br
   });
   expect(setPickupProofRes.ok, setPickupProofRes.error || 'Rider set pickup proof failed').toBe(true);
   expect(setPickupProofRes.body?.data?.rider?.order?.setPickupProof?.photo).toBeTruthy();
+}
+
+export async function getPaymentQRCodeUploadUrlAsRider(api, { riderAccessToken, ext = 'png' }) {
+  const getPaymentQRCodeUploadUrlRes = await safeGraphQL(api, {
+    query: RIDER_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY,
+    variables: { ext },
+    headers: bearer(riderAccessToken),
+  });
+  expect(
+    getPaymentQRCodeUploadUrlRes.ok,
+    getPaymentQRCodeUploadUrlRes.error || 'Rider get payment QR code upload URL failed'
+  ).toBe(true);
+  const node = getPaymentQRCodeUploadUrlRes.body?.data?.rider?.paymentQRCodeUploadURL;
+  expect(node?.url, 'Missing rider payment QR code upload URL').toBeTruthy();
+  expect(node?.blobName, 'Missing rider payment QR code blobName').toBeTruthy();
+  return { riderPaymentQRCodeUploadUrl: node.url, riderPaymentQRCodeBlobName: node.blobName };
+}
+
+export async function savePaymentQRCodeAsRider(api, { riderAccessToken, photo }) {
+  const savePaymentQRCodeRes = await safeGraphQL(api, {
+    query: RIDER_SAVE_PAYMENT_QR_CODE_QUERY,
+    variables: { qrCode: { photo } },
+    headers: bearer(riderAccessToken),
+  });
+  expect(savePaymentQRCodeRes.ok, savePaymentQRCodeRes.error || 'Rider save payment QR code failed').toBe(true);
+  const node = savePaymentQRCodeRes.body?.data?.rider?.order?.savePaymentQRCode;
+  expect(node?.id, 'Missing rider saved payment QR code id').toBeTruthy();
+  return { riderPaymentQRCodeId: node.id };
+}
+
+export async function sendPaymentQRCodeAsRider(api, { riderAccessToken, orderId, branchId, paymentQRCodeId }) {
+  const sendPaymentQRCodeRes = await safeGraphQL(api, {
+    query: RIDER_SEND_PAYMENT_QR_CODE_QUERY,
+    variables: { orderId, branchId, paymentQRCodeId },
+    headers: bearer(riderAccessToken),
+  });
+  expect(sendPaymentQRCodeRes.ok, sendPaymentQRCodeRes.error || 'Rider send payment QR code failed').toBe(true);
+  const node = sendPaymentQRCodeRes.body?.data?.rider?.order?.sendPaymentQRCode;
+  expect(node?.id).toBe(orderId);
 }
 
 export async function getPickupProofUploadUrlAsRider(api, { riderAccessToken, ext = 'png' }) {
