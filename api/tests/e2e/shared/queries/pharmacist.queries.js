@@ -79,6 +79,30 @@ export const PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $prescriptionItemId: ID!, $prescriptionItem: OrderPrescriptionItemRequest!) {
+    pharmacy {
+      order {
+        updatePrescriptionItem(
+          orderId: $orderId
+          prescriptionItemId: $prescriptionItemId
+          prescriptionItem: $prescriptionItem
+        ) {
+          id
+          medicine {
+            brand
+            genericName
+          }
+          quantity
+          unitPrice
+          vatExempt
+          discounted
+        }
+      }
+    }
+  }
+`;
+
 export const PHARMACY_SEND_QUOTE_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!) {
     pharmacy {
@@ -90,6 +114,16 @@ export const PHARMACY_SEND_QUOTE_QUERY = /* GraphQL */ `
             status
           }
         }
+      }
+    }
+  }
+`;
+
+export const PHARMACY_REMOVE_PRESCRIPTION_ITEM_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $medicineId: ID!) {
+    pharmacy {
+      order {
+        removePrescriptionItem(orderId: $orderId, medicineId: $medicineId)
       }
     }
   }

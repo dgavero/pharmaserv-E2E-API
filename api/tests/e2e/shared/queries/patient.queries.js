@@ -13,11 +13,78 @@ export const PATIENT_SUBMIT_ORDER_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PATIENT_GET_PRESCRIPTION_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    patient {
+      prescription {
+        prescriptionUploadURL(ext: $ext) {
+          blobName
+          url
+        }
+      }
+    }
+  }
+`;
+
+export const PATIENT_GET_DISCOUNT_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    patient {
+      discountCardUploadURL(ext: $ext) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
+export const PATIENT_SAVE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
+  mutation ($discountCard: DiscountCardRequest!) {
+    patient {
+      discountCard {
+        create(discountCard: $discountCard) {
+          id
+          name
+          cardType
+          cardNumber
+          photo
+        }
+      }
+    }
+  }
+`;
+
+export const PATIENT_GET_ATTACHMENT_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    patient {
+      attachmentUploadURL(ext: $ext) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
 export const PATIENT_ACCEPT_QUOTE_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!) {
     patient {
       order {
         acceptQuote(orderId: $orderId) {
+          id
+          status
+          legs {
+            status
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const PATIENT_REQUEST_REQUOTE_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!) {
+    patient {
+      order {
+        requestReQuote(orderId: $orderId) {
           id
           status
           legs {

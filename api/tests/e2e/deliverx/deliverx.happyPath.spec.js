@@ -1,4 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
+import path from 'node:path';
 import {
   safeGraphQL,
   bearer,
@@ -36,7 +37,14 @@ import {
 import {
   loginPatient,
   submitOrderAsPatient,
+  getPrescriptionUploadUrlAsPatient,
+  uploadImageToSignedUrl,
+  savePrescriptionAsPatient,
+  getDiscountUploadUrlAsPatient,
+  saveDiscountCardAsPatient,
+  getAttachmentUploadUrlAsPatient,
   acceptQuoteAsPatient,
+  requestReQuoteAsPatient,
   payOrderAsPatient,
   payOrderAsPatientForPickupOrder,
   payOrderAsPatientForScheduledDelivery,
@@ -493,7 +501,17 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
   test(
     'PHARMA-337 | DeliverX scheduled fulfillment happy path',
     {
-      tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@rider', '@admin', '@positive', '@pharma-337'],
+      tag: [
+        '@api',
+        '@workflow',
+        '@deliverx',
+        '@patient',
+        '@pharmacist',
+        '@rider',
+        '@admin',
+        '@positive',
+        '@pharma-337',
+      ],
     },
     async ({ api }) => {
       // Login as patient.
@@ -557,7 +575,11 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const plus8Now = new Date(utcMs + 8 * 60 * 60_000);
       const isBlockedWindow = plus8Now.getUTCHours() >= 0 && plus8Now.getUTCHours() < 6;
       const outOfScheduleMsg = 'Order cannot be started since time is outside the schedule for delivery';
-      if (isBlockedWindow && !startPickupOrderRes.ok && String(startPickupOrderRes.error || '').includes(outOfScheduleMsg)) {
+      if (
+        isBlockedWindow &&
+        !startPickupOrderRes.ok &&
+        String(startPickupOrderRes.error || '').includes(outOfScheduleMsg)
+      ) {
         test.info().annotations.push({
           type: 'info',
           description: 'Expected scheduled-window stop: outside delivery schedule during 12AM-6AM (+08).',
@@ -596,6 +618,239 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await completeOrderAsRider(api, { riderAccessToken, orderId });
 
       // Rate rider as patient.
+      await rateRiderAsPatient(api, {
+        patientAccessToken,
+        riderId: assignedRiderId || process.env.RIDER_USERID,
+        rating: 4,
+      });
+    }
+  );
+
+  test(
+    'PHARMA-338 | DeliverX delivery fulfillment happy path with requote',
+    {
+      tag: [
+        '@api',
+        '@workflow',
+        '@deliverx',
+        '@patient',
+        '@pharmacist',
+        '@rider',
+        '@admin',
+        '@positive',
+        '@pharma-338',
+      ],
+    },
+    async ({ api }) => {
+      const prescriptionImagePath = path.resolve('upload/images/prescription1.png');
+      const discountImagePath = path.resolve('upload/images/prescription2.png');
+      const attachmentImagePath = path.resolve('upload/images/prescription1.png');
+      const proofPaymentImagePath = path.resolve('upload/images/proof1.png');
+
+      // Patient: Login.
+      const { patientAccessToken } = await loginPatient(api);
+
+      // Patient: Get Prescription Upload URL.
+      const { prescriptionUploadUrl, prescriptionBlobName } = await getPrescriptionUploadUrlAsPatient(api, {
+        patientAccessToken,
+      });
+      // Patient: Upload Prescription.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: prescriptionUploadUrl,
+        imagePath: prescriptionImagePath,
+      });
+      // Patient: Save Prescription.
+      const { prescriptionId } = await savePrescriptionAsPatient(api, {
+        patientAccessToken,
+        patientId: process.env.PATIENT_USER_USERNAME_ID,
+        photo: prescriptionBlobName,
+      });
+
+      // Patient: Get Discount Upload URL.
+      const { discountUploadUrl, discountBlobName } = await getDiscountUploadUrlAsPatient(api, {
+        patientAccessToken,
+      });
+      // Patient: Upload Discount Card.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: discountUploadUrl,
+        imagePath: discountImagePath,
+      });
+      // Patient: Save Discount Card.
+      const { discountCardId } = await saveDiscountCardAsPatient(api, {
+        patientAccessToken,
+        patientId: process.env.PATIENT_USER_USERNAME_ID,
+        photo: discountBlobName,
+      });
+
+      // Patient: Get Attachment URL.
+      const { attachmentUploadUrl, attachmentBlobName } = await getAttachmentUploadUrlAsPatient(api, {
+        patientAccessToken,
+      });
+      // Patient: Upload Attachment.
+      await uploadImageToSignedUrl(api, {
+        uploadUrl: attachmentUploadUrl,
+        imagePath: attachmentImagePath,
+      });
+
+      // Patient: Submit Order.
+      const { orderId } = await submitOrderAsPatient(api, {
+        patientAccessToken,
+        order: {
+          deliveryType: 'DELIVER_X',
+          patientId: process.env.PATIENT_USER_USERNAME_ID,
+          branchId: process.env.PHARMACIST_BRANCHID_REG01,
+          prescriptionIds: [prescriptionId],
+          discountCardIds: [discountCardId],
+          prescriptionItems: [
+            {
+              medicineId: 1,
+              quantity: 2,
+              source: 'SEARCH',
+              specialInstructions: null,
+            },
+            {
+              medicineId: 2,
+              quantity: 2,
+              source: 'E_PRESCRIPTION',
+              specialInstructions: null,
+            },
+          ],
+          addressName: 'Home API',
+          address: 'Test API Address',
+          landmark: 'Near City Hall',
+          attachmentPhotos: [
+            {
+              photo: attachmentBlobName,
+              specialInstructions: 'API automated test only',
+            },
+          ],
+          deliveryInstructions: 'API automated test only',
+          lat: 9.6496,
+          lng: 123.8552,
+        },
+      });
+
+      // Pharmacist: Login.
+      const { pharmacistAccessToken } = await loginPharmacist(api);
+      // Pharmacist: Accept Order.
+      await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+
+      // Pharmacist: Add Prescription Item.
+      const { prescriptionItemId: firstPrescriptionItemId } = await addPrescriptionItemAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prescriptionItem: {
+          medicineId: 3,
+          quantity: 1,
+          specialInstructions: 'API automated test only',
+          source: 'SEARCH',
+        },
+      });
+      // Pharmacist: Replace Medicine.
+      await replaceMedicineAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prescriptionItemId: firstPrescriptionItemId,
+        prescriptionItem: {
+          medicineId: 4,
+          quantity: 1,
+          unitPrice: 35.0,
+          specialInstructions: 'API automated test only',
+          source: 'SEARCH',
+        },
+      });
+      // Pharmacist: Update Prices.
+      await updatePricesAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prices: [
+          { medicineId: 1, quantity: 1, unitPrice: 10 },
+          { medicineId: 2, quantity: 1, unitPrice: 12 },
+          { medicineId: 4, quantity: 1, unitPrice: 15 },
+        ],
+      });
+      // Pharmacist: Send Quote.
+      await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
+
+      // Patient: Accept Quote.
+      await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
+      // Patient: Request Re-quote.
+      await requestReQuoteAsPatient(api, { patientAccessToken, orderId });
+
+      // Pharmacist: Add Prescription Item (re-quote path).
+      await addPrescriptionItemAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prescriptionItem: {
+          medicineId: 3,
+          quantity: 1,
+          unitPrice: 18,
+          specialInstructions: 'API automated test only',
+          source: 'SEARCH',
+        },
+      });
+      // Pharmacist: Send Quote (re-quote path).
+      await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
+
+      // Patient: Accept Quote (re-quote path).
+      await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
+      // Patient: Pay Order.
+      await payOrderAsPatient(api, {
+        patientAccessToken,
+        orderId,
+        proof: {
+          fulfillmentMode: 'DELIVERY',
+          photo: path.basename(proofPaymentImagePath),
+        },
+      });
+
+      // Rider Admin: Login.
+      const { adminAccessToken } = await loginAdmin(api);
+      // Rider Admin: Confirm Payment.
+      await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
+
+      // Pharmacist: Prepare Order.
+      await prepareOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+      // Pharmacist: Set For Pickup.
+      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken, orderId });
+
+      // Rider Admin: Assign Rider To Order.
+      const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
+        adminAccessToken,
+        orderId,
+        riderId: process.env.RIDER_USERID,
+      });
+
+      // Rider: Login.
+      const { riderAccessToken } = await loginRider(api);
+      // Rider: Start Pickup Order.
+      await startPickupOrderAsRider(api, { riderAccessToken, orderId });
+      // Rider: Arrived at Pharmacy.
+      const { branchQR } = await arrivedAtPharmacyAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+      });
+      // Rider: Set Pickup Proof.
+      await setPickupProofAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        proof: { photo: path.basename(proofPaymentImagePath) },
+      });
+      // Rider: Pickup Order.
+      await pickupOrderAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchQR,
+      });
+      // Rider: Arrived at Drop Off.
+      await arrivedAtDropOffAsRider(api, { riderAccessToken, orderId });
+      // Rider: Complete Order.
+      await completeOrderAsRider(api, { riderAccessToken, orderId });
+
+      // Patient: Rate Rider.
       await rateRiderAsPatient(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,

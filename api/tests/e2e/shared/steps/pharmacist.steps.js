@@ -3,9 +3,11 @@ import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../../he
 import {
   PHARMACY_ACCEPT_ORDER_QUERY,
   PHARMACY_ADD_PRESCRIPTION_ITEM_QUERY,
+  PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
   PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
   PHARMACY_UPDATE_PRICES_QUERY,
   PHARMACY_SEND_QUOTE_QUERY,
+  PHARMACY_REMOVE_PRESCRIPTION_ITEM_QUERY,
   PHARMACY_PREPARE_ORDER_QUERY,
   PHARMACY_SET_FOR_PICKUP_QUERY,
   PHARMACY_CONFIRM_PICKUP_QUERY,
@@ -62,7 +64,7 @@ export async function updateAvailablePrescriptionItemAsPharmacist(api, {
     );
   }
   const updatePrescriptionItemRes = await safeGraphQL(api, {
-    query: PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
+    query: PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
     variables: { orderId, prescriptionItemId, prescriptionItem },
     headers: bearer(pharmacistAccessToken),
   });
@@ -86,6 +88,36 @@ export async function replaceMedicineAsPharmacist(api, {
   });
   expect(replaceMedicineRes.ok, replaceMedicineRes.error || 'Pharmacist replace medicine failed').toBe(true);
   expect(replaceMedicineRes.body?.data?.pharmacy?.order?.updatePrescriptionItem?.id).toBe(prescriptionItemId);
+}
+
+export async function replaceSetOutOfStockAsPharmacist(api, { pharmacistAccessToken, orderId, prescriptionItemId }) {
+  const replaceSetOutOfStockRes = await safeGraphQL(api, {
+    query: PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
+    variables: {
+      orderId,
+      prescriptionItemId,
+      prescriptionItem: {
+        outOfStock: false,
+      },
+    },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(
+    replaceSetOutOfStockRes.ok,
+    replaceSetOutOfStockRes.error || 'Pharmacist replace set out-of-stock failed'
+  ).toBe(true);
+}
+
+export async function removePrescriptionItemAsPharmacist(api, { pharmacistAccessToken, orderId, medicineId }) {
+  const removePrescriptionItemRes = await safeGraphQL(api, {
+    query: PHARMACY_REMOVE_PRESCRIPTION_ITEM_QUERY,
+    variables: { orderId, medicineId },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(
+    removePrescriptionItemRes.ok,
+    removePrescriptionItemRes.error || 'Pharmacist remove prescription item failed'
+  ).toBe(true);
 }
 
 export async function updatePricesAsPharmacist(api, { pharmacistAccessToken, orderId, prices }) {
