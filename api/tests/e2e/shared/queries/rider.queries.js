@@ -42,12 +42,42 @@ export const RIDER_GET_PICKUP_PROOF_UPLOAD_URL_QUERY = /* GraphQL */ `
   }
 `;
 
+export const RIDER_UPDATE_PRICES_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $branchId: ID!, $prices: [MedicinePriceRequest!]) {
+    rider {
+      order {
+        updatePrices(orderId: $orderId, branchId: $branchId, prices: $prices) {
+          medicine {
+            brand
+            genericName
+          }
+          quantity
+          unitPrice
+        }
+      }
+    }
+  }
+`;
+
 export const RIDER_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY = /* GraphQL */ `
   query ($ext: String!) {
     rider {
       paymentQRCodeUploadURL(ext: $ext) {
         blobName
         url
+      }
+    }
+  }
+`;
+
+export const RIDER_SEND_QUOTE_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $branchId: ID!, $paymentQRCodeId: ID) {
+    rider {
+      order {
+        sendQuote(orderId: $orderId, branchId: $branchId, paymentQRCodeId: $paymentQRCodeId) {
+          id
+          paymentQRCodeId
+        }
       }
     }
   }

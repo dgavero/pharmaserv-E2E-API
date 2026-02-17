@@ -3,9 +3,11 @@ import { safeGraphQL, bearer, riderLoginAndGetTokens } from '../../../../helpers
 import {
   RIDER_START_PICKUP_ORDER_QUERY,
   RIDER_ARRIVED_AT_PHARMACY_QUERY,
+  RIDER_UPDATE_PRICES_QUERY,
   RIDER_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY,
   RIDER_SAVE_PAYMENT_QR_CODE_QUERY,
   RIDER_SEND_PAYMENT_QR_CODE_QUERY,
+  RIDER_SEND_QUOTE_QUERY,
   RIDER_GET_PICKUP_PROOF_UPLOAD_URL_QUERY,
   RIDER_SET_PICKUP_PROOF_QUERY,
   RIDER_PICKUP_ORDER_QUERY,
@@ -62,6 +64,15 @@ export async function setPickupProofAsRider(api, { riderAccessToken, orderId, br
   expect(setPickupProofRes.body?.data?.rider?.order?.setPickupProof?.photo).toBeTruthy();
 }
 
+export async function updatePricesAsRider(api, { riderAccessToken, orderId, branchId, prices }) {
+  const updatePricesRes = await safeGraphQL(api, {
+    query: RIDER_UPDATE_PRICES_QUERY,
+    variables: { orderId, branchId, prices },
+    headers: bearer(riderAccessToken),
+  });
+  expect(updatePricesRes.ok, updatePricesRes.error || 'Rider update prices failed').toBe(true);
+}
+
 export async function getPaymentQRCodeUploadUrlAsRider(api, { riderAccessToken, ext = 'png' }) {
   const getPaymentQRCodeUploadUrlRes = await safeGraphQL(api, {
     query: RIDER_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY,
@@ -99,6 +110,18 @@ export async function sendPaymentQRCodeAsRider(api, { riderAccessToken, orderId,
   expect(sendPaymentQRCodeRes.ok, sendPaymentQRCodeRes.error || 'Rider send payment QR code failed').toBe(true);
   const node = sendPaymentQRCodeRes.body?.data?.rider?.order?.sendPaymentQRCode;
   expect(node?.id).toBe(orderId);
+}
+
+export async function sendQuoteAsRider(api, { riderAccessToken, orderId, branchId, paymentQRCodeId }) {
+  const sendQuoteRes = await safeGraphQL(api, {
+    query: RIDER_SEND_QUOTE_QUERY,
+    variables: { orderId, branchId, paymentQRCodeId },
+    headers: bearer(riderAccessToken),
+  });
+  expect(sendQuoteRes.ok, sendQuoteRes.error || 'Rider send quote failed').toBe(true);
+  const node = sendQuoteRes.body?.data?.rider?.order?.sendQuote;
+  expect(node?.id).toBe(orderId);
+  return { riderSendQuoteNode: node, paymentQRCodeId: node?.paymentQRCodeId };
 }
 
 export async function getPickupProofUploadUrlAsRider(api, { riderAccessToken, ext = 'png' }) {

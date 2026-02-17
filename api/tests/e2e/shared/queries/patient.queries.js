@@ -104,6 +104,7 @@ export const PATIENT_ACCEPT_QUOTE_QUERY = /* GraphQL */ `
       order {
         acceptQuote(orderId: $orderId) {
           id
+          paymentQRCodeId
           status
           legs {
             status

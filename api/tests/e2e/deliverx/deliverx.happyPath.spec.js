@@ -667,10 +667,14 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
 
       // If run between 12AM-6AM (+08), allow expected out-of-schedule response and stop early.
-      const now = new Date();
-      const utcMs = now.getTime() + now.getTimezoneOffset() * 60_000;
-      const plus8Now = new Date(utcMs + 8 * 60 * 60_000);
-      const isBlockedWindow = plus8Now.getUTCHours() >= 0 && plus8Now.getUTCHours() < 6;
+      const manilaHour = Number(
+        new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Manila',
+          hour: '2-digit',
+          hour12: false,
+        }).format(new Date())
+      );
+      const isBlockedWindow = manilaHour >= 0 && manilaHour < 6;
       const outOfScheduleMsg = 'Order cannot be started since time is outside the schedule for delivery';
       if (
         isBlockedWindow &&
