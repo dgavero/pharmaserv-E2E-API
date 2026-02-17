@@ -59,6 +59,22 @@ export const RIDER_PICKUP_ORDER_QUERY = /* GraphQL */ `
   }
 `;
 
+export const RIDER_PICKUP_ORDER_NO_QR_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $branchId: ID!) {
+    rider {
+      order {
+        pickup(orderId: $orderId, branchId: $branchId) {
+          id
+          status
+          legs {
+            status
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const RIDER_ARRIVED_AT_DROPOFF_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!) {
     rider {

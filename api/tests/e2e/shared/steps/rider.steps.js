@@ -5,6 +5,7 @@ import {
   RIDER_ARRIVED_AT_PHARMACY_QUERY,
   RIDER_SET_PICKUP_PROOF_QUERY,
   RIDER_PICKUP_ORDER_QUERY,
+  RIDER_PICKUP_ORDER_NO_QR_QUERY,
   RIDER_ARRIVED_AT_DROPOFF_QUERY,
   RIDER_COMPLETE_ORDER_QUERY,
 } from '../queries/rider.queries.js';
@@ -28,7 +29,7 @@ export async function startPickupOrderAsRider(api, { riderAccessToken, orderId }
   expect(startPickupOrderRes.body?.data?.rider?.order?.start?.id).toBe(orderId);
 }
 
-export async function arrivedAtPharmacyAsRider(api, { riderAccessToken, orderId, branchId }) {
+export async function arrivedAtPharmacyAsRider(api, { riderAccessToken, orderId, branchId, requireBranchQR = true }) {
   const arrivedAtPharmacyRes = await safeGraphQL(api, {
     query: RIDER_ARRIVED_AT_PHARMACY_QUERY,
     variables: { orderId, branchId },
@@ -36,8 +37,12 @@ export async function arrivedAtPharmacyAsRider(api, { riderAccessToken, orderId,
   });
   expect(arrivedAtPharmacyRes.ok, arrivedAtPharmacyRes.error || 'Rider arrived at pharmacy failed').toBe(true);
   expect(arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.id).toBe(orderId);
-  const branchQR = arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.legs?.[0]?.branchQR;
-  expect(branchQR, 'Missing branchQR from arrivedAtPharmacy response').toBeTruthy();
+  const arrivedNode = arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy;
+  const legs = arrivedNode?.legs || [];
+  const branchQR = legs.find((leg) => leg?.branchQR)?.branchQR || null;
+  if (requireBranchQR) {
+    expect(branchQR, `Missing branchQR from arrivedAtPharmacy response: ${JSON.stringify(arrivedNode)}`).toBeTruthy();
+  }
   return { branchQR };
 }
 
@@ -51,10 +56,13 @@ export async function setPickupProofAsRider(api, { riderAccessToken, orderId, br
   expect(setPickupProofRes.body?.data?.rider?.order?.setPickupProof?.photo).toBeTruthy();
 }
 
-export async function pickupOrderAsRider(api, { riderAccessToken, orderId, branchId, branchQR }) {
+export async function pickupOrderAsRider(api, { riderAccessToken, orderId, branchId, branchQR, requireBranchQR = true }) {
+  if (requireBranchQR && !branchQR) {
+    throw new Error('Missing branchQR for pickup when requireBranchQR is true');
+  }
   const pickupOrderRes = await safeGraphQL(api, {
-    query: RIDER_PICKUP_ORDER_QUERY,
-    variables: { orderId, branchId, branchQR },
+    query: requireBranchQR ? RIDER_PICKUP_ORDER_QUERY : RIDER_PICKUP_ORDER_NO_QR_QUERY,
+    variables: requireBranchQR ? { orderId, branchId, branchQR } : { orderId, branchId },
     headers: bearer(riderAccessToken),
   });
   expect(pickupOrderRes.ok, pickupOrderRes.error || 'Rider pickup order failed').toBe(true);

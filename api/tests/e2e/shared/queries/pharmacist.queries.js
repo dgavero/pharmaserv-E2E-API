@@ -32,6 +32,63 @@ export const PHARMACY_UPDATE_PRICES_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PHARMACY_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    pharmacy {
+      paymentQRCodeUploadURL(ext: $ext) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
+export const PHARMACY_SAVE_PAYMENT_QR_CODE_QUERY = /* GraphQL */ `
+  mutation ($qrCode: PaymentQRCodeRequest!) {
+    pharmacy {
+      order {
+        savePaymentQRCode(qrCode: $qrCode) {
+          id
+          branchId
+          photo
+        }
+      }
+    }
+  }
+`;
+
+export const PHARMACY_SEND_PAYMENT_QR_CODE_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $paymentQRCodeId: ID!) {
+    pharmacy {
+      order {
+        sendPaymentQRCode(orderId: $orderId, paymentQRCodeId: $paymentQRCodeId) {
+          id
+          paymentQRCodeId
+        }
+      }
+    }
+  }
+`;
+
+export const PHARMACY_ASSIGN_BRANCH_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $branchId: ID!) {
+    pharmacy {
+      order {
+        assignBranch(orderId: $orderId, branchId: $branchId) {
+          id
+          status
+          legs {
+            status
+            branch {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const PHARMACY_ADD_PRESCRIPTION_ITEM_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!, $prescriptionItem: OrderPrescriptionItemRequest!) {
     pharmacy {

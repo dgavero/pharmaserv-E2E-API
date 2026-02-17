@@ -2,7 +2,11 @@ import { expect } from '../../../../globalConfig.api.js';
 import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
 import {
   PHARMACY_ACCEPT_ORDER_QUERY,
+  PHARMACY_ASSIGN_BRANCH_QUERY,
   PHARMACY_ADD_PRESCRIPTION_ITEM_QUERY,
+  PHARMACY_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY,
+  PHARMACY_SAVE_PAYMENT_QR_CODE_QUERY,
+  PHARMACY_SEND_PAYMENT_QR_CODE_QUERY,
   PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
   PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
   PHARMACY_UPDATE_PRICES_QUERY,
@@ -40,6 +44,56 @@ export async function acceptOrderAsPharmacist(api, { pharmacistAccessToken, orde
   });
   expect(acceptOrderRes.ok, acceptOrderRes.error || 'Pharmacist accept order failed').toBe(true);
   expect(acceptOrderRes.body?.data?.pharmacy?.order?.accept?.id).toBe(orderId);
+}
+
+export async function assignBranchToOrderAsPharmacist(api, { pharmacistAccessToken, orderId, branchId }) {
+  const assignBranchRes = await safeGraphQL(api, {
+    query: PHARMACY_ASSIGN_BRANCH_QUERY,
+    variables: { orderId, branchId: Number(branchId) },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(assignBranchRes.ok, assignBranchRes.error || 'Pharmacist assign branch failed').toBe(true);
+  expect(assignBranchRes.body?.data?.pharmacy?.order?.assignBranch?.id).toBe(orderId);
+}
+
+export async function getPaymentQRCodeUploadUrlAsPharmacist(api, { pharmacistAccessToken, ext = 'png' }) {
+  const getPaymentQRCodeUploadUrlRes = await safeGraphQL(api, {
+    query: PHARMACY_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY,
+    variables: { ext },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(
+    getPaymentQRCodeUploadUrlRes.ok,
+    getPaymentQRCodeUploadUrlRes.error || 'Pharmacist get payment QR code upload URL failed'
+  ).toBe(true);
+  const node = getPaymentQRCodeUploadUrlRes.body?.data?.pharmacy?.paymentQRCodeUploadURL;
+  expect(node?.url, 'Missing payment QR code upload URL').toBeTruthy();
+  expect(node?.blobName, 'Missing payment QR code blobName').toBeTruthy();
+  return { paymentQRCodeUploadUrl: node.url, paymentQRCodeBlobName: node.blobName };
+}
+
+export async function savePaymentQRCodeAsPharmacist(api, { pharmacistAccessToken, photo }) {
+  const savePaymentQRCodeRes = await safeGraphQL(api, {
+    query: PHARMACY_SAVE_PAYMENT_QR_CODE_QUERY,
+    variables: {
+      qrCode: { photo },
+    },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(savePaymentQRCodeRes.ok, savePaymentQRCodeRes.error || 'Pharmacist save payment QR code failed').toBe(true);
+  const node = savePaymentQRCodeRes.body?.data?.pharmacy?.order?.savePaymentQRCode;
+  expect(node?.id, 'Missing saved payment QR code id').toBeTruthy();
+  return { paymentQRCodeId: node.id };
+}
+
+export async function sendPaymentQRCodeAsPharmacist(api, { pharmacistAccessToken, orderId, paymentQRCodeId }) {
+  const sendPaymentQRCodeRes = await safeGraphQL(api, {
+    query: PHARMACY_SEND_PAYMENT_QR_CODE_QUERY,
+    variables: { orderId, paymentQRCodeId },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(sendPaymentQRCodeRes.ok, sendPaymentQRCodeRes.error || 'Pharmacist send payment QR code failed').toBe(true);
+  expect(sendPaymentQRCodeRes.body?.data?.pharmacy?.order?.sendPaymentQRCode?.id).toBe(orderId);
 }
 
 export async function addPrescriptionItemAsPharmacist(api, { pharmacistAccessToken, orderId, prescriptionItem }) {
