@@ -54,6 +54,7 @@ import {
   loginPharmacist,
   acceptOrderAsPharmacist,
   addPrescriptionItemAsPharmacist,
+  updateAvailablePrescriptionItemAsPharmacist,
   replaceMedicineAsPharmacist,
   updatePricesAsPharmacist,
   sendQuoteAsPharmacist,
@@ -645,6 +646,8 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const discountImagePath = path.resolve('upload/images/prescription2.png');
       const attachmentImagePath = path.resolve('upload/images/prescription1.png');
       const proofPaymentImagePath = path.resolve('upload/images/proof1.png');
+      const firstAddedMedicineId = 3;
+      const replacedMedicineId = 4;
 
       // Patient: Login.
       const { patientAccessToken } = await loginPatient(api);
@@ -739,11 +742,23 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         pharmacistAccessToken,
         orderId,
         prescriptionItem: {
-          medicineId: 3,
+          medicineId: firstAddedMedicineId,
           quantity: 1,
           specialInstructions: 'API automated test only',
           source: 'SEARCH',
         },
+      });
+      // Pharmacist: Update Available Prescription Item.
+      await updateAvailablePrescriptionItemAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prescriptionItemId: firstPrescriptionItemId,
+        medicineId: firstAddedMedicineId,
+        quantity: 1,
+        unitPrice: 3000.0,
+        vatExempt: true,
+        specialInstructions: 'API automated test only',
+        source: 'SEARCH',
       });
       // Pharmacist: Replace Medicine.
       await replaceMedicineAsPharmacist(api, {
@@ -751,9 +766,9 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         orderId,
         prescriptionItemId: firstPrescriptionItemId,
         prescriptionItem: {
-          medicineId: 4,
+          medicineId: replacedMedicineId,
           quantity: 1,
-          unitPrice: 35.0,
+          unitPrice: 45.0,
           specialInstructions: 'API automated test only',
           source: 'SEARCH',
         },
@@ -765,7 +780,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         prices: [
           { medicineId: 1, quantity: 1, unitPrice: 10 },
           { medicineId: 2, quantity: 1, unitPrice: 12 },
-          { medicineId: 4, quantity: 1, unitPrice: 15 },
+          { medicineId: replacedMedicineId, quantity: 1, unitPrice: 15 },
         ],
       });
       // Pharmacist: Send Quote.
@@ -781,7 +796,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         pharmacistAccessToken,
         orderId,
         prescriptionItem: {
-          medicineId: 3,
+          medicineId: firstAddedMedicineId,
           quantity: 1,
           unitPrice: 18,
           specialInstructions: 'API automated test only',

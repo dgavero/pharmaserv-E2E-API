@@ -177,17 +177,23 @@ export async function payOrderAsPatientForPickupOrder(api, { patientAccessToken,
 }
 
 export async function payOrderAsPatientForScheduledDelivery(api, { patientAccessToken, orderId }) {
-  const pad2 = (n) => String(n).padStart(2, '0');
-  const now = new Date();
-  const utcMs = now.getTime() + now.getTimezoneOffset() * 60_000;
-  const plus8Now = new Date(utcMs + 8 * 60 * 60_000);
-  const plus8End = new Date(plus8Now.getTime() + 8 * 60 * 60_000);
-  const crossesDay = plus8Now.getUTCDate() !== plus8End.getUTCDate();
+  const manilaHour = Number(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      hour: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  );
 
-  const windowStartTime = `${pad2(plus8Now.getUTCHours())}:${pad2(plus8Now.getUTCMinutes())}:${pad2(plus8Now.getUTCSeconds())}.000+08:00`;
-  const windowEndTime = crossesDay
-    ? '23:59:59.000+08:00'
-    : `${pad2(plus8End.getUTCHours())}:${pad2(plus8End.getUTCMinutes())}:${pad2(plus8End.getUTCSeconds())}.000+08:00`;
+  let windowStartTime = '06:00:00.000+08:00';
+  let windowEndTime = '12:00:00.000+08:00';
+  if (manilaHour >= 12 && manilaHour < 18) {
+    windowStartTime = '12:00:00.000+08:00';
+    windowEndTime = '18:00:00.000+08:00';
+  } else if (manilaHour >= 18) {
+    windowStartTime = '18:00:00.000+08:00';
+    windowEndTime = '23:59:59.000+08:00';
+  }
 
   const payOrderRes = await safeGraphQL(api, {
     query: PATIENT_PAY_ORDER_QUERY,

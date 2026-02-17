@@ -43,29 +43,46 @@ export async function addPrescriptionItemAsPharmacist(api, { pharmacistAccessTok
   );
   const addedPrescriptionItem = addPrescriptionItemRes.body?.data?.pharmacy?.order?.addPrescriptionItem;
   expect(addedPrescriptionItem?.id, 'Missing added prescription item id').toBeTruthy();
+  expect(addedPrescriptionItem?.medicine?.id, 'Missing added prescription item medicine id').toBeTruthy();
   if (process.env.DEBUG_WORKFLOW_IDS === '1') {
     console.log(
       `[DEBUG_WORKFLOW_IDS] addPrescriptionItem orderId=${orderId} medicineId=${prescriptionItem?.medicineId} prescriptionItemId=${addedPrescriptionItem.id}`
     );
   }
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  return { prescriptionItemId: addedPrescriptionItem.id };
+  return { prescriptionItemId: addedPrescriptionItem.id, medicineId: addedPrescriptionItem.medicine.id };
 }
 
 export async function updateAvailablePrescriptionItemAsPharmacist(api, {
   pharmacistAccessToken,
   orderId,
   prescriptionItemId,
-  prescriptionItem,
+  medicineId,
+  quantity = 1,
+  unitPrice = 3000.0,
+  vatExempt = true,
+  specialInstructions = 'API automated test only',
+  source = 'SEARCH',
 }) {
   if (process.env.DEBUG_WORKFLOW_IDS === '1') {
     console.log(
-      `[DEBUG_WORKFLOW_IDS] updateAvailablePrescriptionItem orderId=${orderId} prescriptionItemId=${prescriptionItemId} medicineId=${prescriptionItem?.medicineId ?? 'N/A'}`
+      `[DEBUG_WORKFLOW_IDS] updateAvailablePrescriptionItem orderId=${orderId} prescriptionItemId=${prescriptionItemId} medicineId=${medicineId ?? 'N/A'}`
     );
   }
   const updatePrescriptionItemRes = await safeGraphQL(api, {
     query: PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
-    variables: { orderId, prescriptionItemId, prescriptionItem },
+    variables: {
+      orderId,
+      prescriptionItemId,
+      prescriptionItem: {
+        medicineId,
+        quantity,
+        unitPrice,
+        vatExempt,
+        specialInstructions,
+        source,
+      },
+    },
     headers: bearer(pharmacistAccessToken),
   });
   expect(
