@@ -14,6 +14,23 @@ export const PHARMACY_ACCEPT_ORDER_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PHARMACY_CONFIRM_ORDER_QUERY = /* GraphQL */ `
+  mutation ($orderId: ID!, $riderQuoteEnabled: Boolean!) {
+    pharmacy {
+      order {
+        confirmOrder(orderId: $orderId, riderQuoteEnabled: $riderQuoteEnabled) {
+          id
+          riderQuoteEnabled
+          status
+          legs {
+            status
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const PHARMACY_UPDATE_PRICES_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!, $prices: [MedicinePriceRequest!]) {
     pharmacy {
@@ -166,6 +183,7 @@ export const PHARMACY_SEND_QUOTE_QUERY = /* GraphQL */ `
       order {
         sendQuote(orderId: $orderId) {
           id
+          paymentQRCodeId
           status
           legs {
             status

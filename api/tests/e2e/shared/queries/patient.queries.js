@@ -75,6 +75,29 @@ export const PATIENT_GET_PROOF_OF_PAYMENT_UPLOAD_URL_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PATIENT_GET_PAYMENT_QR_CODE_QUERY = /* GraphQL */ `
+  query ($paymentQRCodeId: ID!) {
+    patient {
+      paymentQRCode(paymentQRCodeId: $paymentQRCodeId) {
+        id
+        branchId
+        photo
+      }
+    }
+  }
+`;
+
+export const PATIENT_GET_BLOB_TOKEN_QUERY = /* GraphQL */ `
+  query ($blobName: String!) {
+    patient {
+      blobToken(blobName: $blobName) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
 export const PATIENT_ACCEPT_QUOTE_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!) {
     patient {

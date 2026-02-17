@@ -2,6 +2,7 @@ import { expect } from '../../../../globalConfig.api.js';
 import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
 import {
   PHARMACY_ACCEPT_ORDER_QUERY,
+  PHARMACY_CONFIRM_ORDER_QUERY,
   PHARMACY_ASSIGN_BRANCH_QUERY,
   PHARMACY_ADD_PRESCRIPTION_ITEM_QUERY,
   PHARMACY_GET_PAYMENT_QR_CODE_UPLOAD_URL_QUERY,
@@ -44,6 +45,18 @@ export async function acceptOrderAsPharmacist(api, { pharmacistAccessToken, orde
   });
   expect(acceptOrderRes.ok, acceptOrderRes.error || 'Pharmacist accept order failed').toBe(true);
   expect(acceptOrderRes.body?.data?.pharmacy?.order?.accept?.id).toBe(orderId);
+}
+
+export async function confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled = false }) {
+  const confirmOrderRes = await safeGraphQL(api, {
+    query: PHARMACY_CONFIRM_ORDER_QUERY,
+    variables: { orderId, riderQuoteEnabled },
+    headers: bearer(pharmacistAccessToken),
+  });
+  expect(confirmOrderRes.ok, confirmOrderRes.error || 'Pharmacist confirm order failed').toBe(true);
+  const confirmOrderNode = confirmOrderRes.body?.data?.pharmacy?.order?.confirmOrder;
+  expect(confirmOrderNode?.id).toBe(orderId);
+  expect(Boolean(confirmOrderNode?.riderQuoteEnabled)).toBe(Boolean(riderQuoteEnabled));
 }
 
 export async function assignBranchToOrderAsPharmacist(api, { pharmacistAccessToken, orderId, branchId }) {
@@ -217,7 +230,9 @@ export async function sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderI
     headers: bearer(pharmacistAccessToken),
   });
   expect(sendQuoteRes.ok, sendQuoteRes.error || 'Pharmacist send quote failed').toBe(true);
-  expect(sendQuoteRes.body?.data?.pharmacy?.order?.sendQuote?.id).toBe(orderId);
+  const sendQuoteNode = sendQuoteRes.body?.data?.pharmacy?.order?.sendQuote;
+  expect(sendQuoteNode?.id).toBe(orderId);
+  return { sendQuoteNode, paymentQRCodeId: sendQuoteNode?.paymentQRCodeId };
 }
 
 export async function prepareOrderAsPharmacist(api, { pharmacistAccessToken, orderId }) {

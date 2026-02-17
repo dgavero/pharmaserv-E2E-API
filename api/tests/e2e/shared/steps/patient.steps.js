@@ -8,6 +8,8 @@ import {
   PATIENT_SAVE_DISCOUNT_CARD_QUERY,
   PATIENT_GET_ATTACHMENT_UPLOAD_URL_QUERY,
   PATIENT_GET_PROOF_OF_PAYMENT_UPLOAD_URL_QUERY,
+  PATIENT_GET_PAYMENT_QR_CODE_QUERY,
+  PATIENT_GET_BLOB_TOKEN_QUERY,
   PATIENT_ACCEPT_QUOTE_QUERY,
   PATIENT_REQUEST_REQUOTE_QUERY,
   PATIENT_PAY_ORDER_QUERY,
@@ -139,6 +141,32 @@ export async function getProofOfPaymentUploadUrlAsPatient(api, { patientAccessTo
   expect(node?.url, 'Missing proof of payment upload URL').toBeTruthy();
   expect(node?.blobName, 'Missing proof of payment blobName').toBeTruthy();
   return { proofOfPaymentUploadUrl: node.url, proofOfPaymentBlobName: node.blobName };
+}
+
+export async function getPaymentQRCodeAsPatient(api, { patientAccessToken, paymentQRCodeId }) {
+  const getPaymentQRCodeRes = await safeGraphQL(api, {
+    query: PATIENT_GET_PAYMENT_QR_CODE_QUERY,
+    variables: { paymentQRCodeId },
+    headers: bearer(patientAccessToken),
+  });
+  expect(getPaymentQRCodeRes.ok, getPaymentQRCodeRes.error || 'Patient get payment QR code failed').toBe(true);
+  const paymentQRCodeNode = getPaymentQRCodeRes.body?.data?.patient?.paymentQRCode;
+  expect(paymentQRCodeNode?.id, 'Missing patient payment QR code id').toBeTruthy();
+  expect(paymentQRCodeNode?.photo, 'Missing patient payment QR code photo').toBeTruthy();
+  return { paymentQRCodeNode, paymentQRCodePhoto: paymentQRCodeNode.photo };
+}
+
+export async function getBlobTokenAsPatient(api, { patientAccessToken, blobName }) {
+  const getBlobTokenRes = await safeGraphQL(api, {
+    query: PATIENT_GET_BLOB_TOKEN_QUERY,
+    variables: { blobName },
+    headers: bearer(patientAccessToken),
+  });
+  expect(getBlobTokenRes.ok, getBlobTokenRes.error || 'Patient get blob token failed').toBe(true);
+  const blobTokenNode = getBlobTokenRes.body?.data?.patient?.blobToken;
+  expect(blobTokenNode?.blobName, 'Missing blob token blobName').toBeTruthy();
+  expect(blobTokenNode?.url, 'Missing blob token url').toBeTruthy();
+  return { blobTokenNode, blobViewUrl: blobTokenNode.url };
 }
 
 export async function acceptQuoteAsPatient(api, { patientAccessToken, orderId }) {
