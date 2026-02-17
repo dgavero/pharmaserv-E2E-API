@@ -106,7 +106,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
       // PSE Pharmacist: Send Quote.
       await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
 
-      // Patient: Accept Quote.
+      // Patient: Accept Quote with default quoted quantities (no quantity reduction in this scenario).
       await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
       // Patient: Get Proof of Payment Upload URL.
       const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
@@ -117,7 +117,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
         uploadUrl: proofOfPaymentUploadUrl,
         imagePath: patientProofPaymentImagePath,
       });
-      // Patient: Pay Order.
+      // Patient: Pay Order using uploaded proof only (keeps quoted quantities as-is).
       await payOrderAsPatient(api, {
         patientAccessToken,
         orderId,

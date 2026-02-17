@@ -84,6 +84,10 @@ export const PATIENT_ACCEPT_QUOTE_QUERY = /* GraphQL */ `
           status
           legs {
             status
+            prescriptionItems {
+              id
+              quantity
+            }
           }
         }
       }

@@ -148,7 +148,9 @@ export async function acceptQuoteAsPatient(api, { patientAccessToken, orderId })
     headers: bearer(patientAccessToken),
   });
   expect(acceptQuoteRes.ok, acceptQuoteRes.error || 'Patient accept quote failed').toBe(true);
-  expect(acceptQuoteRes.body?.data?.patient?.order?.acceptQuote?.id).toBe(orderId);
+  const acceptQuoteNode = acceptQuoteRes.body?.data?.patient?.order?.acceptQuote;
+  expect(acceptQuoteNode?.id).toBe(orderId);
+  return { acceptQuoteNode };
 }
 
 export async function requestReQuoteAsPatient(api, { patientAccessToken, orderId }) {
@@ -162,14 +164,12 @@ export async function requestReQuoteAsPatient(api, { patientAccessToken, orderId
 }
 
 export async function payOrderAsPatient(api, { patientAccessToken, orderId, proof }) {
+  expect(proof?.photo, 'Missing proof.photo for patient pay order').toBeTruthy();
   const payOrderRes = await safeGraphQL(api, {
     query: PATIENT_PAY_ORDER_QUERY,
     variables: {
       orderId,
-      proof: proof || {
-        fulfillmentMode: 'DELIVERY',
-        photo: 'pp-2cba3c7a-6985-46c3-a666-bbcef03367c7.png',
-      },
+      proof,
     },
     headers: bearer(patientAccessToken),
   });
