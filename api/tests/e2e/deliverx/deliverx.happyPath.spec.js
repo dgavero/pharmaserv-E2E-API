@@ -294,18 +294,19 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       expect(completeOrderRes.body?.data?.rider?.order?.complete?.id).toBe(orderId);
 
       // Rate rider as patient.
+      const rating = Math.floor(Math.random() * 5) + 1;
       const rateRiderRes = await safeGraphQL(api, {
         query: PATIENT_RATE_RIDER_QUERY,
         variables: {
           rating: {
             riderId: Number(assignedRiderId || process.env.RIDER_USERID),
-            rating: 4,
+            rating,
           },
         },
         headers: bearer(patientAccessToken),
       });
       expect(rateRiderRes.ok, rateRiderRes.error || 'Patient rate rider failed').toBe(true);
-      expect.soft(rateRiderRes.body?.data?.patient?.order?.rateRider?.rating).toBe(4);
+      expect.soft(rateRiderRes.body?.data?.patient?.order?.rateRider?.rating).toBe(rating);
     }
   );
 
@@ -439,7 +440,6 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await rateRiderAsPatient(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
-        rating: 4,
       });
     }
   );
@@ -621,7 +621,6 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await rateRiderAsPatient(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
-        rating: 4,
       });
     }
   );
@@ -854,7 +853,6 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await rateRiderAsPatient(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
-        rating: 4,
       });
     }
   );

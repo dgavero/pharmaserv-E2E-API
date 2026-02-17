@@ -207,12 +207,13 @@ export async function payOrderAsPatientForScheduledDelivery(api, { patientAccess
   expect(payOrderRes.body?.data?.patient?.order?.pay?.id).toBe(orderId);
 }
 
-export async function rateRiderAsPatient(api, { patientAccessToken, riderId, rating = 4 }) {
+export async function rateRiderAsPatient(api, { patientAccessToken, riderId, rating }) {
+  const selectedRating = rating ?? Math.floor(Math.random() * 5) + 1;
   const rateRiderRes = await safeGraphQL(api, {
     query: PATIENT_RATE_RIDER_QUERY,
-    variables: { rating: { riderId: Number(riderId), rating } },
+    variables: { rating: { riderId: Number(riderId), rating: selectedRating } },
     headers: bearer(patientAccessToken),
   });
   expect(rateRiderRes.ok, rateRiderRes.error || 'Patient rate rider failed').toBe(true);
-  expect.soft(rateRiderRes.body?.data?.patient?.order?.rateRider?.rating).toBe(rating);
+  expect.soft(rateRiderRes.body?.data?.patient?.order?.rateRider?.rating).toBe(selectedRating);
 }
