@@ -38,6 +38,8 @@ import {
   submitOrderAsPatient,
   acceptQuoteAsPatient,
   payOrderAsPatient,
+  payOrderAsPatientForPickupOrder,
+  payOrderAsPatientForScheduledDelivery,
   rateRiderAsPatient,
 } from '../shared/steps/patient.steps.js';
 import {
@@ -467,14 +469,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       // Accept quote as patient.
       await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
       // Pay order as patient (pickup mode).
-      await payOrderAsPatient(api, {
-        patientAccessToken,
-        orderId,
-        proof: {
-          fulfillmentMode: 'PICKUP',
-          photo: 'pp-123456-8888-5643.png',
-        },
-      });
+      await payOrderAsPatientForPickupOrder(api, { patientAccessToken, orderId });
 
       // Login as rider admin.
       const { adminAccessToken } = await loginAdmin(api);
@@ -527,8 +522,8 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
 
       // Accept quote as patient.
       await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
-      // Pay order as patient.
-      await payOrderAsPatient(api, { patientAccessToken, orderId });
+      // Pay order as patient (scheduled delivery mode).
+      await payOrderAsPatientForScheduledDelivery(api, { patientAccessToken, orderId });
 
       // Login as rider admin.
       const { adminAccessToken } = await loginAdmin(api);
@@ -541,7 +536,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken, orderId });
 
       // Assign rider to order as rider admin.
-      await assignRiderToOrderAsAdmin(api, {
+      const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
@@ -550,7 +545,27 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       // Login as rider.
       const { riderAccessToken } = await loginRider(api);
       // Start pickup order as rider.
-      await startPickupOrderAsRider(api, { riderAccessToken, orderId });
+      const startPickupOrderRes = await safeGraphQL(api, {
+        query: RIDER_START_PICKUP_ORDER_QUERY,
+        variables: { orderId },
+        headers: bearer(riderAccessToken),
+      });
+
+      // If run between 12AM-6AM (+08), allow expected out-of-schedule response and stop early.
+      const now = new Date();
+      const utcMs = now.getTime() + now.getTimezoneOffset() * 60_000;
+      const plus8Now = new Date(utcMs + 8 * 60 * 60_000);
+      const isBlockedWindow = plus8Now.getUTCHours() >= 0 && plus8Now.getUTCHours() < 6;
+      const outOfScheduleMsg = 'Order cannot be started since time is outside the schedule for delivery';
+      if (isBlockedWindow && !startPickupOrderRes.ok && String(startPickupOrderRes.error || '').includes(outOfScheduleMsg)) {
+        test.info().annotations.push({
+          type: 'info',
+          description: 'Expected scheduled-window stop: outside delivery schedule during 12AM-6AM (+08).',
+        });
+        return;
+      }
+      expect(startPickupOrderRes.ok, startPickupOrderRes.error || 'Rider start pickup order failed').toBe(true);
+      expect(startPickupOrderRes.body?.data?.rider?.order?.start?.id).toBe(orderId);
 
       // Mark arrived at pharmacy as rider.
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
@@ -579,6 +594,13 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await arrivedAtDropOffAsRider(api, { riderAccessToken, orderId });
       // Complete order as rider.
       await completeOrderAsRider(api, { riderAccessToken, orderId });
+
+      // Rate rider as patient.
+      await rateRiderAsPatient(api, {
+        patientAccessToken,
+        riderId: assignedRiderId || process.env.RIDER_USERID,
+        rating: 4,
+      });
     }
   );
 });
