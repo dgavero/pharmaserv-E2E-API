@@ -1,6 +1,6 @@
 /**
  * Utility helpers for Playwright tests with Discord integration.
- * - Provides markPassed/markFailed logging into Discord threads.
+ * - Provides markFailed logging into Discord threads.
  * - Manages a message queue + flush cycle via REST (no Gateway).
  * - Safe helpers: wrappers around Playwright actions (click, input, hover, navigate, wait)
  *   that return boolean instead of throwing. This:
