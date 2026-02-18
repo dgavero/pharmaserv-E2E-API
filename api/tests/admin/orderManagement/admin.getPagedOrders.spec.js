@@ -13,9 +13,9 @@ import { GET_PAGED_ORDERS_QUERY } from './admin.orderManagementQueries.js';
 
 function buildPagedOrdersFilter() {
   return {
-    pageSize: 100,
+    pageSize: 10,
     page: 1,
-    startDate: '2025-01-01',
+    startDate: '2026-01-01',
     endDate: '2026-12-31',
     ascending: false,
   };
@@ -42,9 +42,7 @@ test.describe('GraphQL: Admin Get Paged Orders', () => {
         headers: bearer(accessToken),
       });
 
-      expect(getPagedOrdersRes.ok, getPagedOrdersRes.error || 'Get paged orders endpoint failed').toBe(
-        true
-      );
+      expect(getPagedOrdersRes.ok, getPagedOrdersRes.error || 'Get paged orders endpoint failed').toBe(true);
     }
   );
 
