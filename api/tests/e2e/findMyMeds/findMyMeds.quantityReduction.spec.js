@@ -7,6 +7,7 @@ import {
   acceptQuoteAsPatient,
   getProofOfPaymentUploadUrlAsPatient,
   payOrderAsPatient,
+  rateRiderAsPatient,
   uploadImageToSignedUrl,
 } from '../shared/steps/patient.steps.js';
 import {
@@ -140,7 +141,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
       // Rider Admin: Assign Rider To Order.
-      await assignRiderToOrderAsAdmin(api, {
+      const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
@@ -207,6 +208,11 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       });
       // Rider: Complete Order.
       await completeOrderAsRider(api, { riderAccessToken, orderId });
+      // Patient: Rate Rider.
+      await rateRiderAsPatient(api, {
+        patientAccessToken,
+        riderId: assignedRiderId || process.env.RIDER_USERID,
+      });
     }
   );
 });

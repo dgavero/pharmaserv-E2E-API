@@ -340,7 +340,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
   );
 
   test(
-    'PHARMA-335 | DeliverX with attachment and no prescription items using shared role steps',
+    'PHARMA-335 | DeliverX with attachment and no prescription items',
     {
       tag: [
         '@api',
@@ -749,5 +749,4 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
     }
   );
-
 });
