@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "test": "playwright test",
-  "report:publish": "node scripts/publish-report.js"
+    "test": "playwright test",
+    "test:all": "bash scripts/run-all.sh safe",
+    "test:all:safe": "bash scripts/run-all.sh safe",
+    "test:all:stress": "bash scripts/run-all.sh stress",
+    "report:publish": "node scripts/publish-report.js"
   },
   "keywords": [],
   "author": "",

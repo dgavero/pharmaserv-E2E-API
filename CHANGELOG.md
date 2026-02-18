@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+# [3.0.2]
+
+### Added
+- Added local batch runner script: `scripts/run-all.sh`
+  - `safe` mode: API standalone -> pause -> API E2E -> pause -> UI E2E
+  - `stress` mode: all three batches run in parallel
+  - `DRY_RUN=1` for execution preview logs without running tests
+- Added npm scripts:
+  - `test:all`
+  - `test:all:safe`
+  - `test:all:stress`
+
+### Changed
+- Updated CI workflow `.github/workflows/tests.yml`:
+  - `push`/`schedule` now resolve to safe mode by default
+  - `workflow_dispatch` now accepts `run_mode`, `threads`, and `safe_pause_seconds`
+  - test execution now calls batch scripts instead of a single direct `playwright` command
+- Updated `README.md` and `USAGE.md` to document safe/stress execution behavior.
+
 # [3.0.1]
 
 ### Changed
