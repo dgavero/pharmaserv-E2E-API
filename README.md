@@ -11,6 +11,8 @@ Playwright test framework for Pharmaserv with:
 - `PROJECT` selector support: `api`, `e2e`, or `e2e,api` (default runs both)
 - `TEST_ENV` routing with default `DEV`
 - Tokenized, case-insensitive `TAGS` filtering
+- Safe batch runner for full suites (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
+- Optional stress mode for parallel batch execution
 - Discord run header + thread logs + final summary
 - Rerun failed PHARMA IDs helper in summary
 - Optional report publishing (`REPORT_PUBLISH=0` disables publish)
@@ -32,7 +34,21 @@ TEST_ENV=DEV THREADS=4 TAGS=PHARMA-160 PROJECT=api npx playwright test
 
 # E2E only
 TEST_ENV=DEV THREADS=4 TAGS=merchant PROJECT=e2e npx playwright test
+
+# Safe full-run orchestration (recommended for shared DEV)
+npm run test:all
+
+# Stress full-run orchestration (parallel batches, high load)
+npm run test:all:stress
+
+# Safe dry-run preview (logs only, no test execution)
+DRY_RUN=1 npm run test:all
 ```
+
+## Safe vs Direct Run
+
+- `npm run test:all` uses safe batch sequencing with pauses.
+- Direct `npx playwright test ...` does not use batch safety and can overload shared DEV if scope is broad.
 
 ## Core Docs
 

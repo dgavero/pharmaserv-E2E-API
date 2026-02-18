@@ -6,6 +6,25 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      run_mode:
+        description: 'Execution mode'
+        required: false
+        default: safe
+        type: choice
+        options:
+          - safe
+          - stress
+      threads:
+        description: 'Worker count override (optional)'
+        required: false
+        default: '4'
+        type: string
+      safe_pause_seconds:
+        description: 'Pause between SAFE batches in seconds'
+        required: false
+        default: '30'
+        type: string
 
 permissions:
   contents: write
@@ -71,7 +90,42 @@ jobs:
           git config --global user.email "${GIT_COMMITTER_EMAIL}"
       - run: npm ci
       - run: npx playwright install --with-deps
-      - run: npx playwright test api/tests
+      - name: Resolve run mode and execution settings
+        id: run_config
+        shell: bash
+        run: |
+          MODE="safe"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            MODE="${{ inputs.run_mode }}"
+          fi
+
+          RUN_THREADS="${THREADS:-4}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.threads }}" ]]; then
+            RUN_THREADS="${{ inputs.threads }}"
+          fi
+
+          SAFE_PAUSE="30"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.safe_pause_seconds }}" ]]; then
+            SAFE_PAUSE="${{ inputs.safe_pause_seconds }}"
+          fi
+
+          echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
+          echo "threads=${RUN_THREADS}" >> "$GITHUB_OUTPUT"
+          echo "safe_pause=${SAFE_PAUSE}" >> "$GITHUB_OUTPUT"
+          echo "Resolved mode=${MODE} threads=${RUN_THREADS} safe_pause=${SAFE_PAUSE}"
+
+      - name: Run tests in SAFE mode (default for push/schedule)
+        if: steps.run_config.outputs.mode == 'safe'
+        run: |
+          THREADS=${{ steps.run_config.outputs.threads }} \
+          SAFE_PAUSE_SECONDS=${{ steps.run_config.outputs.safe_pause }} \
+          npm run test:all:safe
+
+      - name: Run tests in STRESS mode (manual only)
+        if: steps.run_config.outputs.mode == 'stress'
+        run: |
+          THREADS=${{ steps.run_config.outputs.threads }} \
+          npm run test:all:stress
       - uses: actions/upload-artifact@v4
         if: always()
         with:
