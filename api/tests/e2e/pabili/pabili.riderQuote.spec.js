@@ -109,13 +109,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
         riderAccessToken,
         photo: riderPaymentQRCodeBlobName,
       });
-      // // Rider: Send Payment QR Code.
-      // await sendPaymentQRCodeAsRider(api, {
-      //   riderAccessToken,
-      //   orderId,
-      //   branchId: pabiliBranchId,
-      //   paymentQRCodeId: riderPaymentQRCodeId,
-      // });
+
       // Rider: Send Quote.
       await sendQuoteAsRider(api, {
         riderAccessToken,
@@ -209,4 +203,5 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
       await completeOrderAsRider(api, { riderAccessToken, orderId });
     }
   );
+
 });
