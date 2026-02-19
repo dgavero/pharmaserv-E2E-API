@@ -14,9 +14,8 @@ Playwright test framework for Pharmaserv with:
 - Safe batch runner for full suites (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
 - Optional stress mode for parallel batch execution
 - Targeted rerun mode in CI via `rerun_tags` + `rerun_project` (`api`, `e2e`, `all`)
-- Single Discord finalize summary per workflow run (no per-job duplicate summaries)
+- Incremental Discord progress reporting during CI runs
 - Rerun failed PHARMA IDs helper in summary
-- Single publish owner in CI finalize step (prevents parallel publish conflicts)
 
 ## Discord Channel Routing
 
@@ -63,9 +62,13 @@ DRY_RUN=1 npm run test:all
 ## CI Targeted Rerun
 
 - In GitHub Actions `workflow_dispatch`, you can set:
-1. `rerun_tags` (example: `PHARMA-180|PHARMA-181`)
-2. `rerun_project` (`api`, `e2e`, or `all`)
-- When `rerun_tags` is provided, CI skips safe/stress batch jobs and runs only matching tags.
+1. `run_mode` (`safe` or `stress`) for full-suite runs
+2. `threads`
+3. `test_env` (`DEV` default, or `PROD`)
+4. `safe_pause_seconds`
+5. `rerun_tags` (example: `PHARMA-180|PHARMA-181`)
+6. `rerun_project` (`api`, `e2e`, or `all`)
+- When `rerun_tags` is provided, CI runs only matching tags in the selected project scope.
 
 ## Core Docs
 

@@ -1,6 +1,8 @@
 // Initializes the Discord run: posts header + creates thread, then shuts down Gateway.
 
 import { sendSuiteHeader, shutdownBot } from './discordBot.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * Extracts the raw value passed to Playwright via --grep / -g.
@@ -94,8 +96,11 @@ function suiteNameFromProjects(projectsSet) {
  * - Closes the Gateway client (we’ll use REST for live progress during the run).
  */
 async function discordSetup() {
-  // Setup can be disabled explicitly for CI worker jobs.
-  if (String(process.env.DISCORD_SETUP || '1') === '0') return;
+  const reuseRun = String(process.env.DISCORD_REUSE_RUN || '0') === '1';
+  const runMetaPath = path.resolve('.discord-run.json');
+  if (reuseRun && fs.existsSync(runMetaPath)) {
+    return;
+  }
 
   const testEnv = process.env.TEST_ENV || 'DEV';
 
