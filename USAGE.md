@@ -38,6 +38,11 @@ DRY_RUN=1 npm run test:all
 - `PROJECT`: `api`, `e2e`, `e2e,api`; empty means both.
 - `SAFE_PAUSE_SECONDS`: pause duration between safe batches (default `30`).
 - `DRY_RUN`: when `1`, prints batch plan/commands without running tests.
+- Discord channel mapping vars:
+1. `DEV_TESTING_CHANNELID`
+2. `QA_TESTING_CHANNELID`
+3. `PROD_TESTING_CHANNELID`
+4. `LOCAL_RUNS_CHANNELID`
 
 ## Batch Modes
 
@@ -57,7 +62,20 @@ DRY_RUN=1 npm run test:all
 1. `run_mode` (`safe` or `stress`)
 2. `threads`
 3. `safe_pause_seconds`
+4. `rerun_project` (`api`, `e2e`, `all`)
+5. `rerun_tags` (optional TAGS regex, e.g. `PHARMA-180|PHARMA-181`)
 - Direct `npx playwright test ...` commands bypass safe batching.
+- Worker jobs run tests only; final Discord summary/report publish happens in one finalize job.
+
+## Targeted Failed-Test Rerun (CI)
+
+- Use `workflow_dispatch` with:
+1. `rerun_tags` set to failed IDs (pipe-separated)
+2. `rerun_project` set to `api`, `e2e`, or `all`
+- Behavior:
+1. When `rerun_tags` is non-empty, CI runs only `rerun-targeted` job.
+2. Safe/stress batch jobs are skipped.
+3. `rerun_project=all` maps to `PROJECT=e2e,api`.
 
 ## Tag Filtering
 
@@ -70,13 +88,16 @@ TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 
 ## Discord Reporting Flow
 
-1. Global setup posts suite header and creates run thread.
-2. Header updates with live progress and pass/fail/skip summary.
-3. API assertion failures are posted as compact snippets.
+1. CI worker jobs execute tests and upload JUnit/blob artifacts.
+2. Finalize job aggregates artifacts across executed jobs.
+3. Finalize job posts one Discord message/thread for the run.
 4. Final summary includes:
 - pass/fail/skip totals
 - rerun helper when failures include `PHARMA-<id>` in test titles
 - report link (`Playwright HTML report is [here](...)`) when publishing succeeds
+5. Channel routing:
+- `REPORT_PUBLISH=0` -> `LOCAL_RUNS_CHANNELID`
+- `REPORT_PUBLISH!=0` -> `TEST_ENV` channel (`DEV/QA/PROD`)
 
 ## Failure Rerun Helpers
 

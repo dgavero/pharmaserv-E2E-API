@@ -94,6 +94,9 @@ function suiteNameFromProjects(projectsSet) {
  * - Closes the Gateway client (we’ll use REST for live progress during the run).
  */
 async function discordSetup() {
+  // Setup can be disabled explicitly for CI worker jobs.
+  if (String(process.env.DISCORD_SETUP || '1') === '0') return;
+
   const testEnv = process.env.TEST_ENV || 'DEV';
 
   // Prefer env TAGS for clarity (e.g., "samples|smoke"); fallback to CLI --grep if absent.

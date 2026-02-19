@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+# [3.0.3]
+
+### Changed
+- Updated CI workflow to prevent report/publish conflicts:
+  - worker jobs now run with `DISCORD_REPORTER=0` and upload JUnit/blob artifacts
+  - worker jobs now set `DISCORD_SETUP=0` (Discord setup is explicitly controlled)
+  - added `finalize-reporting` job as single owner for Discord summary + report publish
+  - report publishing now happens once per workflow run, not in parallel worker jobs
+- Updated Playwright config to support optional CI reporters via env:
+  - `PW_JUNIT_OUTPUT` for JUnit output
+  - `PW_BLOB_OUTPUT` for blob output
+  - `DISCORD_REPORTER=0` to disable Discord reporter on worker jobs
+- Added Discord channel routing by `REPORT_PUBLISH` + `TEST_ENV`:
+  - `REPORT_PUBLISH=0` routes to `LOCAL_RUNS_CHANNELID`
+  - publish-enabled runs route by env (`DEV_TESTING_CHANNELID`, `QA_TESTING_CHANNELID`, `PROD_TESTING_CHANNELID`)
+  - fallback channel is `LOCAL_RUNS_CHANNELID`
+
 # [3.0.2]
 
 ### Added
@@ -17,7 +34,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Updated CI workflow `.github/workflows/tests.yml`:
   - `push`/`schedule` now resolve to safe mode by default
-  - `workflow_dispatch` now accepts `run_mode`, `threads`, and `safe_pause_seconds`
+  - `workflow_dispatch` now accepts `run_mode`, `threads`, `safe_pause_seconds`, `rerun_tags`, and `rerun_project`
+  - targeted rerun now supports `rerun_project=all` (`PROJECT=e2e,api`)
   - test execution now calls batch scripts instead of a single direct `playwright` command
 - Updated `README.md` and `USAGE.md` to document safe/stress execution behavior.
 
