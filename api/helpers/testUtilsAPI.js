@@ -106,6 +106,15 @@ export async function safeGraphQL(api, args) {
 // Domain helpers (Auth)
 // ============================================================================
 
+function requireNonEmptyCredentials(roleLabel, { username, password }) {
+  const user = String(username ?? '').trim();
+  const pass = String(password ?? '').trim();
+  if (!user || !pass) {
+    throw new Error(`${roleLabel} login: username and password are required and must be non-empty`);
+  }
+  return { username: user, password: pass };
+}
+
 const LOGIN_MUTATION = `
   mutation ($username: String!, $password: String!) {
     patient {
@@ -125,12 +134,10 @@ const LOGIN_MUTATION = `
  * - Returns { accessToken, refreshToken, raw } where "raw" is the safeGraphQL envelope.
  */
 export async function loginAndGetTokens(api, { username, password }) {
-  if (!username || !password) {
-    throw new Error('loginAndGetTokens: username and password are required');
-  }
+  const creds = requireNonEmptyCredentials('Patient', { username, password });
   const raw = await safeGraphQL(api, {
     query: LOGIN_MUTATION,
-    variables: { username, password },
+    variables: creds,
   });
   if (!raw.ok) {
     throw new Error(`Login failed: ${raw.error || 'unknown error'}`);
@@ -165,12 +172,10 @@ const ADMIN_LOGIN_MUTATION = `
 
 /** Login as administrator and return tokens. */
 export async function adminLoginAndGetTokens(api, { username, password }) {
-  if (!username || !password) {
-    throw new Error('adminLoginAndGetTokens: username and password are required');
-  }
+  const creds = requireNonEmptyCredentials('Admin', { username, password });
   const raw = await safeGraphQL(api, {
     query: ADMIN_LOGIN_MUTATION,
-    variables: { username, password },
+    variables: creds,
   });
   if (!raw.ok) {
     throw new Error(`Admin login failed: ${raw.error || 'unknown error'}`);
@@ -198,12 +203,10 @@ export const RIDER_LOGIN_QUERY = /* GraphQL */ `
 `;
 
 export async function riderLoginAndGetTokens(api, { username, password }) {
-  if (!username || !password) {
-    throw new Error('riderLoginAndGetTokens: username and password are required');
-  }
+  const creds = requireNonEmptyCredentials('Rider', { username, password });
   const raw = await safeGraphQL(api, {
     query: RIDER_LOGIN_QUERY,
-    variables: { username, password },
+    variables: creds,
   });
   if (!raw.ok) {
     throw new Error(`Rider login failed: ${raw.error || 'unknown error'}`);
@@ -231,12 +234,10 @@ export const PHARMACIST_LOGIN_QUERY = /* GraphQL */ `
 `;
 
 export async function pharmacistLoginAndGetTokens(api, { username, password }) {
-  if (!username || !password) {
-    throw new Error('pharmacistLoginAndGetTokens: username and password are required');
-  }
+  const creds = requireNonEmptyCredentials('Pharmacist', { username, password });
   const raw = await safeGraphQL(api, {
     query: PHARMACIST_LOGIN_QUERY,
-    variables: { username, password },
+    variables: creds,
   });
   if (!raw.ok) {
     throw new Error(`Pharmacist login failed: ${raw.error || 'unknown error'}`);

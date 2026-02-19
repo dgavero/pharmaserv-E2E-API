@@ -17,6 +17,10 @@ export default class MerchantPortalLoginPage {
   }
 
   async login(user, pass) {
+    if (!String(user ?? '').trim() || !String(pass ?? '').trim()) {
+      markFailed('Merchant login requires non-empty username and password');
+    }
+
     if (!(await safeInput(this.page, getSelector(this.sel, 'Login.Username'), user))) {
       markFailed('Failed to input username');
     }
