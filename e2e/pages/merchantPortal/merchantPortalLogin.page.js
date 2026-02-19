@@ -3,11 +3,7 @@ import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import {
   safeClick,
   safeInput,
-  safeNavigateToUrl,
-  safeWaitForPageLoad,
   safeWaitForElementVisible,
-  safeWaitForElementPresent,
-  getLastError,
 } from '../../helpers/testUtilsUI.js';
 
 export default class MerchantPortalLoginPage {

@@ -197,7 +197,7 @@ jobs:
           else
             if [[ "${{ steps.selector.outputs.use_smoke }}" == "1" ]]; then
               echo "Running smoke suite in one go"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.safe_tags }}" PROJECT= npx playwright test
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.safe_tags }}" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
             else
               echo "Running full suite in SAFE mode"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.safe_tags }}" npm run test:all:safe

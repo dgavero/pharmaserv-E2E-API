@@ -1,7 +1,7 @@
 {
   "Login": {
     "Username": "//input[@aria-label='Enter your username or email' or @placeholder='Enter your username or email' or @name='username' or @name='email']",
-    "Password": "//input[@aria-label='Enter your password' or @placeholder='Enter your password' or @type='password' or @name='password']",
+    "Password": "//input[@aria-label='Enter your password' or @placeholder='Enter your password' or @name='password']",
     "Submit": "//*[@data-testid='login-btn']",
     "Logo": "//img[@alt='logo' or @aria-label='logo' or @title='logo']",
     "ErrorMessageInvalidUserName": "//div[contains(text(),'Invalid username')]",

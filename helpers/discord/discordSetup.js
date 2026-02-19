@@ -104,6 +104,20 @@ async function discordSetup() {
 
   const testEnv = process.env.TEST_ENV || 'DEV';
 
+  // Explicit label override for cleaner CI headers (e.g., "smoke").
+  const explicitLabel = (process.env.DISCORD_GREP_LABEL || '').trim();
+  if (explicitLabel) {
+    const projects = resolveProjectSet();
+    const suiteName = suiteNameFromProjects(projects);
+    await sendSuiteHeader({
+      suiteName,
+      env: testEnv,
+      grep: explicitLabel,
+    });
+    await shutdownBot();
+    return;
+  }
+
   // Prefer env TAGS for clarity (e.g., "samples|smoke"); fallback to CLI --grep if absent.
   const raw =
     process.env.TAGS && process.env.TAGS.trim().length

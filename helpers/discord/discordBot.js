@@ -157,7 +157,7 @@ Tests completed ✅ 100% [${total}/${total}]
       const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}" npx playwright test`;
       const rerunUrl = getWorkflowDispatchUrl();
 
-      content += `\n\n🔁 Rerun the failures [here](${rerunUrl})
+      content += `\n\n🔁 Rerun the failures: <${rerunUrl}>
 🛠️ Rerun the failures manually:
 \`${grepCmd}\``;
     } else {

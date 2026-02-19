@@ -370,16 +370,36 @@ export async function safeWaitForPageLoad(
 }
 
 /** Fill input/textarea directly (faster path when key events are not required). */
-export async function safeFill(page, selector, text, { timeout = Timeouts.standard } = {}) {
-  try {
-    const loc = page.locator(selector);
-    await loc.waitFor({ state: 'visible', timeout });
-    await loc.fill(text == null ? '' : String(text), { timeout });
-    return true;
-  } catch (error) {
-    setLastErrorForPage(page, error);
-    return false;
+export async function safeFill(
+  page,
+  selector,
+  text,
+  { timeout = Timeouts.standard, retries = 2, retryDelayMs = 150 } = {}
+) {
+  const expected = text == null ? '' : String(text);
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const loc = page.locator(selector);
+      await loc.waitFor({ state: 'visible', timeout });
+      await loc.fill(expected, { timeout });
+
+      const actual = await loc.inputValue({ timeout });
+      if (actual === expected) return true;
+
+      lastError = new Error(`safeFill verification mismatch: expected "${expected}", got "${actual}"`);
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < retries) {
+      await page.waitForTimeout(retryDelayMs);
+    }
   }
+
+  setLastErrorForPage(page, lastError || new Error('safeFill failed'));
+  return false;
 }
 
 /** Select an option from a native <select> element. */
