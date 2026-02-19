@@ -45,6 +45,12 @@ function resolveDiscordChannelId() {
   return process.env.LOCAL_RUNS_CHANNELID;
 }
 
+function getWorkflowDispatchUrl() {
+  const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
+  const repo = process.env.GITHUB_REPOSITORY || 'dgavero/pharmaserv-E2E-API';
+  return `${serverUrl}/${repo}/actions/workflows/tests.yml`;
+}
+
 /*
  * Initializes the Discord Gateway client once and fetches the test-report channel.
  * Required for posting the initial header.
@@ -149,8 +155,7 @@ Tests completed ✅ 100% [${total}/${total}]
       const testEnv = process.env.TEST_ENV || 'DEV';
       const threads = process.env.THREADS || '4';
       const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}" npx playwright test`;
-      const baseUrl = process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
-      const rerunUrl = `${baseUrl}${encodeURIComponent(grep)}`;
+      const rerunUrl = getWorkflowDispatchUrl();
 
       content += `\n\n🔁 Rerun the failures [here](${rerunUrl})
 🛠️ Rerun the failures manually:

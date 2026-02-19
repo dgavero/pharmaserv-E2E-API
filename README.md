@@ -11,8 +11,9 @@ Playwright test framework for Pharmaserv with:
 - `PROJECT` selector support: `api`, `e2e`, or `e2e,api` (default runs both)
 - `TEST_ENV` routing with default `DEV`
 - Tokenized, case-insensitive `TAGS` filtering
-- Safe batch runner for full suites (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
-- Optional stress mode for parallel batch execution
+- Safe full runner (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
+- Smoke mode in CI runs in one go (single Playwright invocation)
+- Optional stress mode for full parallel execution
 - Targeted rerun mode in CI via `rerun_tags` + `rerun_project` (`api`, `e2e`, `all`)
 - Incremental Discord progress reporting during CI runs
 - Rerun failed PHARMA IDs helper in summary
@@ -63,11 +64,12 @@ DRY_RUN=1 npm run test:all
 
 - In GitHub Actions `workflow_dispatch`, you can set:
 1. `run_mode` (`safe` or `stress`) for full-suite runs
-2. `threads`
-3. `test_env` (`DEV` default, or `PROD`)
-4. `safe_pause_seconds`
-5. `rerun_tags` (example: `PHARMA-180|PHARMA-181`)
-6. `rerun_project` (`api`, `e2e`, or `all`)
+2. `suite_scope` (`smoke` or `full`) for non-rerun runs
+3. `threads`
+4. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
+5. `safe_pause_seconds`
+6. `rerun_tags` (`Run specific TAGS`, example: `PHARMA-180|PHARMA-181`)
+7. `rerun_project` (`api`, `e2e`, or `all`)
 - When `rerun_tags` is provided, CI runs only matching tags in the selected project scope.
 
 ## Core Docs
