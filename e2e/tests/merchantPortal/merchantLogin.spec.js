@@ -59,10 +59,19 @@ test.describe('Merchant Portal | Login', () => {
     },
 
     async ({ page }) => {
+      const sel = loadSelectors('merchant');
       const login = new MerchantPortalLoginPage(page);
 
       await login.open();
-      await login.login('', '');
+      if (!(await safeFill(page, getSelector(sel, 'Login.Username'), ''))) {
+        markFailed('Failed to fill empty username');
+      }
+      if (!(await safeFill(page, getSelector(sel, 'Login.Password'), ''))) {
+        markFailed('Failed to fill empty password');
+      }
+      if (!(await safeClick(page, getSelector(sel, 'Login.Submit')))) {
+        markFailed('Failed to click login submit with empty credentials');
+      }
       await login.assertFailedLogin();
     }
   );
