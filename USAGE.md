@@ -32,7 +32,7 @@ DRY_RUN=1 npm run test:all
 
 ## Environment Behavior
 
-- `TEST_ENV`: environment selector used by config routing. Empty means `DEV` (current config supports `DEV` and `PROD`).
+- `TEST_ENV`: environment selector used by config routing. Empty means `DEV`.
 - `THREADS`: Playwright workers count (default `4`).
 - `TAGS`: grep pattern used by the config; empty means no grep filter.
 - `PROJECT`: `api`, `e2e`, `e2e,api`; empty means both.
@@ -58,17 +58,19 @@ DRY_RUN=1 npm run test:all
 
 ## CI/CD Mode Behavior
 
-- `push` to `main` and `schedule` run one CI job in `safe` mode by default.
+- `push` to `main` and `schedule` run one CI job in `safe + smoke` mode by default.
 - `workflow_dispatch` can choose:
 1. `run_mode` (`safe` or `stress`)
-2. `threads`
-3. `test_env` (`DEV` default, or `PROD`)
-4. `safe_pause_seconds`
-5. `rerun_project` (`api`, `e2e`, `all`)
-6. `rerun_tags` (optional TAGS regex, e.g. `PHARMA-180|PHARMA-181`)
+2. `suite_scope` (`smoke` or `full`) for non-rerun runs
+3. `threads`
+4. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
+5. `safe_pause_seconds`
+6. `rerun_project` (`api`, `e2e`, `all`)
+7. `rerun_tags` (`Run specific TAGS`, e.g. `PHARMA-180|PHARMA-181`)
 - When `rerun_tags` is empty:
-1. `safe` runs `npm run test:all:safe`
-2. `stress` runs `npm run test:all:stress`
+1. `safe + smoke` runs one Playwright invocation with smoke tags
+2. `safe + full` runs `npm run test:all:safe` (3 safe batches with pauses)
+3. `stress` runs `npm run test:all:stress`
 - When `rerun_tags` is set, CI runs only matching tags in the selected project scope.
 
 ## Targeted Failed-Test Rerun (CI)

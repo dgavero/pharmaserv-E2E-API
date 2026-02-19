@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 - Simplified CI back to a single execution job (`api-tests`) to restore incremental Discord reporting during CI runs.
 - Removed CI finalize orchestrator flow and artifact-merge reporting path.
 - Restored CI `safe`/`stress` run modes in `workflow_dispatch` (`safe` remains default).
+- Added `workflow_dispatch` `suite_scope` selector (`smoke` or `full`).
+- Updated default CI behavior for `push`/`schedule` to run smoke in one go.
 - Added `workflow_dispatch` `test_env` selector with default `DEV`.
 - Kept `workflow_dispatch` targeted rerun support via:
   - `rerun_tags`

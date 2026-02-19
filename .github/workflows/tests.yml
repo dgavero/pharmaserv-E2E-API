@@ -15,6 +15,14 @@ on:
         options:
           - safe
           - stress
+      suite_scope:
+        description: 'Suite scope for non-rerun runs'
+        required: false
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - full
       threads:
         description: 'Worker count override (optional)'
         required: false
@@ -27,6 +35,7 @@ on:
         type: choice
         options:
           - DEV
+          - QA
           - PROD
       safe_pause_seconds:
         description: 'Pause between SAFE batches in seconds'
@@ -43,7 +52,7 @@ on:
           - e2e
           - all
       rerun_tags:
-        description: 'Optional TAGS regex to rerun only selected failed tests (e.g. PHARMA-180|PHARMA-181)'
+        description: 'Run specific TAGS (e.g. PHARMA-67)'
         required: false
         default: ''
         type: string
@@ -105,6 +114,8 @@ jobs:
   api-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      SMOKE_TAGS: PHARMA-1|PHARMA-3|PHARMA-30|PHARMA-59|PHARMA-60|PHARMA-116|PHARMA-118|PHARMA-141|PHARMA-143|PHARMA-150|PHARMA-176|PHARMA-258|PHARMA-261|PHARMA-285|PHARMA-315|PHARMA-334|PHARMA-336|PHARMA-337|E2E-1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -144,14 +155,25 @@ jobs:
           RERUN_TAGS=""
           RERUN_PROJECT="all"
           PROJECT_SELECTOR="e2e,api"
+          SUITE_SCOPE="smoke"
+          USE_SMOKE="1"
+          SAFE_TAGS="${SMOKE_TAGS}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             RERUN_TAGS="${{ inputs.rerun_tags }}"
             RERUN_PROJECT="${{ inputs.rerun_project }}"
+            SUITE_SCOPE="${{ inputs.suite_scope }}"
             if [[ "${RERUN_PROJECT}" == "all" ]]; then
               PROJECT_SELECTOR="e2e,api"
             else
               PROJECT_SELECTOR="${RERUN_PROJECT}"
             fi
+          fi
+
+          if [[ -n "${RERUN_TAGS}" ]]; then
+            USE_SMOKE="0"
+          elif [[ "${SUITE_SCOPE}" == "full" ]]; then
+            USE_SMOKE="0"
+            SAFE_TAGS=""
           fi
 
           echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
@@ -160,6 +182,8 @@ jobs:
           echo "safe_pause=${SAFE_PAUSE}" >> "$GITHUB_OUTPUT"
           echo "rerun_tags=${RERUN_TAGS}" >> "$GITHUB_OUTPUT"
           echo "project_selector=${PROJECT_SELECTOR}" >> "$GITHUB_OUTPUT"
+          echo "use_smoke=${USE_SMOKE}" >> "$GITHUB_OUTPUT"
+          echo "safe_tags=${SAFE_TAGS}" >> "$GITHUB_OUTPUT"
 
       - name: Run tests (full or targeted rerun)
         shell: bash
@@ -171,8 +195,13 @@ jobs:
             echo "Running full suite in STRESS mode"
             TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress
           else
-            echo "Running full suite in SAFE mode"
-            TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} npm run test:all:safe
+            if [[ "${{ steps.selector.outputs.use_smoke }}" == "1" ]]; then
+              echo "Running smoke suite in one go"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.safe_tags }}" PROJECT= npx playwright test
+            else
+              echo "Running full suite in SAFE mode"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.safe_tags }}" npm run test:all:safe
+            fi
           fi
 
       - uses: actions/upload-artifact@v4
