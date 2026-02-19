@@ -7,6 +7,8 @@
 + */
 
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import { appendSummary, shutdownBot, editRunningHeader } from './discordBot.js';
 import { flushApiReports, extractApiFailureSnippet, enqueueApiFailure } from '../../api/helpers/testUtilsAPI.js';
 
@@ -18,8 +20,28 @@ function sanitizePublishLogs(text) {
     .replace(/(github_pat_[a-z0-9_]+)/gi, '***');
 }
 
+function walkDir(rootDir) {
+  const out = [];
+  if (!fs.existsSync(rootDir)) return out;
+  const stack = [rootDir];
+  while (stack.length) {
+    const cur = stack.pop();
+    const entries = fs.readdirSync(cur, { withFileTypes: true });
+    for (const entry of entries) {
+      const full = path.join(cur, entry.name);
+      if (entry.isDirectory()) stack.push(full);
+      else out.push(full);
+    }
+  }
+  return out;
+}
+
 class DiscordReporter {
   constructor() {
+    this.statePath = path.resolve('.discord-cumulative.json');
+    this.batchIndex = parseInt(process.env.DISCORD_BATCH_INDEX || '1', 10);
+    this.batchCount = parseInt(process.env.DISCORD_BATCH_COUNT || '1', 10);
+    this.reuseRun = String(process.env.DISCORD_REUSE_RUN || '0') === '1';
     // Running tallies for the current suite.
     this.passed = 0;
     this.failed = 0;
@@ -33,18 +55,88 @@ class DiscordReporter {
     this.failedCaseIds = new Set();
   }
 
+  loadCumulativeState() {
+    if (!this.reuseRun || this.batchCount <= 1) return null;
+    try {
+      return JSON.parse(fs.readFileSync(this.statePath, 'utf-8'));
+    } catch {
+      return null;
+    }
+  }
+
+  saveCumulativeState() {
+    if (!this.reuseRun || this.batchCount <= 1) return;
+    const snapshot = {
+      passed: this.passed,
+      failed: this.failed,
+      skipped: this.skipped,
+      total: this.total,
+      completed: this.completed,
+      failedCaseIds: Array.from(this.failedCaseIds),
+      projectName: this.projectName || null,
+    };
+    fs.writeFileSync(this.statePath, JSON.stringify(snapshot, null, 2));
+  }
+
+  mergeSafeBatchBlobReports() {
+    if (!this.reuseRun || this.batchCount <= 1) return true;
+    const blobRoot = path.resolve('.blob-report');
+    const zipFiles = walkDir(blobRoot).filter((file) => file.endsWith('.zip'));
+    if (zipFiles.length === 0) return false;
+
+    const mergeInputDir = path.resolve('.blob-report', '__merge-input');
+    fs.rmSync(mergeInputDir, { recursive: true, force: true });
+    fs.mkdirSync(mergeInputDir, { recursive: true });
+
+    for (const [idx, zipPath] of zipFiles.entries()) {
+      const dest = path.join(mergeInputDir, `${String(idx + 1).padStart(4, '0')}-${path.basename(zipPath)}`);
+      fs.copyFileSync(zipPath, dest);
+    }
+
+    const res = spawnSync(
+      'npx',
+      ['playwright', 'merge-reports', '--reporter', 'html', mergeInputDir],
+      { encoding: 'utf-8' }
+    );
+    if (res.status !== 0) {
+      const logs = sanitizePublishLogs((res.stdout || '') + (res.stderr || ''));
+      console.error(
+        `[DiscordReporter] merge-reports failed (status=${res.status}, signal=${res.signal || 'none'})`
+      );
+      if (logs.trim()) console.error('[DiscordReporter] merge logs:\n' + logs.trim());
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Called once before any test runs.
    * - Discovers the exact set of tests that will run (after grep/tags/CLI filters).
    * - Immediately renders "0% [0/N]" so the Discord header shows progress from the start.
    */
   async onBegin(config, suite) {
+    const prior = this.loadCumulativeState();
+    if (prior) {
+      this.passed = Number(prior.passed || 0);
+      this.failed = Number(prior.failed || 0);
+      this.skipped = Number(prior.skipped || 0);
+      this.completed = Number(prior.completed || 0);
+      this.total = Number(prior.total || 0);
+      for (const id of prior.failedCaseIds || []) this.failedCaseIds.add(id);
+    }
+
     const all = suite.allTests();
-    this.total = all.length;
+    this.total += all.length;
     const projectNames = (config?.projects || []).map((p) => p.name).filter(Boolean);
     this.projectName = projectNames.length === 1 ? projectNames[0] : null;
 
-    await editRunningHeader({ completed: 0, total: this.total, passed: 0, failed: 0, skipped: 0 });
+    await editRunningHeader({
+      completed: this.completed,
+      total: this.total,
+      passed: this.passed,
+      failed: this.failed,
+      skipped: this.skipped,
+    });
   }
 
   /**
@@ -87,6 +179,17 @@ class DiscordReporter {
    * - Closes the Gateway client (clean shutdown).
    */
   async onEnd() {
+    // For multi-batch reused runs, only finalize on the last batch.
+    const isLastBatch = !this.reuseRun || this.batchCount <= 1 || this.batchIndex >= this.batchCount;
+    if (!isLastBatch) {
+      this.saveCumulativeState();
+      try { await flushApiReports(); } catch (e) { console.error('[API Reporter] flush failed', e); }
+      await shutdownBot();
+      return;
+    }
+
+    // Merge safe-batch blob outputs into one final HTML report before publish.
+    this.mergeSafeBatchBlobReports();
 
     // At test suite end:
     // - Auto-publishes Playwright HTML report to GitHub Pages (unless disabled via REPORT_PUBLISH=0)
@@ -135,6 +238,9 @@ class DiscordReporter {
        reportUrl, // let the bot render a direct link if available
        traceIndexUrl,
      });
+     try {
+       fs.rmSync(this.statePath, { force: true });
+     } catch {}
      await shutdownBot();
   }
 }

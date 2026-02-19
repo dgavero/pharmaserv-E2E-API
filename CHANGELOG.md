@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+# [3.0.4]
+
+### Changed
+- Simplified CI back to a single execution job (`api-tests`) to restore incremental Discord reporting during CI runs.
+- Removed CI finalize orchestrator flow and artifact-merge reporting path.
+- Restored CI `safe`/`stress` run modes in `workflow_dispatch` (`safe` remains default).
+- Added `workflow_dispatch` `test_env` selector with default `DEV`.
+- Kept `workflow_dispatch` targeted rerun support via:
+  - `rerun_tags`
+  - `rerun_project` (`api`, `e2e`, `all`)
+- Updated rerun helper command format to omit `PROJECT=` by default.
+- Updated batch orchestration to reuse one Discord thread across safe mode batches.
+- Updated stress mode to use one full-suite invocation for cleaner one-thread reporting.
+- Safe mode now runs all batches even when earlier batches fail, then exits with combined failure status.
+- Safe mode report publishing now merges all batch blob outputs into a single report link.
+
 # [3.0.3]
 
 ### Changed

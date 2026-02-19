@@ -20,6 +20,14 @@ on:
         required: false
         default: '4'
         type: string
+      test_env:
+        description: 'Target environment'
+        required: false
+        default: DEV
+        type: choice
+        options:
+          - DEV
+          - PROD
       safe_pause_seconds:
         description: 'Pause between SAFE batches in seconds'
         required: false
@@ -87,455 +95,89 @@ env:
   TEST_ENV: ${{ secrets.TEST_ENV }}
   THREADS: ${{ secrets.THREADS }}
   CI: true
-  DISCORD_REPORTER: '0'
-  DISCORD_SETUP: '0'
 
 concurrency:
-  group: tests-${{ github.ref }}
-  cancel-in-progress: true
+  # Manual runs should not cancel each other; auto runs should cancel older same-ref runs.
+  group: ${{ github.event_name == 'workflow_dispatch' && format('tests-manual-{0}', github.run_id) || format('tests-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
-  resolve-config:
+  api-tests:
     runs-on: ubuntu-latest
-    outputs:
-      mode: ${{ steps.resolve.outputs.mode }}
-      threads: ${{ steps.resolve.outputs.threads }}
-      safe_pause: ${{ steps.resolve.outputs.safe_pause }}
-      rerun_tags: ${{ steps.resolve.outputs.rerun_tags }}
-      rerun_project: ${{ steps.resolve.outputs.rerun_project }}
-      rerun_project_selector: ${{ steps.resolve.outputs.rerun_project_selector }}
+    timeout-minutes: 120
     steps:
-      - name: Resolve run mode and execution settings
-        id: resolve
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Configure git identity for report publish
+        run: |
+          git config --global user.name "${GIT_COMMITTER_NAME}"
+          git config --global user.email "${GIT_COMMITTER_EMAIL}"
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Resolve run selector
+        id: selector
         shell: bash
         run: |
-          # Default to safe mode for push/schedule.
           MODE="safe"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             MODE="${{ inputs.run_mode }}"
           fi
 
-          # Prefer secret THREADS; allow manual override in workflow_dispatch.
           RUN_THREADS="${THREADS:-4}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.threads }}" ]]; then
             RUN_THREADS="${{ inputs.threads }}"
           fi
 
-          # Pause only applies to safe-batch flow.
+          RUN_TEST_ENV="${TEST_ENV:-DEV}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.test_env }}" ]]; then
+            RUN_TEST_ENV="${{ inputs.test_env }}"
+          fi
+
           SAFE_PAUSE="30"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.safe_pause_seconds }}" ]]; then
             SAFE_PAUSE="${{ inputs.safe_pause_seconds }}"
           fi
 
-          # Optional targeted rerun: when set, batch jobs are skipped.
           RERUN_TAGS=""
           RERUN_PROJECT="all"
-          RERUN_PROJECT_SELECTOR="e2e,api"
+          PROJECT_SELECTOR="e2e,api"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             RERUN_TAGS="${{ inputs.rerun_tags }}"
             RERUN_PROJECT="${{ inputs.rerun_project }}"
             if [[ "${RERUN_PROJECT}" == "all" ]]; then
-              RERUN_PROJECT_SELECTOR="e2e,api"
+              PROJECT_SELECTOR="e2e,api"
             else
-              RERUN_PROJECT_SELECTOR="${RERUN_PROJECT}"
+              PROJECT_SELECTOR="${RERUN_PROJECT}"
             fi
           fi
 
           echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
           echo "threads=${RUN_THREADS}" >> "$GITHUB_OUTPUT"
+          echo "test_env=${RUN_TEST_ENV}" >> "$GITHUB_OUTPUT"
           echo "safe_pause=${SAFE_PAUSE}" >> "$GITHUB_OUTPUT"
           echo "rerun_tags=${RERUN_TAGS}" >> "$GITHUB_OUTPUT"
-          echo "rerun_project=${RERUN_PROJECT}" >> "$GITHUB_OUTPUT"
-          echo "rerun_project_selector=${RERUN_PROJECT_SELECTOR}" >> "$GITHUB_OUTPUT"
-          echo "Resolved mode=${MODE} threads=${RUN_THREADS} safe_pause=${SAFE_PAUSE} rerun_tags=${RERUN_TAGS} rerun_project=${RERUN_PROJECT} rerun_project_selector=${RERUN_PROJECT_SELECTOR}"
+          echo "project_selector=${PROJECT_SELECTOR}" >> "$GITHUB_OUTPUT"
 
-  api-standalone-safe:
-    needs: resolve-config
-    # Safe mode runs in sequence and is skipped when targeted rerun is requested.
-    if: needs.resolve-config.outputs.mode == 'safe' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
+      - name: Run tests (full or targeted rerun)
+        shell: bash
         run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Run API standalone tests
-        run: |
-          # Standalone API scope excludes workflow/E2E tests.
-          PW_JUNIT_OUTPUT=test-results/junit/api-standalone-safe.xml PW_BLOB_OUTPUT=blob-report/api-standalone-safe \
-          TEST_ENV=${TEST_ENV} THREADS=${{ needs.resolve-config.outputs.threads }} PROJECT=api \
-          npx playwright test api/tests --grep-invert "@workflow"
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-standalone-playwright-report
-          path: |
-            .playwright-report
-            test-results/junit
-            blob-report
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-standalone-safe-junit
-          path: test-results/junit
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-standalone-safe-blob
-          path: blob-report
-          include-hidden-files: true
-
-  wait-before-api-e2e-safe:
-    needs: [resolve-config, api-standalone-safe]
-    if: needs.resolve-config.outputs.mode == 'safe' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    steps:
-      - name: Pause before API E2E batch
-        # Intentional cool-down to reduce load on shared environments.
-        run: sleep ${{ needs.resolve-config.outputs.safe_pause }}
-
-  api-e2e-safe:
-    needs: [resolve-config, wait-before-api-e2e-safe]
-    # Runs only after standalone + pause in safe mode.
-    if: needs.resolve-config.outputs.mode == 'safe' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Run API E2E tests
-        run: |
-          PW_JUNIT_OUTPUT=test-results/junit/api-e2e-safe.xml PW_BLOB_OUTPUT=blob-report/api-e2e-safe \
-          TEST_ENV=${TEST_ENV} THREADS=${{ needs.resolve-config.outputs.threads }} PROJECT=api \
-          npx playwright test api/tests/e2e
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-e2e-playwright-report
-          path: |
-            .playwright-report
-            test-results/junit
-            blob-report
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-e2e-safe-junit
-          path: test-results/junit
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-e2e-safe-blob
-          path: blob-report
-          include-hidden-files: true
-
-  wait-before-ui-e2e-safe:
-    needs: [resolve-config, api-e2e-safe]
-    if: needs.resolve-config.outputs.mode == 'safe' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    steps:
-      - name: Pause before UI E2E batch
-        # Intentional cool-down before browser-heavy suite.
-        run: sleep ${{ needs.resolve-config.outputs.safe_pause }}
-
-  ui-e2e-safe:
-    needs: [resolve-config, wait-before-ui-e2e-safe]
-    # Final safe-mode batch.
-    if: needs.resolve-config.outputs.mode == 'safe' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Run UI E2E tests
-        run: |
-          PW_JUNIT_OUTPUT=test-results/junit/ui-e2e-safe.xml PW_BLOB_OUTPUT=blob-report/ui-e2e-safe \
-          TEST_ENV=${TEST_ENV} THREADS=${{ needs.resolve-config.outputs.threads }} PROJECT=e2e \
-          npx playwright test e2e/tests
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ui-e2e-playwright-report
-          path: |
-            .playwright-report
-            test-results/junit
-            blob-report
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ui-e2e-safe-junit
-          path: test-results/junit
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ui-e2e-safe-blob
-          path: blob-report
-          include-hidden-files: true
-
-  api-standalone-stress:
-    needs: resolve-config
-    # Stress mode batches run in parallel (no waits).
-    if: needs.resolve-config.outputs.mode == 'stress' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Run API standalone tests (stress)
-        run: |
-          PW_JUNIT_OUTPUT=test-results/junit/api-standalone-stress.xml PW_BLOB_OUTPUT=blob-report/api-standalone-stress \
-          TEST_ENV=${TEST_ENV} THREADS=${{ needs.resolve-config.outputs.threads }} PROJECT=api \
-          npx playwright test api/tests --grep-invert "@workflow"
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-standalone-stress-playwright-report
-          path: |
-            .playwright-report
-            test-results/junit
-            blob-report
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-standalone-stress-junit
-          path: test-results/junit
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-standalone-stress-blob
-          path: blob-report
-          include-hidden-files: true
-
-  api-e2e-stress:
-    needs: resolve-config
-    # Stress mode batches run in parallel (no waits).
-    if: needs.resolve-config.outputs.mode == 'stress' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Run API E2E tests (stress)
-        run: |
-          PW_JUNIT_OUTPUT=test-results/junit/api-e2e-stress.xml PW_BLOB_OUTPUT=blob-report/api-e2e-stress \
-          TEST_ENV=${TEST_ENV} THREADS=${{ needs.resolve-config.outputs.threads }} PROJECT=api \
-          npx playwright test api/tests/e2e
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-e2e-stress-playwright-report
-          path: |
-            .playwright-report
-            test-results/junit
-            blob-report
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-e2e-stress-junit
-          path: test-results/junit
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-e2e-stress-blob
-          path: blob-report
-          include-hidden-files: true
-
-  ui-e2e-stress:
-    needs: resolve-config
-    # Stress mode batches run in parallel (no waits).
-    if: needs.resolve-config.outputs.mode == 'stress' && needs.resolve-config.outputs.rerun_tags == ''
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Run UI E2E tests (stress)
-        run: |
-          PW_JUNIT_OUTPUT=test-results/junit/ui-e2e-stress.xml PW_BLOB_OUTPUT=blob-report/ui-e2e-stress \
-          TEST_ENV=${TEST_ENV} THREADS=${{ needs.resolve-config.outputs.threads }} PROJECT=e2e \
-          npx playwright test e2e/tests
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ui-e2e-stress-playwright-report
-          path: |
-            .playwright-report
-            test-results/junit
-            blob-report
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ui-e2e-stress-junit
-          path: test-results/junit
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ui-e2e-stress-blob
-          path: blob-report
-          include-hidden-files: true
-
-  rerun-targeted:
-    needs: resolve-config
-    # If tags are provided, run only matching tests and skip batch orchestration.
-    if: needs.resolve-config.outputs.rerun_tags != ''
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Run targeted rerun by tags
-        run: |
-          # Uses same TAGS/PROJECT pattern shown in Discord rerun helper.
-          PW_JUNIT_OUTPUT=test-results/junit/rerun-targeted.xml PW_BLOB_OUTPUT=blob-report/rerun-targeted \
-          TEST_ENV=${TEST_ENV} THREADS=${{ needs.resolve-config.outputs.threads }} TAGS="${{ needs.resolve-config.outputs.rerun_tags }}" PROJECT=${{ needs.resolve-config.outputs.rerun_project_selector }} \
-          npx playwright test
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: rerun-targeted-playwright-report
-          path: |
-            .playwright-report
-            test-results/junit
-            blob-report
-          include-hidden-files: true
+          if [[ -n "${{ steps.selector.outputs.rerun_tags }}" ]]; then
+            echo "Running targeted rerun: TAGS=${{ steps.selector.outputs.rerun_tags }} PROJECT=${{ steps.selector.outputs.project_selector }}"
+            TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.rerun_tags }}" PROJECT=${{ steps.selector.outputs.project_selector }} npx playwright test
+          elif [[ "${{ steps.selector.outputs.mode }}" == "stress" ]]; then
+            echo "Running full suite in STRESS mode"
+            TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress
+          else
+            echo "Running full suite in SAFE mode"
+            TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} npm run test:all:safe
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: rerun-targeted-junit
-          path: test-results/junit
+          name: playwright-report
+          path: .playwright-report
           include-hidden-files: true
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: rerun-targeted-blob
-          path: blob-report
-          include-hidden-files: true
-
-  finalize-reporting:
-    needs:
-      - resolve-config
-      - api-standalone-safe
-      - wait-before-api-e2e-safe
-      - api-e2e-safe
-      - wait-before-ui-e2e-safe
-      - ui-e2e-safe
-      - api-standalone-stress
-      - api-e2e-stress
-      - ui-e2e-stress
-      - rerun-targeted
-    # Always run once after test jobs so one owner sends final summary/publish.
-    if: always() && !cancelled() && needs.resolve-config.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-
-      - name: Download JUnit artifacts from executed jobs
-        uses: actions/download-artifact@v4
-        with:
-          # Pull all JUnit fragments from whichever path (safe/stress/rerun) actually ran.
-          pattern: '*-junit'
-          path: .ci-artifacts/junit
-          merge-multiple: true
-
-      - name: Download blob artifacts from executed jobs
-        uses: actions/download-artifact@v4
-        with:
-          # Blob zips are merged into one HTML report by finalize script.
-          pattern: '*-blob'
-          path: .ci-artifacts/blob
-          merge-multiple: true
-
-      - name: Configure git identity for final report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-
-      - name: Send single final Discord summary and publish once
-        env:
-          # Finalize decides summary + publish exactly once for this workflow run.
-          RERUN_TAGS: ${{ needs.resolve-config.outputs.rerun_tags }}
-          RERUN_PROJECT: ${{ needs.resolve-config.outputs.rerun_project }}
-          CI_JUNIT_DIR: .ci-artifacts/junit
-          CI_BLOB_DIR: .ci-artifacts/blob
-        run: node scripts/ci-finalize-discord.js

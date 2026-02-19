@@ -52,20 +52,24 @@ DRY_RUN=1 npm run test:all
 3. API E2E (`api/tests/e2e`)
 4. Pause (`SAFE_PAUSE_SECONDS`)
 5. UI E2E (`e2e/tests`)
+6. If a batch fails, next batches still run; final exit is failed when any batch failed.
 - `stress` mode (`npm run test:all:stress`):
-1. Runs API standalone, API E2E, and UI E2E in parallel.
+1. Runs a single full-suite Playwright invocation (no safe pauses).
 
 ## CI/CD Mode Behavior
 
-- `push` to `main` and `schedule` use safe mode by default.
+- `push` to `main` and `schedule` run one CI job in `safe` mode by default.
 - `workflow_dispatch` can choose:
 1. `run_mode` (`safe` or `stress`)
 2. `threads`
-3. `safe_pause_seconds`
-4. `rerun_project` (`api`, `e2e`, `all`)
-5. `rerun_tags` (optional TAGS regex, e.g. `PHARMA-180|PHARMA-181`)
-- Direct `npx playwright test ...` commands bypass safe batching.
-- Worker jobs run tests only; final Discord summary/report publish happens in one finalize job.
+3. `test_env` (`DEV` default, or `PROD`)
+4. `safe_pause_seconds`
+5. `rerun_project` (`api`, `e2e`, `all`)
+6. `rerun_tags` (optional TAGS regex, e.g. `PHARMA-180|PHARMA-181`)
+- When `rerun_tags` is empty:
+1. `safe` runs `npm run test:all:safe`
+2. `stress` runs `npm run test:all:stress`
+- When `rerun_tags` is set, CI runs only matching tags in the selected project scope.
 
 ## Targeted Failed-Test Rerun (CI)
 
@@ -73,9 +77,8 @@ DRY_RUN=1 npm run test:all
 1. `rerun_tags` set to failed IDs (pipe-separated)
 2. `rerun_project` set to `api`, `e2e`, or `all`
 - Behavior:
-1. When `rerun_tags` is non-empty, CI runs only `rerun-targeted` job.
-2. Safe/stress batch jobs are skipped.
-3. `rerun_project=all` maps to `PROJECT=e2e,api`.
+1. `rerun_tags` non-empty switches CI to targeted execution.
+2. `rerun_project=all` maps to `PROJECT=e2e,api`.
 
 ## Tag Filtering
 
@@ -88,14 +91,13 @@ TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 
 ## Discord Reporting Flow
 
-1. CI worker jobs execute tests and upload JUnit/blob artifacts.
-2. Finalize job aggregates artifacts across executed jobs.
-3. Finalize job posts one Discord message/thread for the run.
-4. Final summary includes:
+1. Global setup posts suite header and creates run thread.
+2. Reporter updates progress incrementally while tests run.
+3. Final summary includes:
 - pass/fail/skip totals
 - rerun helper when failures include `PHARMA-<id>` in test titles
 - report link (`Playwright HTML report is [here](...)`) when publishing succeeds
-5. Channel routing:
+4. Channel routing:
 - `REPORT_PUBLISH=0` -> `LOCAL_RUNS_CHANNELID`
 - `REPORT_PUBLISH!=0` -> `TEST_ENV` channel (`DEV/QA/PROD`)
 
@@ -104,10 +106,10 @@ TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 When failures exist and PHARMA IDs are present, summary includes:
 
 - CI placeholder link: `Rerun the failures [here](...)`
-- Manual command preserving active env/threads/project:
+- Manual command preserving active env/threads:
 
 ```bash
-TEST_ENV=DEV THREADS=4 TAGS="PHARMA-160|PHARMA-243|PHARMA-244" PROJECT=api npx playwright test
+TEST_ENV=DEV THREADS=4 TAGS="PHARMA-160|PHARMA-243|PHARMA-244" npx playwright test
 ```
 
 If no failures exist, summary shows: `Yay. No failures!`
