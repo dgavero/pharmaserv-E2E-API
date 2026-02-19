@@ -48,6 +48,17 @@ const pendingPosts = new Set();
 const failedOnceByTitle = new Set();
 
 /**
+ * Delay helper for reusable wait + log.
+ * Example: await delay(1, 'Waiting 1 second after typing');
+ */
+export async function delay(seconds, message) {
+  const sec = Number(seconds);
+  const waitSeconds = Number.isFinite(sec) && sec > 0 ? sec : 0;
+  if (message) console.log(message);
+  await new Promise((resolve) => setTimeout(resolve, Math.round(waitSeconds * 1000)));
+}
+
+/**
  * Capture a viewport screenshot to ./screenshots with a timestamp+title filename.
  * Returns { path, filename } on success, or null on failure.
  * (Future: element-only snapshots can be added here.)
@@ -306,7 +317,7 @@ export async function safeClick(page, selector, { timeout = Timeouts.standard } 
 }
 
 /** Type into input/textarea with keystrokes (cross-platform select-all). */
-export async function safeInput(page, selector, text, { timeout = Timeouts.standard, delay = 15 } = {}) {
+export async function safeInput(page, selector, text, { timeout = Timeouts.standard, delay: typeDelay = 15 } = {}) {
   try {
     const loc = page.locator(selector);
     await loc.waitFor({ state: 'visible', timeout });
@@ -317,7 +328,10 @@ export async function safeInput(page, selector, text, { timeout = Timeouts.stand
     await page.keyboard.press(selectAllShortcut);
     await page.keyboard.press('Backspace');
 
-    if (text) await page.keyboard.type(String(text), { delay });
+    if (text) {
+      await page.keyboard.type(String(text), { delay: typeDelay });
+      await delay(1, 'Waiting 1 second after typing');
+    }
     return true;
   } catch (error) {
     // Fallback path: when keystroke-based input fails, try direct fill.
@@ -384,6 +398,7 @@ export async function safeFill(
       const loc = page.locator(selector);
       await loc.waitFor({ state: 'visible', timeout });
       await loc.fill(expected, { timeout });
+      await delay(1, 'Waiting 1 second after typing');
 
       const actual = await loc.inputValue({ timeout });
       if (actual === expected) return true;
