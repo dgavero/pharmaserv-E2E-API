@@ -41,6 +41,9 @@ const normalizedTags = tags
   .join('|'); // supports comma-separated input, keeps regex OR behavior
 const threads = parseInt(process.env.THREADS || '4', 10); // Default to 4 threads
 const isCI = String(process.env.CI || '').toLowerCase() === 'true';
+const enableDiscordReporter = String(process.env.DISCORD_REPORTER || '1') !== '0';
+const junitOutput = (process.env.PW_JUNIT_OUTPUT || '').trim();
+const blobOutput = (process.env.PW_BLOB_OUTPUT || '').trim();
 
 function parseHeadlessOverride(raw) {
   if (!raw) return null;
@@ -97,11 +100,15 @@ export default defineConfig({
 
   // 🔹 Reporters:
   // - list: console output
-  // - discordReporter: live updates + final summary in Discord
+  // - html: local artifact for CI upload
+  // - discordReporter: enabled only when DISCORD_REPORTER != 0
+  // - junit/blob: optional CI aggregation inputs
   reporter: [
     ['list'],
     ['html', { outputFolder: '.playwright-report', open: 'never' }],
-    ['./helpers/discord/discordReporter.js'],
+    ...(enableDiscordReporter ? [['./helpers/discord/discordReporter.js']] : []),
+    ...(junitOutput ? [['junit', { outputFile: junitOutput }]] : []),
+    ...(blobOutput ? [['blob', { outputDir: blobOutput }]] : []),
   ],
   use: {
     baseURL, // ✅ Dynamic baseURL based on TEST_ENV

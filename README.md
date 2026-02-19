@@ -13,9 +13,19 @@ Playwright test framework for Pharmaserv with:
 - Tokenized, case-insensitive `TAGS` filtering
 - Safe batch runner for full suites (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
 - Optional stress mode for parallel batch execution
-- Discord run header + thread logs + final summary
+- Targeted rerun mode in CI via `rerun_tags` + `rerun_project` (`api`, `e2e`, `all`)
+- Single Discord finalize summary per workflow run (no per-job duplicate summaries)
 - Rerun failed PHARMA IDs helper in summary
-- Optional report publishing (`REPORT_PUBLISH=0` disables publish)
+- Single publish owner in CI finalize step (prevents parallel publish conflicts)
+
+## Discord Channel Routing
+
+- If `REPORT_PUBLISH=0`, reports go to `LOCAL_RUNS_CHANNELID` regardless of `TEST_ENV`.
+- If `REPORT_PUBLISH!=0`, channel is selected by `TEST_ENV`:
+1. `DEV` -> `DEV_TESTING_CHANNELID`
+2. `QA` -> `QA_TESTING_CHANNELID`
+3. `PROD` -> `PROD_TESTING_CHANNELID`
+- Fallback channel is always `LOCAL_RUNS_CHANNELID`.
 
 ## Installation
 
@@ -49,6 +59,13 @@ DRY_RUN=1 npm run test:all
 
 - `npm run test:all` uses safe batch sequencing with pauses.
 - Direct `npx playwright test ...` does not use batch safety and can overload shared DEV if scope is broad.
+
+## CI Targeted Rerun
+
+- In GitHub Actions `workflow_dispatch`, you can set:
+1. `rerun_tags` (example: `PHARMA-180|PHARMA-181`)
+2. `rerun_project` (`api`, `e2e`, or `all`)
+- When `rerun_tags` is provided, CI skips safe/stress batch jobs and runs only matching tags.
 
 ## Core Docs
 

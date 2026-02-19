@@ -11,7 +11,6 @@ import { REST, Routes } from 'discord.js';
 
 // --- Discord Tokens & Config ---
 const TOKEN = process.env.DISCORD_BOT_TOKEN; // Used by Gateway client
-const CHANNEL_ID = process.env.DISCORD_CHANNEL_ID; // Target Discord channel
 
 // --- REST Client Setup ---
 // Used for fast, frequent header edits (progress bar, running status, etc.)
@@ -27,6 +26,25 @@ const RUN_META_PATH = path.resolve('.discord-run.json');
 let client = null; // Discord Gateway client (used for posting header + creating thread)
 let channel = null; // Target channel instance (fetched once, reused)
 
+function isPublishEnabled() {
+  const raw = process.env.REPORT_PUBLISH;
+  const isCI = String(process.env.CI || '').toLowerCase() === 'true';
+  if (raw == null || raw === '') return isCI;
+  return String(raw) !== '0';
+}
+
+function resolveDiscordChannelId() {
+  if (!isPublishEnabled()) {
+    return process.env.LOCAL_RUNS_CHANNELID;
+  }
+
+  const envName = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+  if (envName === 'DEV') return process.env.DEV_TESTING_CHANNELID || process.env.LOCAL_RUNS_CHANNELID;
+  if (envName === 'QA') return process.env.QA_TESTING_CHANNELID || process.env.LOCAL_RUNS_CHANNELID;
+  if (envName === 'PROD') return process.env.PROD_TESTING_CHANNELID || process.env.LOCAL_RUNS_CHANNELID;
+  return process.env.LOCAL_RUNS_CHANNELID;
+}
+
 /*
  * Initializes the Discord Gateway client once and fetches the test-report channel.
  * Required for posting the initial header.
@@ -35,12 +53,13 @@ let channel = null; // Target channel instance (fetched once, reused)
  */
 export async function initBot() {
   if (client) return client;
-  if (!TOKEN || !CHANNEL_ID) {
-    throw new Error('Missing DISCORD_BOT_TOKEN or DISCORD_CHANNEL_ID');
+  const channelId = resolveDiscordChannelId();
+  if (!TOKEN || !channelId) {
+    throw new Error('Missing DISCORD_BOT_TOKEN or channel id (set TEST_ENV channel mappings)');
   }
   client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
   await client.login(TOKEN);
-  channel = await client.channels.fetch(CHANNEL_ID);
+  channel = await client.channels.fetch(channelId);
   return client;
 }
 
@@ -50,6 +69,7 @@ export async function initBot() {
  */
 export async function sendSuiteHeader({ suiteName, env, grep }) {
   await initBot();
+  const channelId = resolveDiscordChannelId();
 
   // Compose the immutable "title" that we keep at the top of the header.
   // `env` comes from TEST_ENV; `grep` is your tag/filter summary shown in the header.
@@ -67,7 +87,7 @@ export async function sendSuiteHeader({ suiteName, env, grep }) {
   // 3) Identifiers so every worker can find/update the same places.
   const meta = {
     threadId: thread.id,
-    channelId: CHANNEL_ID,
+    channelId,
     headerMessageId: headerMessage.id,
     suiteLabel: title, // we reuse this exact top line on every header edit
   };
@@ -87,19 +107,6 @@ export function readRunMeta() {
   } catch {
     return null;
   }
-}
-
-// Infer rerun project from failed ID patterns.
-// - E2E-only failures  -> project "e2e"
-// - PHARMA-only failures -> project "api"
-// - Mixed/unknown -> null (run both)
-function inferProjectFromFailedIds(ids) {
-  if (!Array.isArray(ids) || ids.length === 0) return null;
-  const allE2E = ids.every((id) => /^E2E-\d+$/i.test(id));
-  if (allE2E) return 'e2e';
-  const allPharma = ids.every((id) => /^PHARMA-\d+$/i.test(id));
-  if (allPharma) return 'api';
-  return null;
 }
 
 /**
@@ -141,10 +148,7 @@ Tests completed ✅ 100% [${total}/${total}]
       const grep = uniqueIds.join('|');
       const testEnv = process.env.TEST_ENV || 'DEV';
       const threads = process.env.THREADS || '4';
-      const inferredProject = inferProjectFromFailedIds(uniqueIds);
-      const rerunProject = inferredProject || projectName || null;
-      const projectArg = rerunProject ? ` PROJECT=${rerunProject}` : '';
-      const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}"${projectArg} npx playwright test`;
+      const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}" npx playwright test`;
       const baseUrl = process.env.CI_RERUN_URL_BASE || 'https://ci.example.com/rerun?grep=';
       const rerunUrl = `${baseUrl}${encodeURIComponent(grep)}`;
 
