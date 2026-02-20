@@ -89,7 +89,7 @@ function suiteNameFromProjects(projectsSet) {
 
 /**
  * Global setup for the Discord dashboard:
- * - Determines the environment label (TEST_ENV or "LOCAL").
+ * - Determines the environment label (TEST_ENV or "DEV").
  * - Chooses the visible "grep/tags" label:
  *     Prefer TAGS env (e.g., "samples|smoke"), otherwise fall back to CLI --grep.
  * - Posts the header + creates the run thread.

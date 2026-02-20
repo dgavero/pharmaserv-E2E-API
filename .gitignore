@@ -13,6 +13,7 @@ test-results/
 .playwright-report/
 playwright-report/
 blob-report/
+.blob-report/
 trace.zip
 screenshots/
 reports/

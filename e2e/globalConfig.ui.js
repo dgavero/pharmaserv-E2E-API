@@ -10,12 +10,18 @@ import {
 
 export const test = base.extend({});
 
+function resolveBaseUrlForLog() {
+  const envName = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+  if (envName === 'PROD') return process.env.BASE_URL_PROD || 'N/A';
+  if (envName === 'QA') return process.env.BASE_URL_QA || 'N/A';
+  if (envName === 'DEV') return process.env.BASE_URL_DEV || 'N/A';
+  return 'N/A';
+}
+
 test.beforeEach(async ({ page }, testInfo) => {
   setCurrentTestTitle(testInfo.title);
   setCurrentPage(page);
-  console.log(
-    `🌐 Testing against: ${process.env.TEST_ENV || 'LOCAL'} (${page.context()._options.baseURL})`
-  );
+  console.log(`🌐 Testing against: ${process.env.TEST_ENV || 'DEV'} (${resolveBaseUrlForLog()})`);
 });
 
 // ✅ Flush Discord posts at worker end

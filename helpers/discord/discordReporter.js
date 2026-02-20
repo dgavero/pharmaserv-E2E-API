@@ -73,7 +73,6 @@ class DiscordReporter {
       total: this.total,
       completed: this.completed,
       failedCaseIds: Array.from(this.failedCaseIds),
-      projectName: this.projectName || null,
     };
     fs.writeFileSync(this.statePath, JSON.stringify(snapshot, null, 2));
   }
@@ -127,9 +126,6 @@ class DiscordReporter {
 
     const all = suite.allTests();
     this.total += all.length;
-    const projectNames = (config?.projects || []).map((p) => p.name).filter(Boolean);
-    this.projectName = projectNames.length === 1 ? projectNames[0] : null;
-
     await editRunningHeader({
       completed: this.completed,
       total: this.total,
@@ -234,7 +230,6 @@ class DiscordReporter {
        failed: this.failed,
        skipped: this.skipped,
        failedCaseIds: Array.from(this.failedCaseIds),
-       projectName: this.projectName,
        reportUrl, // let the bot render a direct link if available
        traceIndexUrl,
      });

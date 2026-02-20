@@ -8,28 +8,21 @@ on:
   workflow_dispatch:
     inputs:
       run_mode:
-        description: 'Execution mode'
+        description: 'Execution Mode'
         required: false
-        default: safe
+        default: basic
         type: choice
         options:
+          - basic
           - safe
           - stress
-      suite_scope:
-        description: 'Suite scope for non-rerun runs'
-        required: false
-        default: smoke
-        type: choice
-        options:
-          - smoke
-          - full
       threads:
-        description: 'Worker count override (optional)'
+        description: 'Threads'
         required: false
         default: '4'
         type: string
       test_env:
-        description: 'Target environment'
+        description: 'Environment'
         required: false
         default: DEV
         type: choice
@@ -38,20 +31,11 @@ on:
           - QA
           - PROD
       safe_pause_seconds:
-        description: 'Pause between SAFE batches in seconds'
+        description: 'Rest per test batch (seconds)'
         required: false
         default: '30'
         type: string
-      rerun_project:
-        description: 'Project for targeted rerun (used when rerun_tags is set)'
-        required: false
-        default: all
-        type: choice
-        options:
-          - api
-          - e2e
-          - all
-      rerun_tags:
+      tags:
         description: 'Run specific TAGS (e.g. PHARMA-67)'
         required: false
         default: ''
@@ -133,6 +117,7 @@ jobs:
         shell: bash
         run: |
           MODE="safe"
+          EVENT_NAME="${{ github.event_name }}"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             MODE="${{ inputs.run_mode }}"
           fi
@@ -152,55 +137,53 @@ jobs:
             SAFE_PAUSE="${{ inputs.safe_pause_seconds }}"
           fi
 
-          RERUN_TAGS=""
-          RERUN_PROJECT="all"
-          PROJECT_SELECTOR="e2e,api"
-          SUITE_SCOPE="smoke"
-          USE_SMOKE="1"
-          SAFE_TAGS="${SMOKE_TAGS}"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            RERUN_TAGS="${{ inputs.rerun_tags }}"
-            RERUN_PROJECT="${{ inputs.rerun_project }}"
-            SUITE_SCOPE="${{ inputs.suite_scope }}"
-            if [[ "${RERUN_PROJECT}" == "all" ]]; then
-              PROJECT_SELECTOR="e2e,api"
-            else
-              PROJECT_SELECTOR="${RERUN_PROJECT}"
-            fi
+          RUN_TAGS=""
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            RUN_TAGS="${{ inputs.tags }}"
+          elif [[ "${EVENT_NAME}" == "push" ]]; then
+            RUN_TAGS="${SMOKE_TAGS}"
+          elif [[ "${EVENT_NAME}" == "schedule" ]]; then
+            RUN_TAGS=""
           fi
 
-          if [[ -n "${RERUN_TAGS}" ]]; then
-            USE_SMOKE="0"
-          elif [[ "${SUITE_SCOPE}" == "full" ]]; then
-            USE_SMOKE="0"
-            SAFE_TAGS=""
+          if [[ "${MODE}" == "stress" ]]; then
+            RUN_TAGS=""
+            SAFE_PAUSE="0"
           fi
 
           echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
           echo "threads=${RUN_THREADS}" >> "$GITHUB_OUTPUT"
           echo "test_env=${RUN_TEST_ENV}" >> "$GITHUB_OUTPUT"
           echo "safe_pause=${SAFE_PAUSE}" >> "$GITHUB_OUTPUT"
-          echo "rerun_tags=${RERUN_TAGS}" >> "$GITHUB_OUTPUT"
-          echo "project_selector=${PROJECT_SELECTOR}" >> "$GITHUB_OUTPUT"
-          echo "use_smoke=${USE_SMOKE}" >> "$GITHUB_OUTPUT"
-          echo "safe_tags=${SAFE_TAGS}" >> "$GITHUB_OUTPUT"
+          echo "run_tags=${RUN_TAGS}" >> "$GITHUB_OUTPUT"
 
-      - name: Run tests (full or targeted rerun)
+      - name: Run tests
         shell: bash
         run: |
-          if [[ -n "${{ steps.selector.outputs.rerun_tags }}" ]]; then
-            echo "Running targeted rerun: TAGS=${{ steps.selector.outputs.rerun_tags }} PROJECT=${{ steps.selector.outputs.project_selector }}"
-            TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.rerun_tags }}" PROJECT=${{ steps.selector.outputs.project_selector }} npx playwright test
-          elif [[ "${{ steps.selector.outputs.mode }}" == "stress" ]]; then
+          if [[ "${{ steps.selector.outputs.mode }}" == "stress" ]]; then
             echo "Running full suite in STRESS mode"
             TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress
-          else
-            if [[ "${{ steps.selector.outputs.use_smoke }}" == "1" ]]; then
-              echo "Running smoke suite in one go"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.safe_tags }}" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
+          elif [[ "${{ steps.selector.outputs.mode }}" == "safe" ]]; then
+            if [[ "${{ github.event_name }}" == "push" ]]; then
+              echo "Running SAFE mode smoke batches (push)"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" DISCORD_GREP_LABEL=smoke npm run test:all:safe
+            elif [[ "${{ github.event_name }}" == "schedule" ]]; then
+              echo "Running SAFE mode full batches (schedule)"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
+            elif [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
+              echo "Running SAFE mode with specific TAGS in a single pass"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
             else
               echo "Running full suite in SAFE mode"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.safe_tags }}" npm run test:all:safe
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
+            fi
+          else
+            if [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
+              echo "Running BASIC mode with specific TAGS"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
+            else
+              echo "Running smoke suite in BASIC mode"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${SMOKE_TAGS}" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
             fi
           fi
 

@@ -23,7 +23,7 @@ npm run test:all
 # Safe full run with custom pause and workers
 SAFE_PAUSE_SECONDS=30 THREADS=4 npm run test:all:safe
 
-# Stress full run (parallel batches)
+# Stress full run (single full-suite invocation)
 THREADS=4 npm run test:all:stress
 
 # Dry-run preview (no tests executed)
@@ -58,29 +58,20 @@ DRY_RUN=1 npm run test:all
 
 ## CI/CD Mode Behavior
 
-- `push` to `main` and `schedule` run one CI job in `safe + smoke` mode by default.
+- `push` to `main` runs one CI job in `safe + smoke` mode by default.
+- `schedule` runs one CI job in `safe + full` mode by default.
 - `workflow_dispatch` can choose:
-1. `run_mode` (`safe` or `stress`)
-2. `suite_scope` (`smoke` or `full`) for non-rerun runs
-3. `threads`
-4. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
-5. `safe_pause_seconds`
-6. `rerun_project` (`api`, `e2e`, `all`)
-7. `rerun_tags` (`Run specific TAGS`, e.g. `PHARMA-180|PHARMA-181`)
-- When `rerun_tags` is empty:
-1. `safe + smoke` runs one Playwright invocation with smoke tags
-2. `safe + full` runs `npm run test:all:safe` (3 safe batches with pauses)
-3. `stress` runs `npm run test:all:stress`
-- When `rerun_tags` is set, CI runs only matching tags in the selected project scope.
-
-## Targeted Failed-Test Rerun (CI)
-
-- Use `workflow_dispatch` with:
-1. `rerun_tags` set to failed IDs (pipe-separated)
-2. `rerun_project` set to `api`, `e2e`, or `all`
-- Behavior:
-1. `rerun_tags` non-empty switches CI to targeted execution.
-2. `rerun_project=all` maps to `PROJECT=e2e,api`.
+1. `run_mode` (`basic`, `safe`, `stress`)
+2. `threads`
+3. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
+4. `safe_pause_seconds`
+5. `tags` (`Run specific TAGS`, e.g. `PHARMA-180|PHARMA-181`)
+- Mode behavior:
+1. `basic` + empty `tags` runs smoke in one pass.
+2. `basic` + non-empty `tags` runs matching tags directly in one pass.
+3. `safe` + empty `tags` runs full 3-batch safe mode.
+4. `safe` + non-empty `tags` runs matching tags directly in one pass.
+5. `stress` ignores `tags` and runs full suite in one pass.
 
 ## Tag Filtering
 
@@ -98,7 +89,7 @@ TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 3. Final summary includes:
 - pass/fail/skip totals
 - rerun helper when failures include `PHARMA-<id>` in test titles
-- report link (`Playwright HTML report is [here](...)`) when publishing succeeds
+- report link when publishing succeeds
 4. Channel routing:
 - `REPORT_PUBLISH=0` -> `LOCAL_RUNS_CHANNELID`
 - `REPORT_PUBLISH!=0` -> `TEST_ENV` channel (`DEV/QA/PROD`)
@@ -107,7 +98,6 @@ TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 
 When failures exist and PHARMA IDs are present, summary includes:
 
-- CI placeholder link: `Rerun the failures [here](...)`
 - Manual command preserving active env/threads:
 
 ```bash

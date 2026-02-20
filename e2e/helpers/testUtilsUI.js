@@ -398,7 +398,7 @@ export async function safeFill(
       const loc = page.locator(selector);
       await loc.waitFor({ state: 'visible', timeout });
       await loc.fill(expected, { timeout });
-      await delay(1, 'Waiting 1 second after typing');
+      await delay(1, 'Waiting 1 second after fill');
 
       const actual = await loc.inputValue({ timeout });
       if (actual === expected) return true;
