@@ -34,7 +34,7 @@ test.describe('GraphQL: Patient Login', () => {
   test(
     'PHARMA-1 | Patient Should Login And Return Tokens',
     {
-      tag: ['@api', '@patient', '@positive', '@login', '@pharma-1'],
+      tag: ['@api', '@patient', '@positive', '@login', '@pharma-1', '@smoke'],
     },
     async ({ api }) => {
       const creds = buildValidCreds();

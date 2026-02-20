@@ -16,7 +16,7 @@ test.describe('GraphQL: Pharmacist Login', () => {
   test(
     'PHARMA-141 | Should be able to Login as Regular Pharmacist',
     {
-      tag: ['@api', '@pharmacist', '@positive', '@pharma-141'],
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-141', '@smoke'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {

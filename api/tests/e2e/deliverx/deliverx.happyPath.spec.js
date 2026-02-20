@@ -82,7 +82,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         '@rider',
         '@admin',
         '@positive',
-        '@pharma-334',
+        '@pharma-334', '@smoke',
       ],
     },
     async ({ api }) => {
@@ -516,7 +516,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
   test(
     'PHARMA-336 | DeliverX pickup order fulfillment happy path',
     {
-      tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@admin', '@positive', '@pharma-336'],
+      tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@admin', '@positive', '@pharma-336', '@smoke'],
     },
     async ({ api }) => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
@@ -591,7 +591,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         '@rider',
         '@admin',
         '@positive',
-        '@pharma-337',
+        '@pharma-337', '@smoke',
       ],
     },
     async ({ api }) => {
