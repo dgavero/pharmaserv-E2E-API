@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 # [3.0.4]
 
 ### Changed
+
 - Removed dedicated CI targeted rerun branch; workflow now uses mode + optional `tags` input only.
 - Updated `workflow_dispatch` input key from `rerun_tags` to `tags`.
 - Simplified CI back to a single execution job (`api-tests`) to restore incremental Discord reporting during CI runs.
@@ -25,6 +26,7 @@ All notable changes to this project will be documented in this file.
 > Superseded by `3.0.4` (kept for historical context).
 
 ### Changed
+
 - Updated CI workflow to prevent report/publish conflicts:
   - worker jobs now run with `DISCORD_REPORTER=0` and upload JUnit/blob artifacts
   - worker jobs now set `DISCORD_SETUP=0` (Discord setup is explicitly controlled)
@@ -42,6 +44,7 @@ All notable changes to this project will be documented in this file.
 # [3.0.2]
 
 ### Added
+
 - Added local batch runner script: `scripts/run-all.sh`
   - `safe` mode: API standalone -> pause -> API E2E -> pause -> UI E2E
   - `stress` mode: all three batches run in parallel
@@ -52,6 +55,7 @@ All notable changes to this project will be documented in this file.
   - `test:all:stress`
 
 ### Changed
+
 - Updated CI workflow `.github/workflows/tests.yml`:
   - `push`/`schedule` now resolve to safe mode by default
   - `workflow_dispatch` now accepts `run_mode`, `threads`, `safe_pause_seconds`, `rerun_tags`, and `rerun_project`
@@ -62,19 +66,20 @@ All notable changes to this project will be documented in this file.
 # [3.0.1]
 
 ### Changed
+
 - **API failures** now post to Discord **per test (immediately)** with a **cleaned Error/Expected/Received snippet** (ANSI-stripped) and **no file paths**.
 - Reporter polish: removed duplicate ❌ in API logs; clarified comments and flow.
-
-
 
 ## [3.0.0]
 
 ### Added
+
 - **Env-based project selection**: set `PROJECT=api` or `PROJECT=e2e,api`. Empty/unset runs **both**.
 - **Case-insensitive, tokenized tags**: `TAGS='smoke|regression'` matches `@smoke` / `@regression` in any case and avoids `smoke1`.
 - **API fixtures baseline** (`api/globalConfig.api.js`) to init/teardown an API client per test.
 
 ### Changed
+
 - **Discord header titles & icons** now reflect selected projects:
   - **E2E only** → `🌐 End2End Test Suite`
   - **API only** → `🧭 API Test Suite`
@@ -86,18 +91,20 @@ All notable changes to this project will be documented in this file.
 ## [2.2.5]
 
 ### Changed
-  - Renamed `testUtils.js` → `testUtilsUI.js` under `e2e/helpers/`.
-  - Added `api/helpers/testUtilsAPI.js` as a scaffold for upcoming API-safe helpers.
-  - Updated `playwright.config.js` to reflect new `e2e` and `api` projects.
-  - Synced README.md and USAGE.md:
-    - Project tree now lists both helper files.
-    - Usage docs clarify **UI helpers** vs. **API helpers** sections.
+
+- Renamed `testUtils.js` → `testUtilsUI.js` under `e2e/helpers/`.
+- Added `api/helpers/testUtilsAPI.js` as a scaffold for upcoming API-safe helpers.
+- Updated `playwright.config.js` to reflect new `e2e` and `api` projects.
+- Synced README.md and USAGE.md:
+  - Project tree now lists both helper files.
+  - Usage docs clarify **UI helpers** vs. **API helpers** sections.
 
 ---
 
 ## [2.2.4]
 
 ### Changed
+
 - Restructured repository into **projects**:
   - **`e2e/`** for UI/browser tests (moved `globalConfig` → `e2e/globalConfig.ui.js`, `Timeouts.js`, pages & specs).
   - **`api/`** scaffold for future API tests.
@@ -109,6 +116,7 @@ All notable changes to this project will be documented in this file.
 ## [2.2.3]
 
 ### Changed
+
 - Cleaned up documentation to remove duplication:
   - `.env` configuration is now centralized in `.env.example`.
   - README.md Quick Start now points directly to `.env.example` instead of duplicating values.
@@ -118,6 +126,7 @@ All notable changes to this project will be documented in this file.
 ---
 
 ## [2.2.2]
+
 - Nothing much. Just missed update in changelog
 
 ---
@@ -125,10 +134,12 @@ All notable changes to this project will be documented in this file.
 ## [2.2.1]
 
 ### Added
+
 - `.env.example` file with placeholders for easy setup.
 - Updated README and USAGE to document `REPORT_PUBLISH` and all env vars.
 
 ### Changed
+
 - Updated PROJECTVISIONS.md To-Do list (safe helpers marked complete).
 
 ---
@@ -136,12 +147,14 @@ All notable changes to this project will be documented in this file.
 ## [2.2.0]
 
 ### Added
+
 - Automatic publishing of Playwright HTML reports to **GitHub Pages** (with timestamped runs).
 - Final Discord summary now includes a direct 🔗 link to the published HTML report.
 
 ---
 
 ### Changed
+
 - Discord summary simplified: always a single final message with ✅/❌/⚪ counts + report link.
 
 ## [2.1.0]
