@@ -18,7 +18,7 @@ test.describe('GraphQL: Get Privacy Policy', () => {
   test(
     'PHARMA-59 | Should be able to load Privacy Policy',
     {
-      tag: ['@api', '@patient', '@positive', '@pharma-59', '@legals'],
+      tag: ['@api', '@patient', '@positive', '@pharma-59', '@smoke', '@legals'],
     },
     async ({ api, noAuth }) => {
       const getPrivacyPolicyRes = await safeGraphQL(api, {

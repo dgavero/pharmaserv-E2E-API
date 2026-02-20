@@ -17,7 +17,7 @@ test.describe('Merchant Portal | Login', () => {
   test(
     'E2E-1 | Merchant Should be able to Login Successfully',
     {
-      tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal'],
+      tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal', '@smoke'],
     },
     async ({ page }) => {
       const login = new MerchantPortalLoginPage(page);

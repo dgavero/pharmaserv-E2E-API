@@ -11,7 +11,7 @@ test.describe('GraphQL: Rider Authentication', () => {
   test(
     'PHARMA-116 | Should be able to login as Rider',
     {
-      tag: ['@api', '@rider', '@positive', '@pharma-116'],
+      tag: ['@api', '@rider', '@positive', '@pharma-116', '@smoke'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {

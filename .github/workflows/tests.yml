@@ -51,10 +51,10 @@ env:
   API_BASE_URL: ${{ secrets.API_BASE_URL }}
   BASE_URL_DEV: ${{ secrets.BASE_URL_DEV }}
   DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-  DEV_TESTING_CHANNELID: '1407783823835402351'
-  QA_TESTING_CHANNELID: '1473873338756632716'
-  PROD_TESTING_CHANNELID: '1473873431748677723'
-  LOCAL_RUNS_CHANNELID: '1473872105849491629'
+  DEV_TESTING_CHANNELID: ${{ secrets.DEV_TESTING_CHANNELID }}
+  QA_TESTING_CHANNELID: ${{ secrets.QA_TESTING_CHANNELID }}
+  PROD_TESTING_CHANNELID: ${{ secrets.PROD_TESTING_CHANNELID }}
+  LOCAL_RUNS_CHANNELID: ${{ secrets.LOCAL_RUNS_CHANNELID }}
   GITHUB_TOKEN: ${{ github.token }}
   GIT_AUTHOR_NAME: github-actions[bot]
   GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
@@ -98,8 +98,6 @@ jobs:
   api-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    env:
-      SMOKE_TAGS: PHARMA-1|PHARMA-3|PHARMA-30|PHARMA-59|PHARMA-60|PHARMA-116|PHARMA-118|PHARMA-141|PHARMA-143|PHARMA-150|PHARMA-176|PHARMA-258|PHARMA-261|PHARMA-285|PHARMA-315|PHARMA-334|PHARMA-336|PHARMA-337|E2E-1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -141,7 +139,7 @@ jobs:
           if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
             RUN_TAGS="${{ inputs.tags }}"
           elif [[ "${EVENT_NAME}" == "push" ]]; then
-            RUN_TAGS="${SMOKE_TAGS}"
+            RUN_TAGS="smoke"
           elif [[ "${EVENT_NAME}" == "schedule" ]]; then
             RUN_TAGS=""
           fi
@@ -183,7 +181,7 @@ jobs:
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
             else
               echo "Running smoke suite in BASIC mode"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${SMOKE_TAGS}" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="smoke" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
             fi
           fi
 

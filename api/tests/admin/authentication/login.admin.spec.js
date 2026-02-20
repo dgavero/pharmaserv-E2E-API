@@ -13,7 +13,7 @@ test.describe('GraphQL: Admin Login', () => {
   test(
     'PHARMA-30 | Admin Login And Return Tokens',
     {
-      tag: ['@api', '@admin', '@positive', '@login', '@pharma-30'],
+      tag: ['@api', '@admin', '@positive', '@login', '@pharma-30', '@smoke'],
     },
     async ({ api }) => {
       const creds = buildAdminCreds();

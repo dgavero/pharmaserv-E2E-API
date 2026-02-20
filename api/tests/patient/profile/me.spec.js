@@ -19,7 +19,7 @@ test.describe('GraphQL: Me', () => {
   test(
     'PHARMA-3 | Authenticated call to patient.me returns the current user details',
     {
-      tag: ['@api', '@patient', '@positive', '@login', '@pharma-3'],
+      tag: ['@api', '@patient', '@positive', '@login', '@pharma-3', '@smoke'],
     },
     async ({ api }) => {
       const username = process.env.PATIENT_USER_USERNAME;

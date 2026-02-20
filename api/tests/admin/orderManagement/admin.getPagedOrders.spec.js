@@ -25,7 +25,7 @@ test.describe('GraphQL: Admin Get Paged Orders', () => {
   test(
     'PHARMA-261 | Should get paged orders with valid auth tokens',
     {
-      tag: ['@api', '@admin', '@positive', '@pharma-261'],
+      tag: ['@api', '@admin', '@positive', '@pharma-261', '@smoke'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {

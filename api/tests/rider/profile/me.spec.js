@@ -15,7 +15,7 @@ test.describe('GraphQL: Get Rider Profile', () => {
   test(
     'PHARMA-118 | Should be able to get rider profile with valid auth',
     {
-      tag: ['@api', '@rider', '@positive', '@pharma-118'],
+      tag: ['@api', '@rider', '@positive', '@pharma-118', '@smoke'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
