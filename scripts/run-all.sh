@@ -31,7 +31,14 @@ sleep_step() {
 }
 
 run_api_standalone() {
-  local tags="${SAFE_TAGS:-${TAGS:-}}"
+  local tags
+  if [[ "${SAFE_TAGS:-}" == "__ALL__" ]]; then
+    tags=""
+  elif [[ -n "${SAFE_TAGS:-}" ]]; then
+    tags="${SAFE_TAGS}"
+  else
+    tags="${TAGS:-}"
+  fi
   if [[ "${DRY_RUN}" == "1" ]]; then
     log "[DRY_RUN] TEST_ENV=${TEST_ENV} THREADS=${THREADS} PROJECT=api TAGS=${tags} DISCORD_REUSE_RUN=${DISCORD_REUSE_RUN} DISCORD_BATCH_INDEX=1 DISCORD_BATCH_COUNT=3 PW_BLOB_OUTPUT=.blob-report/safe-b1 npx playwright test api/tests --grep-invert \"@workflow\""
     return 0
@@ -43,7 +50,14 @@ run_api_standalone() {
 }
 
 run_api_e2e() {
-  local tags="${SAFE_TAGS:-${TAGS:-}}"
+  local tags
+  if [[ "${SAFE_TAGS:-}" == "__ALL__" ]]; then
+    tags=""
+  elif [[ -n "${SAFE_TAGS:-}" ]]; then
+    tags="${SAFE_TAGS}"
+  else
+    tags="${TAGS:-}"
+  fi
   if [[ "${DRY_RUN}" == "1" ]]; then
     log "[DRY_RUN] TEST_ENV=${TEST_ENV} THREADS=${THREADS} PROJECT=api TAGS=${tags} DISCORD_REUSE_RUN=${DISCORD_REUSE_RUN} DISCORD_BATCH_INDEX=2 DISCORD_BATCH_COUNT=3 PW_BLOB_OUTPUT=.blob-report/safe-b2 npx playwright test api/tests/e2e"
     return 0
@@ -55,7 +69,14 @@ run_api_e2e() {
 }
 
 run_ui_e2e() {
-  local tags="${SAFE_TAGS:-${TAGS:-}}"
+  local tags
+  if [[ "${SAFE_TAGS:-}" == "__ALL__" ]]; then
+    tags=""
+  elif [[ -n "${SAFE_TAGS:-}" ]]; then
+    tags="${SAFE_TAGS}"
+  else
+    tags="${TAGS:-}"
+  fi
   if [[ "${DRY_RUN}" == "1" ]]; then
     log "[DRY_RUN] TEST_ENV=${TEST_ENV} THREADS=${THREADS} PROJECT=e2e TAGS=${tags} DISCORD_REUSE_RUN=${DISCORD_REUSE_RUN} DISCORD_BATCH_INDEX=3 DISCORD_BATCH_COUNT=3 PW_BLOB_OUTPUT=.blob-report/safe-b3 npx playwright test e2e/tests"
     return 0

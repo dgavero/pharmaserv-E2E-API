@@ -5,15 +5,15 @@ All notable changes to this project will be documented in this file.
 # [3.0.4]
 
 ### Changed
+- Removed dedicated CI targeted rerun branch; workflow now uses mode + optional `tags` input only.
+- Updated `workflow_dispatch` input key from `rerun_tags` to `tags`.
 - Simplified CI back to a single execution job (`api-tests`) to restore incremental Discord reporting during CI runs.
 - Removed CI finalize orchestrator flow and artifact-merge reporting path.
-- Restored CI `safe`/`stress` run modes in `workflow_dispatch` (`safe` remains default).
-- Added `workflow_dispatch` `suite_scope` selector (`smoke` or `full`).
-- Updated default CI behavior for `push`/`schedule` to run smoke in one go.
+- Restored CI `safe`/`stress` run modes in `workflow_dispatch` and added `basic` mode as default.
+- Updated default CI behavior:
+  - `push` runs `safe + smoke` batches
+  - `schedule` runs `safe + full` batches
 - Added `workflow_dispatch` `test_env` selector with default `DEV`.
-- Kept `workflow_dispatch` targeted rerun support via:
-  - `rerun_tags`
-  - `rerun_project` (`api`, `e2e`, `all`)
 - Updated rerun helper command format to omit `PROJECT=` by default.
 - Updated batch orchestration to reuse one Discord thread across safe mode batches.
 - Updated stress mode to use one full-suite invocation for cleaner one-thread reporting.
@@ -21,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - Safe mode report publishing now merges all batch blob outputs into a single report link.
 
 # [3.0.3]
+
+> Superseded by `3.0.4` (kept for historical context).
 
 ### Changed
 - Updated CI workflow to prevent report/publish conflicts:

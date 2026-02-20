@@ -14,7 +14,6 @@ Playwright test framework for Pharmaserv with:
 - Safe full runner (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
 - Smoke mode in CI runs in one go (single Playwright invocation)
 - Optional stress mode for full parallel execution
-- Targeted rerun mode in CI via `rerun_tags` + `rerun_project` (`api`, `e2e`, `all`)
 - Incremental Discord progress reporting during CI runs
 - Rerun failed PHARMA IDs helper in summary
 
@@ -48,7 +47,7 @@ TEST_ENV=DEV THREADS=4 TAGS=merchant PROJECT=e2e npx playwright test
 # Safe full-run orchestration (recommended for shared DEV)
 npm run test:all
 
-# Stress full-run orchestration (parallel batches, high load)
+# Stress full-run orchestration (single full invocation with parallel workers, high load)
 npm run test:all:stress
 
 # Safe dry-run preview (logs only, no test execution)
@@ -60,17 +59,25 @@ DRY_RUN=1 npm run test:all
 - `npm run test:all` uses safe batch sequencing with pauses.
 - Direct `npx playwright test ...` does not use batch safety and can overload shared DEV if scope is broad.
 
-## CI Targeted Rerun
+## CI Behavior
+
+- `push` to `main`: runs `safe + smoke` (batched).
+- `schedule`: runs `safe + full` (batched).
+
+## CI Manual Run Inputs
 
 - In GitHub Actions `workflow_dispatch`, you can set:
-1. `run_mode` (`safe` or `stress`) for full-suite runs
-2. `suite_scope` (`smoke` or `full`) for non-rerun runs
-3. `threads`
-4. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
-5. `safe_pause_seconds`
-6. `rerun_tags` (`Run specific TAGS`, example: `PHARMA-180|PHARMA-181`)
-7. `rerun_project` (`api`, `e2e`, or `all`)
-- When `rerun_tags` is provided, CI runs only matching tags in the selected project scope.
+1. `run_mode` (`basic`, `safe`, `stress`)
+2. `threads`
+3. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
+4. `safe_pause_seconds`
+5. `tags` (`Run specific TAGS`, example: `PHARMA-180|PHARMA-181`)
+- Behavior:
+1. `stress` ignores `tags` and runs full suite in parallel.
+2. `safe` + empty `tags` runs full safe batches.
+3. `safe` + non-empty `tags` runs matching tags directly (single pass).
+4. `basic` + empty `tags` runs smoke tags.
+5. `basic` + non-empty `tags` runs matching tags directly.
 
 ## Core Docs
 

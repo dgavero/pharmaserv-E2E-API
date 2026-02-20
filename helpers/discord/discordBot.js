@@ -45,12 +45,6 @@ function resolveDiscordChannelId() {
   return process.env.LOCAL_RUNS_CHANNELID;
 }
 
-function getWorkflowDispatchUrl() {
-  const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
-  const repo = process.env.GITHUB_REPOSITORY || 'dgavero/pharmaserv-E2E-API';
-  return `${serverUrl}/${repo}/actions/workflows/tests.yml`;
-}
-
 /*
  * Initializes the Discord Gateway client once and fetches the test-report channel.
  * Required for posting the initial header.
@@ -126,7 +120,6 @@ export async function appendSummary({
   reportUrl,
   traceIndexUrl,
   failedCaseIds = [],
-  projectName = null,
 }) {
   const meta = readRunMeta();
   if (!meta || !rest) return;
@@ -155,10 +148,8 @@ Tests completed ✅ 100% [${total}/${total}]
       const testEnv = process.env.TEST_ENV || 'DEV';
       const threads = process.env.THREADS || '4';
       const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}" npx playwright test`;
-      const rerunUrl = getWorkflowDispatchUrl();
 
-      content += `\n\n🔁 Rerun the failures: <${rerunUrl}>
-🛠️ Rerun the failures manually:
+      content += `\n\n🛠️ Rerun the failures manually:
 \`${grepCmd}\``;
     } else {
       content += `\n\n❗ Failed tests found, but no PHARMA-/E2E- IDs were detected in test titles.`;
