@@ -1,6 +1,7 @@
 # Playwright E2E + API Automation
 
 Playwright test framework for Pharmaserv with:
+
 - UI (`e2e`) and API (`api`) projects
 - Discord live reporting
 - HTML report publishing to GitHub Pages
@@ -12,7 +13,7 @@ Playwright test framework for Pharmaserv with:
 - `TEST_ENV` routing with default `DEV`
 - Tokenized, case-insensitive `TAGS` filtering
 - Safe full runner (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
-- Smoke mode in CI runs in one go (single Playwright invocation)
+- Smoke selection is supported in CI (manual `basic` runs in one pass; auto `push` uses safe smoke batches)
 - Optional stress mode for full parallel execution
 - Incremental Discord progress reporting during CI runs
 - Rerun failed PHARMA IDs helper in summary
@@ -21,9 +22,11 @@ Playwright test framework for Pharmaserv with:
 
 - If `REPORT_PUBLISH=0`, reports go to `LOCAL_RUNS_CHANNELID` regardless of `TEST_ENV`.
 - If `REPORT_PUBLISH!=0`, channel is selected by `TEST_ENV`:
+
 1. `DEV` -> `DEV_TESTING_CHANNELID`
 2. `QA` -> `QA_TESTING_CHANNELID`
 3. `PROD` -> `PROD_TESTING_CHANNELID`
+
 - Fallback channel is always `LOCAL_RUNS_CHANNELID`.
 
 ## Installation
@@ -67,12 +70,15 @@ DRY_RUN=1 npm run test:all
 ## CI Manual Run Inputs
 
 - In GitHub Actions `workflow_dispatch`, you can set:
+
 1. `run_mode` (`basic`, `safe`, `stress`)
 2. `threads`
 3. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
 4. `safe_pause_seconds`
 5. `tags` (`Run specific TAGS`, example: `PHARMA-180|PHARMA-181`)
+
 - Behavior:
+
 1. `stress` ignores `tags` and runs full suite in parallel.
 2. `safe` + empty `tags` runs full safe batches.
 3. `safe` + non-empty `tags` runs matching tags directly (single pass).

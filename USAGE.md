@@ -39,6 +39,7 @@ DRY_RUN=1 npm run test:all
 - `SAFE_PAUSE_SECONDS`: pause duration between safe batches (default `30`).
 - `DRY_RUN`: when `1`, prints batch plan/commands without running tests.
 - Discord channel mapping vars:
+
 1. `DEV_TESTING_CHANNELID`
 2. `QA_TESTING_CHANNELID`
 3. `PROD_TESTING_CHANNELID`
@@ -47,13 +48,16 @@ DRY_RUN=1 npm run test:all
 ## Batch Modes
 
 - `safe` mode (default for `npm run test:all`):
+
 1. API standalone (`api/tests`, excluding `@workflow`)
 2. Pause (`SAFE_PAUSE_SECONDS`)
 3. API E2E (`api/tests/e2e`)
 4. Pause (`SAFE_PAUSE_SECONDS`)
 5. UI E2E (`e2e/tests`)
 6. If a batch fails, next batches still run; final exit is failed when any batch failed.
+
 - `stress` mode (`npm run test:all:stress`):
+
 1. Runs a single full-suite Playwright invocation (no safe pauses).
 
 ## CI/CD Mode Behavior
@@ -61,12 +65,15 @@ DRY_RUN=1 npm run test:all
 - `push` to `main` runs one CI job in `safe + smoke` mode by default.
 - `schedule` runs one CI job in `safe + full` mode by default.
 - `workflow_dispatch` can choose:
+
 1. `run_mode` (`basic`, `safe`, `stress`)
 2. `threads`
 3. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
 4. `safe_pause_seconds`
 5. `tags` (`Run specific TAGS`, e.g. `PHARMA-180|PHARMA-181`)
+
 - Mode behavior:
+
 1. `basic` + empty `tags` runs smoke in one pass.
 2. `basic` + non-empty `tags` runs matching tags directly in one pass.
 3. `safe` + empty `tags` runs full 3-batch safe mode.
@@ -87,10 +94,13 @@ TAGS='PHARMA-160|PHARMA-243|PHARMA-244' npx playwright test
 1. Global setup posts suite header and creates run thread.
 2. Reporter updates progress incrementally while tests run.
 3. Final summary includes:
+
 - pass/fail/skip totals
 - rerun helper when failures include `PHARMA-<id>` in test titles
 - report link when publishing succeeds
+
 4. Channel routing:
+
 - `REPORT_PUBLISH=0` -> `LOCAL_RUNS_CHANNELID`
 - `REPORT_PUBLISH!=0` -> `TEST_ENV` channel (`DEV/QA/PROD`)
 
@@ -123,6 +133,7 @@ For API test creation/update conventions, follow:
 - [AGENTS.MD](./AGENTS.MD)
 
 That file is the source-of-truth for:
+
 - required imports/fixtures
 - GraphQL query file separation
 - happy path and negative auth patterns
