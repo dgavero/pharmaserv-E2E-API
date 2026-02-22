@@ -84,7 +84,6 @@ env:
   RIDER_PASSWORD: ${{ secrets.RIDER_PASSWORD }}
   RIDER_USERID: ${{ secrets.RIDER_USERID }}
   RIDER_USERNAME: ${{ secrets.RIDER_USERNAME }}
-  TAGS: ${{ secrets.TAGS }}
   TEST_ENV: ${{ secrets.TEST_ENV }}
   THREADS: ${{ secrets.THREADS }}
   CI: true
