@@ -39,6 +39,9 @@ import {
   setDeliveryProofAsRider,
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
+import {
+  buildDeliverXRequoteData,
+} from './deliverx.testData.js';
 
 test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
   test(
@@ -53,8 +56,6 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       const proofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const firstAddedMedicineId = 3;
-      const replacedMedicineId = 4;
 
       // Patient: Login.
       const { patientAccessToken } = await loginPatient(api);
@@ -100,43 +101,12 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
         uploadUrl: attachmentUploadUrl,
         imagePath: attachmentImagePath,
       });
+      const requoteData = buildDeliverXRequoteData({ prescriptionId, discountCardId, attachmentBlobName });
 
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
-        order: {
-          deliveryType: 'DELIVER_X',
-          patientId: process.env.PATIENT_USER_USERNAME_ID,
-          branchId: process.env.PHARMACIST_BRANCHID_REG01,
-          prescriptionIds: [prescriptionId],
-          discountCardIds: [discountCardId],
-          prescriptionItems: [
-            {
-              medicineId: 1,
-              quantity: 2,
-              source: 'SEARCH',
-              specialInstructions: null,
-            },
-            {
-              medicineId: 2,
-              quantity: 2,
-              source: 'E_PRESCRIPTION',
-              specialInstructions: null,
-            },
-          ],
-          addressName: 'Home API',
-          address: 'Test API Address',
-          landmark: 'Near City Hall',
-          attachmentPhotos: [
-            {
-              photo: attachmentBlobName,
-              specialInstructions: 'API automated test only',
-            },
-          ],
-          deliveryInstructions: 'API automated test only',
-          lat: 9.6496,
-          lng: 123.8552,
-        },
+        order: requoteData.orderInput,
       });
 
       // Pharmacist: Login.
@@ -148,47 +118,30 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       const { prescriptionItemId: firstPrescriptionItemId } = await addPrescriptionItemAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prescriptionItem: {
-          medicineId: firstAddedMedicineId,
-          quantity: 1,
-          specialInstructions: 'API automated test only',
-          source: 'SEARCH',
-        },
+        prescriptionItem: requoteData.firstAddedPrescriptionItem,
       });
+      const firstAddedMedicineId = requoteData.firstAddedPrescriptionItem.medicineId;
       // Pharmacist: Update Available Prescription Item.
       await updateAvailablePrescriptionItemAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
         prescriptionItemId: firstPrescriptionItemId,
         medicineId: firstAddedMedicineId,
-        quantity: 1,
-        unitPrice: 3000.0,
-        vatExempt: true,
-        specialInstructions: 'API automated test only',
-        source: 'SEARCH',
+        ...requoteData.availablePrescriptionItemUpdate,
       });
       // Pharmacist: Replace Medicine.
+      const replacementPrescriptionItem = requoteData.replacementPrescriptionItem;
       await replaceMedicineAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
         prescriptionItemId: firstPrescriptionItemId,
-        prescriptionItem: {
-          medicineId: replacedMedicineId,
-          quantity: 1,
-          unitPrice: 45.0,
-          specialInstructions: 'API automated test only',
-          source: 'SEARCH',
-        },
+        prescriptionItem: replacementPrescriptionItem,
       });
       // Pharmacist: Update Prices.
       await updatePricesAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prices: [
-          { medicineId: 1, quantity: 1, unitPrice: 10 },
-          { medicineId: 2, quantity: 1, unitPrice: 12 },
-          { medicineId: replacedMedicineId, quantity: 1, unitPrice: 15 },
-        ],
+        prices: requoteData.priceItems,
       });
       // Pharmacist: Send Quote.
       await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
@@ -202,13 +155,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       await addPrescriptionItemAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prescriptionItem: {
-          medicineId: firstAddedMedicineId,
-          quantity: 1,
-          unitPrice: 18,
-          specialInstructions: 'API automated test only',
-          source: 'SEARCH',
-        },
+        prescriptionItem: requoteData.postRequotePrescriptionItem,
       });
       // Pharmacist: Send Quote (re-quote path).
       await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
@@ -234,9 +181,9 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
         },
       });
 
-      // Rider Admin: Login.
+      // Admin: Login.
       const { adminAccessToken } = await loginAdmin(api);
-      // Rider Admin: Confirm Payment.
+      // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
       // Pharmacist: Prepare Order.
@@ -244,7 +191,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       // Pharmacist: Set For Pickup.
       await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken, orderId });
 
-      // Rider Admin: Assign Rider To Order.
+      // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,

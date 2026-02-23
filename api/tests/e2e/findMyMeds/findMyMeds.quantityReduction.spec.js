@@ -1,6 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
-import { buildFindMyMedsDeclinedOrderInput } from './findMyMeds.testData.js';
+import { buildFindMyMedsBaseOrderInput, buildFindMyMedsBasePriceItems } from './findMyMeds.testData.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -63,7 +63,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
-        order: buildFindMyMedsDeclinedOrderInput(),
+        order: buildFindMyMedsBaseOrderInput(),
       });
 
       // PSE Pharmacist: Login.
@@ -74,10 +74,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       await updatePricesAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prices: [
-          { medicineId: 1, quantity: 10, unitPrice: 10 },
-          { medicineId: 2, quantity: 10, unitPrice: 12 },
-        ],
+        prices: buildFindMyMedsBasePriceItems({ quantity: 10 }),
       });
       // PSE Pharmacist: Assign Branch To Order.
       await assignBranchToOrderAsPharmacist(api, {
@@ -136,11 +133,11 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
         },
       });
 
-      // Rider Admin: Login.
+      // Admin: Login.
       const { adminAccessToken } = await loginAdmin(api);
       // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
-      // Rider Admin: Assign Rider To Order.
+      // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,

@@ -5,30 +5,74 @@
  * - Supports optional TAGS filtering and configurable THREADS concurrency.
  */
 
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
 import { defineConfig } from '@playwright/test';
 
-dotenv.config(); // Load .env file into process.env
+const shellEnvKeys = new Set(Object.keys(process.env));
+
+function loadEnvFile(relPath) {
+  const absPath = path.join(process.cwd(), relPath);
+  if (!fs.existsSync(absPath)) return false;
+
+  const parsed = dotenv.parse(fs.readFileSync(absPath));
+  for (const [key, value] of Object.entries(parsed)) {
+    // Keep shell/CI-provided vars as highest precedence.
+    if (!shellEnvKeys.has(key)) {
+      process.env[key] = value;
+    }
+  }
+  return true;
+}
+
+function normalizeTestEnv(raw) {
+  const envName = String(raw || 'DEV').trim().toUpperCase();
+  if (!['DEV', 'QA', 'PROD'].includes(envName)) {
+    throw new Error(`❌ Unsupported TEST_ENV=${envName}. Valid values: DEV, QA, PROD`);
+  }
+  return envName;
+}
+
+// Layered env loading for zero test-code changes:
+// 1) .env (shared defaults)
+// 2) .env.<test_env> (env profile)
+// 3) .env.local (machine-level overrides)
+// 4) .env.<test_env>.local (machine + env overrides)
+loadEnvFile('.env');
 
 // Normalize TEST_ENV (default to DEV)
-const testEnv = (process.env.TEST_ENV || 'DEV').toUpperCase();
+const testEnv = normalizeTestEnv(process.env.TEST_ENV || 'DEV');
+process.env.TEST_ENV = testEnv;
+const testEnvLower = testEnv.toLowerCase();
+
+loadEnvFile(`.env.${testEnvLower}`);
+loadEnvFile('.env.local');
+loadEnvFile(`.env.${testEnvLower}.local`);
 
 // Select URL based on TEST_ENV
-let baseURL;
-if (testEnv === 'PROD') {
-  baseURL = process.env.BASE_URL_PROD;
-} else if (testEnv === 'DEV') {
-  baseURL = process.env.BASE_URL_DEV;
-} else {
-  throw new Error(`❌ Unsupported TEST_ENV=${testEnv}. Valid values: DEV, PROD`);
+const uiBaseUrlByEnv = {
+  DEV: process.env.BASE_URL_DEV,
+  QA: process.env.BASE_URL_QA,
+  PROD: process.env.BASE_URL_PROD,
+};
+const baseURL = uiBaseUrlByEnv[testEnv] || process.env.BASE_URL;
+
+// Keep API fixture compatible with existing tests while allowing env-specific API URLs.
+if (!process.env.API_BASE_URL) {
+  const apiBaseUrlByEnv = {
+    DEV: process.env.API_BASE_URL_DEV,
+    QA: process.env.API_BASE_URL_QA,
+    PROD: process.env.API_BASE_URL_PROD,
+  };
+  process.env.API_BASE_URL = apiBaseUrlByEnv[testEnv] || '';
 }
 
 // 🔹 Fail fast if the URL is missing
 if (!baseURL) {
+  const requiredVar = `BASE_URL_${testEnv}`;
   throw new Error(
-    `❌ Missing baseURL for TEST_ENV=${testEnv}. Please set ${
-      testEnv === 'PROD' ? 'BASE_URL_PROD' : 'BASE_URL_DEV'
-    } in your .env`
+    `❌ Missing baseURL for TEST_ENV=${testEnv}. Set ${requiredVar} (or BASE_URL fallback).`
   );
 }
 

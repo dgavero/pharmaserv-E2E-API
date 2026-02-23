@@ -1,6 +1,6 @@
 import { test } from '../../../globalConfig.api.js';
 import path from 'node:path';
-import { buildFindMyMedsDeclinedOrderInput } from './findMyMeds.testData.js';
+import { buildFindMyMedsBaseOrderInput, buildFindMyMedsBasePriceItems } from './findMyMeds.testData.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -62,7 +62,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
-        order: buildFindMyMedsDeclinedOrderInput(),
+        order: buildFindMyMedsBaseOrderInput(),
       });
 
       // PSE Pharmacist: Login.
@@ -73,10 +73,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
       await updatePricesAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prices: [
-          { medicineId: 1, quantity: 1, unitPrice: 10 },
-          { medicineId: 2, quantity: 1, unitPrice: 12 },
-        ],
+        prices: buildFindMyMedsBasePriceItems(),
       });
       // PSE Pharmacist: Assign Branch To Order.
       await assignBranchToOrderAsPharmacist(api, {
@@ -125,11 +122,11 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Happy Path', () => {
         proof: { photo: proofOfPaymentBlobName },
       });
 
-      // Rider Admin: Login.
+      // Admin: Login.
       const { adminAccessToken } = await loginAdmin(api);
       // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
-      // Rider Admin: Assign Rider To Order.
+      // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,

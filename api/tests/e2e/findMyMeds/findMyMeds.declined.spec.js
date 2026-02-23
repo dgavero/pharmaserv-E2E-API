@@ -1,5 +1,5 @@
 import { test } from '../../../globalConfig.api.js';
-import { buildFindMyMedsDeclinedOrderInput } from './findMyMeds.testData.js';
+import { buildFindMyMedsBaseOrderInput } from './findMyMeds.testData.js';
 import { loginPatient, submitOrderAsPatient } from '../shared/steps/patient.steps.js';
 import { loginPsePharmacist, declineOrderAsPharmacist } from '../shared/steps/pharmacist.steps.js';
 
@@ -16,7 +16,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Order Declined', () => {
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
-        order: buildFindMyMedsDeclinedOrderInput(),
+        order: buildFindMyMedsBaseOrderInput(),
       });
 
       // PSE Pharmacist: Login.

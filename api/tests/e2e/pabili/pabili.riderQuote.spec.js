@@ -1,6 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
-import { buildPabiliHappyPathOrderInput } from './pabili.testData.js';
+import { buildPabiliBaseOrderInput, buildPabiliBasePriceItems } from './pabili.testData.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -48,7 +48,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const pickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const deliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const pabiliOrder = buildPabiliHappyPathOrderInput();
+      const pabiliOrder = buildPabiliBaseOrderInput();
       const pabiliBranchId = Number(pabiliOrder.branchId);
 
       // Patient: Login.
@@ -66,9 +66,9 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
       // PSE Pharmacist: Confirm Order (enable rider quote flow).
       await confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled: true });
 
-      // Rider Admin: Login.
+      // Admin: Login.
       const { adminAccessToken } = await loginAdmin(api);
-      // Rider Admin: Assign Rider To Order.
+      // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
@@ -91,10 +91,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
         riderAccessToken,
         orderId,
         branchId: pabiliBranchId,
-        prices: [
-          { medicineId: 1, quantity: 1, unitPrice: 10 },
-          { medicineId: 2, quantity: 1, unitPrice: 12 },
-        ],
+        prices: buildPabiliBasePriceItems(),
       });
       // Rider: Get Payment QR Code Upload URL.
       const { riderPaymentQRCodeUploadUrl, riderPaymentQRCodeBlobName } = await getPaymentQRCodeUploadUrlAsRider(api, {
@@ -156,7 +153,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
         proof: { photo: proofOfPaymentBlobName },
       });
 
-      // Rider Admin: Confirm Payment.
+      // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
       // Rider: Get Pickup Proof Upload URL.
