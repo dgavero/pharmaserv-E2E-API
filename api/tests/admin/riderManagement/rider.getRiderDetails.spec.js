@@ -10,19 +10,56 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
 
-// RiderID to getData
-const riderId = '8';
-const riderUUID = 'b56c95f8-7127-479c-a47f-a6742bcbd758';
-const riderFirstName = 'Dave';
+function resolveRiderData() {
+  const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
 
-// Expected identity for id=8
-const EXPECTED_RIDER = {
-  id: 8,
-  username: 'dave.riderapi',
-  email: 'dave.rider.api@yopmail.com',
-  firstName: 'Dave',
-  lastName: 'RiderApi',
-};
+  const riderDataByEnv = {
+    DEV: {
+      id: '8',
+      uuid: 'b56c95f8-7127-479c-a47f-a6742bcbd758',
+      firstName: 'Dave',
+      expected: {
+        id: '8',
+        username: 'dave.riderapi',
+        email: 'dave.rider.api@yopmail.com',
+        firstName: 'Dave',
+        lastName: 'RiderApi',
+      },
+    },
+
+    QA: {
+      id: '30',
+      uuid: 'a267fe74-771c-49c8-b0ab-46864dfc5455',
+      firstName: 'Test',
+      expected: {
+        id: '30',
+        username: 'testriderqa@yopmail.com',
+        email: 'testriderqa@yopmail.com',
+        firstName: 'Test',
+        lastName: 'RiderQA',
+      },
+    },
+
+    PROD: {
+      id: 10,
+      uuid: 'd56c95f8-7127-479c-a47f-a6742bcbd760',
+      firstName: 'PROD Dave',
+      expected: {
+        id: 10,
+        username: 'prod.riderapi',
+        email: 'prod.rider.api@yopmail.com',
+        firstName: 'PROD Dave',
+        lastName: 'RiderApi',
+      },
+    },
+  };
+
+  if (!riderDataByEnv[testEnv]) {
+    throw new Error(`Unsupported TEST_ENV: ${testEnv}`);
+  }
+
+  return riderDataByEnv[testEnv];
+}
 
 const GET_RIDER_MUTATION = /* GraphQL */ `
   query ($by: IdentifierRequest!) {
@@ -78,10 +115,11 @@ test.describe('GraphQL: Get Rider Detail', () => {
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       // get rider detail
+      const rider = resolveRiderData();
       const getRiderRes = await safeGraphQL(api, {
         query: GET_RIDER_MUTATION,
         variables: {
-          by: { id: riderId },
+          by: { id: rider.id },
         },
         headers: bearer(accessToken),
       });
@@ -93,9 +131,9 @@ test.describe('GraphQL: Get Rider Detail', () => {
       const node = getRiderRes.body?.data?.administrator?.rider?.detail;
       expect(node, 'Rider detail is null').toBeTruthy();
 
-      expect(node.id).toBe(riderId);
-      expect(node.uuid).toBe(riderUUID);
-      expect(node.firstName).toBe(riderFirstName);
+      expect(node.id).toBe(rider.id);
+      expect(node.uuid).toBe(rider.uuid);
+      expect(node.firstName).toBe(rider.firstName);
     }
   );
 
@@ -105,10 +143,11 @@ test.describe('GraphQL: Get Rider Detail', () => {
       tag: ['@api', '@admin', '@negative', '@pharma-49'],
     },
     async ({ api, noAuth }) => {
+      const rider = resolveRiderData();
       const getRiderNoAuthRes = await safeGraphQL(api, {
         query: GET_RIDER_MUTATION,
         variables: {
-          by: { id: riderId },
+          by: { id: rider.id },
         },
         headers: noAuth,
       });
@@ -128,10 +167,11 @@ test.describe('GraphQL: Get Rider Detail', () => {
       tag: ['@api', '@admin', '@negative', '@pharma-50'],
     },
     async ({ api, invalidAuth }) => {
+      const rider = resolveRiderData();
       const getRiderInvalidAuthRes = await safeGraphQL(api, {
         query: GET_RIDER_MUTATION,
         variables: {
-          by: { id: riderId },
+          by: { id: rider.id },
         },
         headers: invalidAuth,
       });
@@ -160,6 +200,8 @@ test.describe('GraphQL: Get Rider Detail', () => {
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       // 2) Query rider detail (hard-coded id)
+      const rider = resolveRiderData();
+      const EXPECTED_RIDER = rider.expected;
       const riderRes = await safeGraphQL(api, {
         query: GET_RIDER_MUTATION,
         variables: { by: { id: EXPECTED_RIDER.id } },
@@ -216,9 +258,11 @@ test.describe('GraphQL: Get Rider Detail', () => {
     },
     async ({ api, noAuth }) => {
       // Correct ID, but NO bearer header
+      const rider = resolveRiderData();
+
       const riderDetailNoAuth = await safeGraphQL(api, {
         query: GET_RIDER_MUTATION,
-        variables: { by: { id: 31 } },
+        variables: { by: { id: rider.id } },
         headers: noAuth,
       });
 
