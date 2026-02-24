@@ -1,10 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  adminLoginAndGetTokens,
-  bearer,
-  getGQLError,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, adminLoginAndGetTokens, bearer, getGQLError } from '../../../helpers/testUtilsAPI.js';
 
 const GET_PAGED_BRANCHES_QUERY = `
   query ($pharmacyId: ID!, $filter: FilterRequest!) {
@@ -25,8 +20,18 @@ const GET_PAGED_BRANCHES_QUERY = `
 `;
 
 function buildPagedBranchesVariables() {
+  const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+
+  const pharmacyIdByEnv = {
+    DEV: 36,
+    QA: 59,
+    PROD: 70,
+  };
+
+  const pharmacyId = pharmacyIdByEnv[env] ?? pharmacyIdByEnv.DEV;
+
   return {
-    pharmacyId: 1,
+    pharmacyId,
     filter: {
       pageSize: 3,
       page: 1,
@@ -59,14 +64,12 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
         variables,
         headers: bearer(accessToken),
       });
-      expect(
-        getPagedBranchesRes.ok,
-        getPagedBranchesRes.error || 'administrator.branch.pagedBranches failed'
-      ).toBe(true);
+      expect(getPagedBranchesRes.ok, getPagedBranchesRes.error || 'administrator.branch.pagedBranches failed').toBe(
+        true
+      );
 
       // 4) Hard check on node
-      const pagedBranchesNode =
-        getPagedBranchesRes.body?.data?.administrator?.branch?.pagedBranches;
+      const pagedBranchesNode = getPagedBranchesRes.body?.data?.administrator?.branch?.pagedBranches;
       expect(pagedBranchesNode, 'Missing data.administrator.branch.pagedBranches').toBeTruthy();
 
       const items = pagedBranchesNode?.items ?? [];

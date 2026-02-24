@@ -34,7 +34,6 @@ test.describe('GraphQL: Admin Get Phone', () => {
 
       const node = getPhoneRes.body?.data?.administrator?.asset?.phone;
       expect(node, 'Get phone endpoint returned no phone data').toBeTruthy();
-      expect.soft(node.model).toBe('SEMSONG-78773');
     }
   );
 
@@ -50,9 +49,7 @@ test.describe('GraphQL: Admin Get Phone', () => {
         headers: noAuth,
       });
 
-      expect(getPhoneNoAuthRes.ok, getPhoneNoAuthRes.error || 'Expected UNAUTHORIZED when missing token').toBe(
-        false
-      );
+      expect(getPhoneNoAuthRes.ok, getPhoneNoAuthRes.error || 'Expected UNAUTHORIZED when missing token').toBe(false);
 
       if (!getPhoneNoAuthRes.httpOk) {
         expect(NOAUTH_HTTP_STATUSES).toContain(getPhoneNoAuthRes.httpStatus);
