@@ -11,6 +11,7 @@ import {
 } from '../../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { UPDATE_CHAT_MESSAGE_MUTATION } from './patient.chatMessagingQueries.js';
+import { CHAT_MESSAGE_ID } from './patient.chatMessagingConstants.js';
 
 function buildUpdatedMessage() {
   return `This is an API edited message ${randomAlphanumeric(9)}`;
@@ -33,7 +34,7 @@ test.describe('GraphQL: Patient Update Chat Message', () => {
 
       const updateChatMessageRes = await safeGraphQL(api, {
         query: UPDATE_CHAT_MESSAGE_MUTATION,
-        variables: { id: 400, message: updatedMessage },
+        variables: { id: CHAT_MESSAGE_ID, message: updatedMessage },
         headers: bearer(accessToken),
       });
 
