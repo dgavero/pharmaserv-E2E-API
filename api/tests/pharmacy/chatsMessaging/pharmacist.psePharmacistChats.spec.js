@@ -12,9 +12,30 @@ import {
 import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 
-//incase of data wipe, you'll need to create a new test with chats from patient/pharmacy side for this api test to pass
-const testOrderId = 216;
-const testThreadId = 85;
+function resolveTestData() {
+  const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+
+  const testData = {
+    DEV: {
+      orderId: 216,
+      threadId: 85,
+    },
+    QA: {
+      orderId: 686,
+      threadId: 526,
+    },
+    PROD: {
+      orderId: 216,
+      threadId: 85,
+    },
+  };
+
+  if (!testData[testEnv]) {
+    throw new Error(`Unsupported TEST_ENV: ${testEnv}`);
+  }
+
+  return testData[testEnv];
+}
 
 test.describe('GraphQL: PSE Pharmacist Messaging', () => {
   test(
@@ -71,10 +92,12 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
+      const testData = resolveTestData();
+
       const getChatThreadIdRes = await safeGraphQL(api, {
         query: PHARMACIST_GET_CHAT_THREAD_BY_ID_QUERY,
         variables: {
-          orderId: testOrderId,
+          orderId: testData.orderId,
           type: `PATIENT_PHARMACY`,
         },
         headers: bearer(accessToken),
@@ -96,10 +119,12 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
+      const testData = resolveTestData();
+
       const getChatMessageByOrderIdRes = await safeGraphQL(api, {
         query: PHARMACIST_GET_CHAT_MESSAGES_BY_ORDER_ID_QUERY,
         variables: {
-          orderId: testOrderId,
+          orderId: testData.orderId,
         },
         headers: bearer(accessToken),
       });
@@ -119,10 +144,12 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
+      const testData = resolveTestData();
+
       const getChatMessageByThreadIdRes = await safeGraphQL(api, {
         query: PHARMACIST_GET_CHAT_MESSAGES_BY_THREAD_ID_QUERY,
         variables: {
-          threadId: testThreadId,
+          threadId: testData.threadId,
         },
         headers: bearer(accessToken),
       });
@@ -142,10 +169,12 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
+      const testData = resolveTestData();
+
       const sendChatMessageByOrderIdRes = await safeGraphQL(api, {
         query: PHARMACIST_SEND_CHAT_MESSAGES_BY_ORDER_ID_QUERY,
         variables: {
-          orderId: testOrderId,
+          orderId: testData.orderId,
           chat: {
             sender: `PHARMACIST`,
             message: `Sample message from api - ${randomAlphanumeric(6)}`,
@@ -169,10 +198,12 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
+      const testData = resolveTestData();
+
       const sendChatMessageByThreadIdRes = await safeGraphQL(api, {
         query: PHARMACIST_SEND_CHAT_MESSAGES_BY_THREAD_ID_QUERY,
         variables: {
-          threadId: testThreadId,
+          threadId: testData.threadId,
           chat: {
             sender: `PHARMACIST`,
             message: `Sample message from api - ${randomAlphanumeric(6)}`,
@@ -196,10 +227,12 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
+      const testData = resolveTestData();
+
       const setThreadSeenRes = await safeGraphQL(api, {
         query: PHARMACIST_SET_THREAD_SEEN_QUERY,
         variables: {
-          threadId: testThreadId,
+          threadId: testData.threadId,
         },
         headers: bearer(accessToken),
       });
