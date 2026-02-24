@@ -7,8 +7,8 @@ const CHAT_CONSTANTS_BY_ENV = {
     photoName: 'md-94f96997-4cc1-46c0-9367-a1e9bad457d7.png',
   },
   QA: {
-    orderId: 576,
-    threadId: 467,
+    orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01,
+    threadId: process.env.PHARMACIST_REUSABLE_THREADID_REGO1,
     photoName: 'md-94f96997-4cc1-46c0-9367-a1e9bad457d7.png',
   },
   PROD: {

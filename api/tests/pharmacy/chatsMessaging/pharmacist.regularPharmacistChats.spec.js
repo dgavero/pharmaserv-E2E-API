@@ -21,8 +21,8 @@ function resolveTestData() {
       threadId: 80,
     },
     QA: {
-      orderId: 534,
-      threadId: 426,
+      orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01,
+      threadId: process.env.PHARMACIST_REUSABLE_THREADID_REGO1,
     },
     PROD: {
       orderId: 216,

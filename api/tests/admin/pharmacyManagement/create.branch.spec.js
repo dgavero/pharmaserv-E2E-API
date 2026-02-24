@@ -54,8 +54,9 @@ function buildBranchVariables() {
   const openingTime = '10:00:00+08:00';
   const closingTime = '21:00:00+08:00';
 
-  // Created branch for API test
-  const pharmacyId = String(4);
+  // Created branch for API test will go to this pharmacy
+  const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+  const pharmacyId = String({ DEV: 4, QA: 64, PROD: 10 }[env] ?? 4);
 
   const branch = {
     name, // string
@@ -115,7 +116,6 @@ test.describe('GraphQL: Admin Create Branch', () => {
       // 5) Assertions
       expect.soft(typeof branchNode.id).toBe('string'); // id present
       expect.soft(branchNode.name).toBe(meta.expectedName); // echoes randomized name
-      expect.soft(branchNode.pharmacyName).toBe('QA Mercury Drug'); // fixed by pharmacyId=4
 
       // lat/lng should be numbers (ints are numbers in JS) and within our integer bounds
       expect.soft(typeof branchNode.lat).toBe('number');
