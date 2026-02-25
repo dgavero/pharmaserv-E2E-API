@@ -1,6 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { declineOrderAsPharmacist } from '../../../helpers/orderHelpers.js';
 import { SUBMIT_PABILI_ORDER_QUERY } from './patient.orderingQueries.js';
+import { buildPatientPabiliOrderInput } from './patient.testData.js';
 import {
   safeGraphQL,
   bearer,
@@ -11,32 +12,6 @@ import {
   NOAUTH_CODES,
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
-
-function orderDetailsInput() {
-  return {
-    deliveryType: 'PABILI',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: 1,
-    prescriptionItems: [
-      {
-        medicineId: 1,
-        quantity: 2,
-        source: 'SEARCH',
-        specialInstructions: null,
-      },
-      {
-        medicineId: 2,
-        quantity: 2,
-        source: 'SEARCH',
-        specialInstructions: null,
-      },
-    ],
-    addressName: 'Home',
-    address: 'Unit 243 Baranca Bldg, Mandaluyong Housing',
-    lat: 14.582019317323562,
-    lng: 121.01251092551259,
-  };
-}
 
 test.describe('GraphQL: Submit Pabili Order', () => {
   test(
@@ -53,7 +28,7 @@ test.describe('GraphQL: Submit Pabili Order', () => {
 
       const pabiliOrderRes = await safeGraphQL(api, {
         query: SUBMIT_PABILI_ORDER_QUERY,
-        variables: { order: orderDetailsInput() },
+        variables: { order: buildPatientPabiliOrderInput() },
         headers: bearer(accessToken),
       });
 
@@ -79,7 +54,7 @@ test.describe('GraphQL: Submit Pabili Order', () => {
     async ({ api, noAuth }) => {
       const pabiliOrderResNoAuth = await safeGraphQL(api, {
         query: SUBMIT_PABILI_ORDER_QUERY,
-        variables: { order: orderDetailsInput() },
+        variables: { order: buildPatientPabiliOrderInput() },
         headers: noAuth,
       });
 
@@ -101,7 +76,7 @@ test.describe('GraphQL: Submit Pabili Order', () => {
     async ({ api, invalidAuth }) => {
       const pabiliOrderResInvalidAuth = await safeGraphQL(api, {
         query: SUBMIT_PABILI_ORDER_QUERY,
-        variables: { order: orderDetailsInput() },
+        variables: { order: buildPatientPabiliOrderInput() },
         headers: invalidAuth,
       });
 

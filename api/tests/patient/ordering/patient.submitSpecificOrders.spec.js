@@ -1,6 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { declineOrderAsPharmacist } from '../../../helpers/orderHelpers.js';
 import { SUBMIT_ORDER_QUERY } from './patient.orderingQueries.js';
+import { buildPatientSpecificOrderInput } from './patient.testData.js';
 import {
   safeGraphQL,
   bearer,
@@ -11,32 +12,6 @@ import {
   NOAUTH_CODES,
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
-
-function orderDetailsInput() {
-  return {
-    deliveryType: 'DELIVER_X',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: process.env.PHARMACIST_BRANCHID_REG01,
-    prescriptionItems: [
-      {
-        medicineId: 1,
-        quantity: 2,
-        source: 'SEARCH',
-        specialInstructions: null,
-      },
-      {
-        description: 'Brand X',
-        quantity: 1,
-        specialInstructions: null,
-        source: 'SEARCH',
-      },
-    ],
-    addressName: 'Home',
-    address: 'Unit 243 Baranca Bldg, Mandaluyong Housing',
-    lat: 14.582019317323562,
-    lng: 121.01251092551259,
-  };
-}
 
 test.describe('GraphQL: Submit Specific Orders', () => {
   test(
@@ -51,7 +26,7 @@ test.describe('GraphQL: Submit Specific Orders', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
-      const orderDetailsWithRequestedMedicine = orderDetailsInput();
+      const orderDetailsWithRequestedMedicine = buildPatientSpecificOrderInput();
       const submitOrderRes = await safeGraphQL(api, {
         query: SUBMIT_ORDER_QUERY,
         variables: { order: orderDetailsWithRequestedMedicine },
@@ -85,7 +60,7 @@ test.describe('GraphQL: Submit Specific Orders', () => {
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       //Override medicine id to match test
-      const orderDetailsWithNonExistentMedicineId = orderDetailsInput();
+      const orderDetailsWithNonExistentMedicineId = buildPatientSpecificOrderInput();
       orderDetailsWithNonExistentMedicineId.prescriptionItems[0].medicineId = 9999;
 
       const submitOrderRes = await safeGraphQL(api, {
@@ -116,7 +91,7 @@ test.describe('GraphQL: Submit Specific Orders', () => {
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       //Override quantity to match test
-      const orderDetailsWithZeroQuantity = orderDetailsInput();
+      const orderDetailsWithZeroQuantity = buildPatientSpecificOrderInput();
       orderDetailsWithZeroQuantity.prescriptionItems[0].quantity = 0;
 
       const submitOrderRes = await safeGraphQL(api, {
