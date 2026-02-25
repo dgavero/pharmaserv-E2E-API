@@ -35,7 +35,7 @@ test.describe('GraphQL: Update Discount Card Patient', () => {
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const updateCardData = updateDiscountCardInput();
-      const patientCardId = 1;
+      const patientCardId = process.env.PATIENT_USER_USENAME_CARDID;
 
       const updateDiscountCardRes = await safeGraphQL(api, {
         query: UPDATE_DISCOUNT_CARD_QUERY,
