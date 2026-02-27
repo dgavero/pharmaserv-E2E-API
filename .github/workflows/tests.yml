@@ -45,11 +45,13 @@ permissions:
   contents: write
 
 env:
-  ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-  ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
   API_BASE_LEGACY: ${{ secrets.API_BASE_LEGACY }}
-  API_BASE_URL: ${{ secrets.API_BASE_URL }}
+  API_BASE_URL_DEV: ${{ secrets.API_BASE_URL_DEV }}
+  API_BASE_URL_QA: ${{ secrets.API_BASE_URL_QA }}
+  API_BASE_URL_PROD: ${{ secrets.API_BASE_URL_PROD }}
   BASE_URL_DEV: ${{ secrets.BASE_URL_DEV }}
+  BASE_URL_QA: ${{ secrets.BASE_URL_QA }}
+  BASE_URL_PROD: ${{ secrets.BASE_URL_PROD }}
   DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
   DEV_TESTING_CHANNELID: ${{ secrets.DEV_TESTING_CHANNELID }}
   QA_TESTING_CHANNELID: ${{ secrets.QA_TESTING_CHANNELID }}
@@ -61,29 +63,91 @@ env:
   GIT_COMMITTER_NAME: github-actions[bot]
   GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
   GRAPHQL_PATH: ${{ secrets.GRAPHQL_PATH }}
-  MERCHANT_PASSWORD: ${{ secrets.MERCHANT_PASSWORD }}
-  MERCHANT_USERNAME: ${{ secrets.MERCHANT_USERNAME }}
-  PATIENT_USER_PASSWORD: ${{ secrets.PATIENT_USER_PASSWORD }}
-  PATIENT_USER_USERNAME: ${{ secrets.PATIENT_USER_USERNAME }}
-  PATIENT_USER_USERNAME_ID: ${{ secrets.PATIENT_USER_USERNAME_ID }}
-  PATIENT_USER_USERNAME_RELATED_ID: ${{ secrets.PATIENT_USER_USERNAME_RELATED_ID }}
-  PHARMACIST_BRANCHID_REG01: ${{ secrets.PHARMACIST_BRANCHID_REG01 }}
-  PHARMACIST_BRANCHID_REG02: ${{ secrets.PHARMACIST_BRANCHID_REG02 }}
-  PHARMACIST_PASSWORD_ADMIN: ${{ secrets.PHARMACIST_PASSWORD_ADMIN }}
-  PHARMACIST_PASSWORD_PSE01: ${{ secrets.PHARMACIST_PASSWORD_PSE01 }}
-  PHARMACIST_PASSWORD_REG01: ${{ secrets.PHARMACIST_PASSWORD_REG01 }}
-  PHARMACIST_PASSWORD_REG02: ${{ secrets.PHARMACIST_PASSWORD_REG02 }}
-  PHARMACIST_PHONENUMBER_REG01: ${{ secrets.PHARMACIST_PHONENUMBER_REG01 }}
-  PHARMACIST_PHONENUMBER_REG02: ${{ secrets.PHARMACIST_PHONENUMBER_REG02 }}
-  PHARMACIST_REUSABLE_ORDERID_REG01: ${{ secrets.PHARMACIST_REUSABLE_ORDERID_REG01 }}
-  PHARMACIST_USERNAME_ADMIN: ${{ secrets.PHARMACIST_USERNAME_ADMIN }}
-  PHARMACIST_USERNAME_PSE01: ${{ secrets.PHARMACIST_USERNAME_PSE01 }}
-  PHARMACIST_USERNAME_REG01: ${{ secrets.PHARMACIST_USERNAME_REG01 }}
-  PHARMACIST_USERNAME_REG02: ${{ secrets.PHARMACIST_USERNAME_REG02 }}
+  ADMIN_USERNAME_DEV: ${{ secrets.ADMIN_USERNAME_DEV }}
+  ADMIN_USERNAME_QA: ${{ secrets.ADMIN_USERNAME_QA }}
+  ADMIN_USERNAME_PROD: ${{ secrets.ADMIN_USERNAME_PROD }}
+  ADMIN_PASSWORD_DEV: ${{ secrets.ADMIN_PASSWORD_DEV }}
+  ADMIN_PASSWORD_QA: ${{ secrets.ADMIN_PASSWORD_QA }}
+  ADMIN_PASSWORD_PROD: ${{ secrets.ADMIN_PASSWORD_PROD }}
+  MERCHANT_USERNAME_DEV: ${{ secrets.MERCHANT_USERNAME_DEV }}
+  MERCHANT_USERNAME_QA: ${{ secrets.MERCHANT_USERNAME_QA }}
+  MERCHANT_USERNAME_PROD: ${{ secrets.MERCHANT_USERNAME_PROD }}
+  MERCHANT_PASSWORD_DEV: ${{ secrets.MERCHANT_PASSWORD_DEV }}
+  MERCHANT_PASSWORD_QA: ${{ secrets.MERCHANT_PASSWORD_QA }}
+  MERCHANT_PASSWORD_PROD: ${{ secrets.MERCHANT_PASSWORD_PROD }}
+  PATIENT_USER_USERNAME_DEV: ${{ secrets.PATIENT_USER_USERNAME_DEV }}
+  PATIENT_USER_USERNAME_QA: ${{ secrets.PATIENT_USER_USERNAME_QA }}
+  PATIENT_USER_USERNAME_PROD: ${{ secrets.PATIENT_USER_USERNAME_PROD }}
+  PATIENT_USER_PASSWORD_DEV: ${{ secrets.PATIENT_USER_PASSWORD_DEV }}
+  PATIENT_USER_PASSWORD_QA: ${{ secrets.PATIENT_USER_PASSWORD_QA }}
+  PATIENT_USER_PASSWORD_PROD: ${{ secrets.PATIENT_USER_PASSWORD_PROD }}
+  PATIENT_USER_USERNAME_ID_DEV: ${{ secrets.PATIENT_USER_USERNAME_ID_DEV }}
+  PATIENT_USER_USERNAME_ID_QA: ${{ secrets.PATIENT_USER_USERNAME_ID_QA }}
+  PATIENT_USER_USERNAME_ID_PROD: ${{ secrets.PATIENT_USER_USERNAME_ID_PROD }}
+  PATIENT_USER_USERNAME_RELATED_ID_DEV: ${{ secrets.PATIENT_USER_USERNAME_RELATED_ID_DEV }}
+  PATIENT_USER_USERNAME_RELATED_ID_QA: ${{ secrets.PATIENT_USER_USERNAME_RELATED_ID_QA }}
+  PATIENT_USER_USERNAME_RELATED_ID_PROD: ${{ secrets.PATIENT_USER_USERNAME_RELATED_ID_PROD }}
+  PATIENT_USER_USENAME_CARDID_DEV: ${{ secrets.PATIENT_USER_USENAME_CARDID_DEV }}
+  PATIENT_USER_USENAME_CARDID_QA: ${{ secrets.PATIENT_USER_USENAME_CARDID_QA }}
+  PATIENT_USER_USENAME_CARDID_PROD: ${{ secrets.PATIENT_USER_USENAME_CARDID_PROD }}
+  RIDER_USERNAME_DEV: ${{ secrets.RIDER_USERNAME_DEV }}
+  RIDER_USERNAME_QA: ${{ secrets.RIDER_USERNAME_QA }}
+  RIDER_USERNAME_PROD: ${{ secrets.RIDER_USERNAME_PROD }}
+  RIDER_PASSWORD_DEV: ${{ secrets.RIDER_PASSWORD_DEV }}
+  RIDER_PASSWORD_QA: ${{ secrets.RIDER_PASSWORD_QA }}
+  RIDER_PASSWORD_PROD: ${{ secrets.RIDER_PASSWORD_PROD }}
+  RIDER_USERID_DEV: ${{ secrets.RIDER_USERID_DEV }}
+  RIDER_USERID_QA: ${{ secrets.RIDER_USERID_QA }}
+  RIDER_USERID_PROD: ${{ secrets.RIDER_USERID_PROD }}
+  PHARMACIST_USERNAME_REG01_DEV: ${{ secrets.PHARMACIST_USERNAME_REG01_DEV }}
+  PHARMACIST_USERNAME_REG01_QA: ${{ secrets.PHARMACIST_USERNAME_REG01_QA }}
+  PHARMACIST_USERNAME_REG01_PROD: ${{ secrets.PHARMACIST_USERNAME_REG01_PROD }}
+  PHARMACIST_PASSWORD_REG01_DEV: ${{ secrets.PHARMACIST_PASSWORD_REG01_DEV }}
+  PHARMACIST_PASSWORD_REG01_QA: ${{ secrets.PHARMACIST_PASSWORD_REG01_QA }}
+  PHARMACIST_PASSWORD_REG01_PROD: ${{ secrets.PHARMACIST_PASSWORD_REG01_PROD }}
+  PHARMACIST_REUSABLE_MSGID_REG01_DEV: ${{ secrets.PHARMACIST_REUSABLE_MSGID_REG01_DEV }}
+  PHARMACIST_REUSABLE_MSGID_REG01_QA: ${{ secrets.PHARMACIST_REUSABLE_MSGID_REG01_QA }}
+  PHARMACIST_REUSABLE_MSGID_REG01_PROD: ${{ secrets.PHARMACIST_REUSABLE_MSGID_REG01_PROD }}
+  PHARMACIST_REUSABLE_ORDERID_REG01_DEV: ${{ secrets.PHARMACIST_REUSABLE_ORDERID_REG01_DEV }}
+  PHARMACIST_REUSABLE_ORDERID_REG01_QA: ${{ secrets.PHARMACIST_REUSABLE_ORDERID_REG01_QA }}
+  PHARMACIST_REUSABLE_ORDERID_REG01_PROD: ${{ secrets.PHARMACIST_REUSABLE_ORDERID_REG01_PROD }}
+  PHARMACIST_REUSABLE_THREADID_REGO1_DEV: ${{ secrets.PHARMACIST_REUSABLE_THREADID_REGO1_DEV }}
+  PHARMACIST_REUSABLE_THREADID_REGO1_QA: ${{ secrets.PHARMACIST_REUSABLE_THREADID_REGO1_QA }}
+  PHARMACIST_REUSABLE_THREADID_REGO1_PROD: ${{ secrets.PHARMACIST_REUSABLE_THREADID_REGO1_PROD }}
+  PHARMACIST_BRANCHID_REG01_DEV: ${{ secrets.PHARMACIST_BRANCHID_REG01_DEV }}
+  PHARMACIST_BRANCHID_REG01_QA: ${{ secrets.PHARMACIST_BRANCHID_REG01_QA }}
+  PHARMACIST_BRANCHID_REG01_PROD: ${{ secrets.PHARMACIST_BRANCHID_REG01_PROD }}
+  PHARMACIST_PHONENUMBER_REG01_DEV: ${{ secrets.PHARMACIST_PHONENUMBER_REG01_DEV }}
+  PHARMACIST_PHONENUMBER_REG01_QA: ${{ secrets.PHARMACIST_PHONENUMBER_REG01_QA }}
+  PHARMACIST_PHONENUMBER_REG01_PROD: ${{ secrets.PHARMACIST_PHONENUMBER_REG01_PROD }}
+  PHARMACIST_USERNAME_REG02_DEV: ${{ secrets.PHARMACIST_USERNAME_REG02_DEV }}
+  PHARMACIST_USERNAME_REG02_QA: ${{ secrets.PHARMACIST_USERNAME_REG02_QA }}
+  PHARMACIST_USERNAME_REG02_PROD: ${{ secrets.PHARMACIST_USERNAME_REG02_PROD }}
+  PHARMACIST_PASSWORD_REG02_DEV: ${{ secrets.PHARMACIST_PASSWORD_REG02_DEV }}
+  PHARMACIST_PASSWORD_REG02_QA: ${{ secrets.PHARMACIST_PASSWORD_REG02_QA }}
+  PHARMACIST_PASSWORD_REG02_PROD: ${{ secrets.PHARMACIST_PASSWORD_REG02_PROD }}
+  PHARMACIST_BRANCHID_REG02_DEV: ${{ secrets.PHARMACIST_BRANCHID_REG02_DEV }}
+  PHARMACIST_BRANCHID_REG02_QA: ${{ secrets.PHARMACIST_BRANCHID_REG02_QA }}
+  PHARMACIST_BRANCHID_REG02_PROD: ${{ secrets.PHARMACIST_BRANCHID_REG02_PROD }}
+  PHARMACIST_PHONENUMBER_REG02_DEV: ${{ secrets.PHARMACIST_PHONENUMBER_REG02_DEV }}
+  PHARMACIST_PHONENUMBER_REG02_QA: ${{ secrets.PHARMACIST_PHONENUMBER_REG02_QA }}
+  PHARMACIST_PHONENUMBER_REG02_PROD: ${{ secrets.PHARMACIST_PHONENUMBER_REG02_PROD }}
+  PHARMACIST_USERNAME_PSE01_DEV: ${{ secrets.PHARMACIST_USERNAME_PSE01_DEV }}
+  PHARMACIST_USERNAME_PSE01_QA: ${{ secrets.PHARMACIST_USERNAME_PSE01_QA }}
+  PHARMACIST_USERNAME_PSE01_PROD: ${{ secrets.PHARMACIST_USERNAME_PSE01_PROD }}
+  PHARMACIST_PASSWORD_PSE01_DEV: ${{ secrets.PHARMACIST_PASSWORD_PSE01_DEV }}
+  PHARMACIST_PASSWORD_PSE01_QA: ${{ secrets.PHARMACIST_PASSWORD_PSE01_QA }}
+  PHARMACIST_PASSWORD_PSE01_PROD: ${{ secrets.PHARMACIST_PASSWORD_PSE01_PROD }}
+  PHARMACIST_BRANCHID_PSE01_DEV: ${{ secrets.PHARMACIST_BRANCHID_PSE01_DEV }}
+  PHARMACIST_BRANCHID_PSE01_QA: ${{ secrets.PHARMACIST_BRANCHID_PSE01_QA }}
+  PHARMACIST_BRANCHID_PSE01_PROD: ${{ secrets.PHARMACIST_BRANCHID_PSE01_PROD }}
+  PHARMACIST_USERNAME_ADMIN_DEV: ${{ secrets.PHARMACIST_USERNAME_ADMIN_DEV }}
+  PHARMACIST_USERNAME_ADMIN_QA: ${{ secrets.PHARMACIST_USERNAME_ADMIN_QA }}
+  PHARMACIST_USERNAME_ADMIN_PROD: ${{ secrets.PHARMACIST_USERNAME_ADMIN_PROD }}
+  PHARMACIST_PASSWORD_ADMIN_DEV: ${{ secrets.PHARMACIST_PASSWORD_ADMIN_DEV }}
+  PHARMACIST_PASSWORD_ADMIN_QA: ${{ secrets.PHARMACIST_PASSWORD_ADMIN_QA }}
+  PHARMACIST_PASSWORD_ADMIN_PROD: ${{ secrets.PHARMACIST_PASSWORD_ADMIN_PROD }}
   REPORT_PUBLISH: '1'
-  RIDER_PASSWORD: ${{ secrets.RIDER_PASSWORD }}
-  RIDER_USERID: ${{ secrets.RIDER_USERID }}
-  RIDER_USERNAME: ${{ secrets.RIDER_USERNAME }}
   TEST_ENV: ${{ secrets.TEST_ENV }}
   THREADS: ${{ secrets.THREADS }}
   CI: true
@@ -154,32 +218,98 @@ jobs:
           echo "safe_pause=${SAFE_PAUSE}" >> "$GITHUB_OUTPUT"
           echo "run_tags=${RUN_TAGS}" >> "$GITHUB_OUTPUT"
 
+      - name: Map env-scoped credentials
+        shell: bash
+        run: |
+          TARGET_ENV="$(echo "${{ steps.selector.outputs.test_env }}" | tr '[:lower:]' '[:upper:]')"
+          if [[ -z "${TARGET_ENV}" ]]; then
+            TARGET_ENV="DEV"
+          fi
+
+          map_key() {
+            local base="$1"
+            local primary="${base}_${TARGET_ENV}"
+            local fallback="${base}_DEV"
+            local value=""
+            local source=""
+            if [[ -n "${!primary:-}" ]]; then
+              value="${!primary}"
+              source="${primary}"
+            elif [[ -n "${!fallback:-}" ]]; then
+              value="${!fallback}"
+              source="${fallback}"
+            fi
+            echo "${base}=${value}" >> "$GITHUB_ENV"
+            if [[ -n "${source}" ]]; then
+              echo "Mapped ${base} from ${source}"
+            else
+              echo "Mapped ${base} from <empty>"
+            fi
+          }
+
+          for key in \
+            ADMIN_USERNAME ADMIN_PASSWORD \
+            MERCHANT_USERNAME MERCHANT_PASSWORD \
+            PATIENT_USER_USERNAME PATIENT_USER_PASSWORD PATIENT_USER_USERNAME_ID PATIENT_USER_USERNAME_RELATED_ID PATIENT_USER_USENAME_CARDID \
+            RIDER_USERNAME RIDER_PASSWORD RIDER_USERID \
+            PHARMACIST_USERNAME_REG01 PHARMACIST_PASSWORD_REG01 PHARMACIST_REUSABLE_MSGID_REG01 PHARMACIST_REUSABLE_ORDERID_REG01 PHARMACIST_REUSABLE_THREADID_REGO1 PHARMACIST_BRANCHID_REG01 PHARMACIST_PHONENUMBER_REG01 \
+            PHARMACIST_USERNAME_REG02 PHARMACIST_PASSWORD_REG02 PHARMACIST_BRANCHID_REG02 PHARMACIST_PHONENUMBER_REG02 \
+            PHARMACIST_USERNAME_PSE01 PHARMACIST_PASSWORD_PSE01 PHARMACIST_BRANCHID_PSE01 \
+            PHARMACIST_USERNAME_ADMIN PHARMACIST_PASSWORD_ADMIN
+          do
+            map_key "${key}"
+          done
+
+      - name: Validate required credentials
+        shell: bash
+        run: |
+          missing=0
+          for key in ADMIN_USERNAME ADMIN_PASSWORD PATIENT_USER_USERNAME PATIENT_USER_PASSWORD RIDER_USERNAME RIDER_PASSWORD; do
+            if [[ -z "${!key:-}" ]]; then
+              echo "Missing required credential variable: ${key}"
+              missing=1
+            fi
+          done
+          if [[ "${missing}" -ne 0 ]]; then
+            echo "Required credential vars are missing. Check *_${{ steps.selector.outputs.test_env }} and *_DEV secrets."
+            exit 1
+          fi
+
       - name: Run tests
         shell: bash
         run: |
+          echo "Resolved selector: mode=${{ steps.selector.outputs.mode }} test_env=${{ steps.selector.outputs.test_env }} threads=${{ steps.selector.outputs.threads }} safe_pause=${{ steps.selector.outputs.safe_pause }} run_tags=${{ steps.selector.outputs.run_tags }}"
+
           if [[ "${{ steps.selector.outputs.mode }}" == "stress" ]]; then
             echo "Running full suite in STRESS mode"
+            echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress"
             TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress
           elif [[ "${{ steps.selector.outputs.mode }}" == "safe" ]]; then
             if [[ "${{ github.event_name }}" == "push" ]]; then
               echo "Running SAFE mode smoke batches (push)"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=${{ steps.selector.outputs.run_tags }} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" DISCORD_GREP_LABEL=smoke npm run test:all:safe
             elif [[ "${{ github.event_name }}" == "schedule" ]]; then
               echo "Running SAFE mode full batches (schedule)"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=__ALL__ npm run test:all:safe"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
             elif [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
               echo "Running SAFE mode with specific TAGS in a single pass"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=${{ steps.selector.outputs.run_tags }} PROJECT=e2e,api npx playwright test"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
             else
               echo "Running full suite in SAFE mode"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=__ALL__ npm run test:all:safe"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
             fi
           else
             if [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
               echo "Running BASIC mode with specific TAGS"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=${{ steps.selector.outputs.run_tags }} PROJECT=e2e,api npx playwright test"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
             else
               echo "Running smoke suite in BASIC mode"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=smoke DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="smoke" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
             fi
           fi
