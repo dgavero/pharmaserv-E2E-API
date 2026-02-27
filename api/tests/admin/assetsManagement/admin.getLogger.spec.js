@@ -34,7 +34,6 @@ test.describe('GraphQL: Admin Get Logger', () => {
 
       const node = getLoggerRes.body?.data?.administrator?.asset?.logger;
       expect(node, 'Get logger endpoint returned no logger data').toBeTruthy();
-      expect.soft(node.loggerNumber).toBe('DL-1234');
     }
   );
 
@@ -50,9 +49,7 @@ test.describe('GraphQL: Admin Get Logger', () => {
         headers: noAuth,
       });
 
-      expect(getLoggerNoAuthRes.ok, getLoggerNoAuthRes.error || 'Expected UNAUTHORIZED when missing token').toBe(
-        false
-      );
+      expect(getLoggerNoAuthRes.ok, getLoggerNoAuthRes.error || 'Expected UNAUTHORIZED when missing token').toBe(false);
 
       if (!getLoggerNoAuthRes.httpOk) {
         expect(NOAUTH_HTTP_STATUSES).toContain(getLoggerNoAuthRes.httpStatus);

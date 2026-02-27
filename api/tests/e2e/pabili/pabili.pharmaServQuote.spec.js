@@ -1,6 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
-import { buildPabiliHappyPathOrderInput } from './pabili.testData.js';
+import { buildPabiliBaseOrderInput, buildPabiliBasePriceItems } from './pabili.testData.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -50,7 +50,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const pickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const deliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const pabiliOrder = buildPabiliHappyPathOrderInput();
+      const pabiliOrder = buildPabiliBaseOrderInput();
       const pabiliBranchId = Number(pabiliOrder.branchId);
 
       // Patient: Login.
@@ -68,9 +68,9 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       // PSE Pharmacist: Confirm Order (second accept step for riderQuoteEnabled=false).
       await confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled: false });
 
-      // Rider Admin: Login.
+      // Admin: Login.
       const { adminAccessToken } = await loginAdmin(api);
-      // Rider Admin: Assign Rider To Order.
+      // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
@@ -81,10 +81,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       await updatePricesAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prices: [
-          { medicineId: 1, quantity: 1, unitPrice: 10 },
-          { medicineId: 2, quantity: 1, unitPrice: 12 },
-        ],
+        prices: buildPabiliBasePriceItems(),
       });
       // PSE Pharmacist: Get Payment QR Code Upload URL.
       const { paymentQRCodeUploadUrl, paymentQRCodeBlobName } = await getPaymentQRCodeUploadUrlAsPharmacist(api, {
@@ -141,7 +138,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
         proof: { photo: proofOfPaymentBlobName },
       });
 
-      // Rider Admin: Confirm Payment.
+      // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
       // Rider: Login.
@@ -216,7 +213,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const pickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const deliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const pabiliOrder = buildPabiliHappyPathOrderInput();
+      const pabiliOrder = buildPabiliBaseOrderInput();
       const pabiliBranchId = Number(pabiliOrder.branchId);
 
       // Patient: Login.
@@ -234,9 +231,9 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       // PSE Pharmacist: Confirm Order (second accept step for riderQuoteEnabled=false).
       await confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled: false });
 
-      // Rider Admin: Login.
+      // Admin: Login.
       const { adminAccessToken } = await loginAdmin(api);
-      // Rider Admin: Assign Rider To Order.
+      // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
@@ -280,10 +277,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       await updatePricesAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prices: [
-          { medicineId: 1, quantity: 1, unitPrice: 10 },
-          { medicineId: 2, quantity: 1, unitPrice: 12 },
-        ],
+        prices: buildPabiliBasePriceItems(),
       });
       // PSE Pharmacist: Send Quote.
       const { paymentQRCodeId: quotedPaymentQRCodeId } = await sendQuoteAsPharmacist(api, {
@@ -320,7 +314,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
         proof: { photo: proofOfPaymentBlobName },
       });
 
-      // Rider Admin: Confirm Payment.
+      // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
       // Rider: Get Pickup Proof Upload URL.
@@ -384,7 +378,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const pickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const deliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const pabiliOrder = buildPabiliHappyPathOrderInput();
+      const pabiliOrder = buildPabiliBaseOrderInput();
       const pabiliBranchId = Number(pabiliOrder.branchId);
 
       // Patient: Login.
@@ -402,9 +396,9 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       // PSE Pharmacist: Confirm Order (second accept step with rider quote disabled).
       await confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled: false });
 
-      // Rider Admin: Login.
+      // Admin: Login.
       const { adminAccessToken } = await loginAdmin(api);
-      // Rider Admin: Assign Rider To Order.
+      // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
@@ -415,10 +409,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       await updatePricesAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        prices: [
-          { medicineId: 1, quantity: 10, unitPrice: 10 },
-          { medicineId: 2, quantity: 10, unitPrice: 12 },
-        ],
+        prices: buildPabiliBasePriceItems({ quantity: 10 }),
       });
       // PSE Pharmacist: Get Payment QR Code Upload URL.
       const { paymentQRCodeUploadUrl, paymentQRCodeBlobName } = await getPaymentQRCodeUploadUrlAsPharmacist(api, {
@@ -484,7 +475,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
         },
       });
 
-      // Rider Admin: Confirm Payment.
+      // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
       // Rider: Login.

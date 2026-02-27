@@ -12,7 +12,12 @@ import { test as base, request as pwRequest } from '@playwright/test';
 import { flushApiReports, INVALID_JWT } from './helpers/testUtilsAPI.js';
 
 // Avoid the macOS IPv6 localhost (::1) gotcha by normalizing to 127.0.0.1.
-const BASE_URL = (process.env.API_BASE_URL || '').replace('localhost', '127.0.0.1');
+const TEST_ENV = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+const API_BASE_ENV_KEY = `API_BASE_URL_${TEST_ENV}`;
+const BASE_URL = (process.env.API_BASE_URL || process.env[API_BASE_ENV_KEY] || '').replace(
+  'localhost',
+  '127.0.0.1'
+);
 
 // After all API tests finish, flush any queued Discord reports (failures etc).
 base.afterAll(async () => {
@@ -27,7 +32,9 @@ export const test = base.extend({
    */
   api: async ({}, use) => {
     if (!BASE_URL) {
-      throw new Error('Missing API_BASE_URL (set it in .env or your shell)');
+      throw new Error(
+        `Missing API_BASE_URL (or ${API_BASE_ENV_KEY} for TEST_ENV=${TEST_ENV}) in .env or shell`
+      );
     }
 
     // Create the API client for this test.

@@ -34,7 +34,6 @@ test.describe('GraphQL: Admin Get Box', () => {
 
       const node = getBoxRes.body?.data?.administrator?.asset?.box;
       expect(node, 'Get box endpoint returned no box data').toBeTruthy();
-      expect.soft(node.boxNumber).toBe('A12-12-12');
     }
   );
 

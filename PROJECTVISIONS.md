@@ -20,10 +20,16 @@ Build a reliable, maintainable, and fast automation stack for Pharmaserv that co
 ## Runtime Contract
 
 - `TEST_ENV` defaults to `DEV` when empty.
+- `TEST_ENV` supports `DEV`, `QA`, and `PROD`.
 - `PROJECT` can target `api`, `e2e`, or both.
 - `THREADS` controls worker parallelism.
 - `TAGS` is case-insensitive and tokenized.
 - `REPORT_PUBLISH=0` disables GitHub Pages publish step.
+- Env files load in this order:
+- `.env` -> `.env.<env>` -> `.env.local` -> `.env.<env>.local`
+- Shell/CI variables keep highest precedence over env files.
+- UI base URL is selected by `BASE_URL_<TEST_ENV>` (with `BASE_URL` fallback).
+- API base URL resolves as `API_BASE_URL` override first, then `API_BASE_URL_<TEST_ENV>`.
 
 ## Test Authoring Direction
 

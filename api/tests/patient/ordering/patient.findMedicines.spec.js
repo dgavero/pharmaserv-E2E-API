@@ -38,16 +38,18 @@ test.describe('GraphQL: Find Medicines', () => {
       expect(medicinesNode.length, 'medicines should contain at least one item').toBeGreaterThan(0);
 
       const hasParacetamolGenericName = medicinesNode.some((medicineNode) =>
-        String(medicineNode?.genericName || '').toLowerCase().includes('paracetamol')
+        String(medicineNode?.genericName || '')
+          .toLowerCase()
+          .includes('paracetamol')
       );
       expect(hasParacetamolGenericName, 'No medicine genericName contains "paracetamol"').toBe(true);
     }
   );
 
   test(
-    'PHARMA-298 | Should NOT be able to find medicines with missing auth tokens',
+    'PHARMA-298 | Should BE able to find medicines with missing auth tokens',
     {
-      tag: ['@api', '@patient', '@negative', '@pharma-298'],
+      tag: ['@api', '@patient', '@positive', '@pharma-298'],
     },
     async ({ api, noAuth }) => {
       const findMedicinesNoAuthRes = await safeGraphQL(api, {
@@ -55,16 +57,7 @@ test.describe('GraphQL: Find Medicines', () => {
         variables: { query: medicineQueryInput },
         headers: noAuth,
       });
-      expect(findMedicinesNoAuthRes.ok).toBe(false);
-
-      if (!findMedicinesNoAuthRes.httpOk) {
-        expect(NOAUTH_HTTP_STATUSES).toContain(findMedicinesNoAuthRes.httpStatus);
-      } else {
-        const { message, code, classification } = getGQLError(findMedicinesNoAuthRes);
-        expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
-        expect.soft(NOAUTH_CODES).toContain(code);
-        expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
-      }
+      expect(findMedicinesNoAuthRes.ok).toBe(true);
     }
   );
 

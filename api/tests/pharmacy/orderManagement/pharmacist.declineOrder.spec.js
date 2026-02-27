@@ -25,10 +25,20 @@ test.describe('GraphQL: Pharmacy Decline Order', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
+      const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+      const inactiveOrderIdByEnv = {
+        DEV: 1093,
+        QA: 701,
+        PROD: 931,
+      };
+
+      const inactiveOrderId = inactiveOrderIdByEnv[testEnv];
+      if (!inactiveOrderId) throw new Error(`Unsupported TEST_ENV=${testEnv}`);
+
       const declineOrderRes = await safeGraphQL(api, {
         query: DECLINE_ORDER_QUERY,
         variables: {
-          orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01,
+          orderId: inactiveOrderId,
           reason: 'Order is declined via API',
         },
         headers: bearer(accessToken),

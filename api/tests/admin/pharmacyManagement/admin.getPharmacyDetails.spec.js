@@ -55,10 +55,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
         variables: { filter: { pageSize: 3, page: 1, sortField: 'name', ascending: true } },
         headers: bearer(accessToken),
       });
-      expect(
-        pagedPharmaciesRes.ok,
-        pagedPharmaciesRes.error || 'pagedPharmacies query failed'
-      ).toBe(true);
+      expect(pagedPharmaciesRes.ok, pagedPharmaciesRes.error || 'pagedPharmacies query failed').toBe(true);
 
       // 3) Node existence
       const block = pagedPharmaciesRes.body?.data?.administrator?.pharmacy?.pagedPharmacies;
@@ -113,6 +110,17 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       tag: ['@api', '@admin', '@positive', '@pharma-15'],
     },
     async ({ api }) => {
+      const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+
+      // Set pharmacy ID and name by environment
+      const pharmacyByEnv = {
+        DEV: { id: '1', name: 'Mercury Drug' },
+        QA: { id: '59', name: 'Pharmacy API-QA' },
+        PROD: { id: '3', name: 'Watsons' },
+      };
+
+      const EXPECTED_PHARMACY = pharmacyByEnv[env] ?? pharmacyByEnv.DEV;
+
       // 1) Admin login
       const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
         username: process.env.ADMIN_USERNAME,
@@ -120,19 +128,13 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
-      // 2) Query pharmacy detail (hard-coded id)
-      const EXPECTED_PHARMACY = { id: '1', name: 'Mercury Drug' };
-
       const pharmacyRes = await safeGraphQL(api, {
         query: GET_PHARMACY_QUERY,
-        variables: { pharmacyId: 1 }, // ID! accepts number or string
+        variables: { pharmacyId: EXPECTED_PHARMACY.id }, // ID! accepts number or string
         headers: bearer(accessToken),
       });
 
-      expect(
-        pharmacyRes.ok,
-        pharmacyRes.error || 'administrator.pharmacy.detail query failed'
-      ).toBe(true);
+      expect(pharmacyRes.ok, pharmacyRes.error || 'administrator.pharmacy.detail query failed').toBe(true);
 
       // 3) Validate payload (hard assertions on identity fields)
       const pharmacyNode = pharmacyRes.body?.data?.administrator?.pharmacy?.detail;

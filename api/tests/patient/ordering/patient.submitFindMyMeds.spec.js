@@ -1,6 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { declineOrderAsPharmacist } from '../../../helpers/orderHelpers.js';
 import { SUBMIT_FINDMYMEDS_ORDER_QUERY } from './patient.orderingQueries.js';
+import { buildPatientFindMyMedsOrderInput } from './patient.testData.js';
 import {
   safeGraphQL,
   bearer,
@@ -11,31 +12,6 @@ import {
   NOAUTH_CODES,
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
-
-function orderDetailsInput() {
-  return {
-    deliveryType: 'FIND_MY_MEDS',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    prescriptionItems: [
-      {
-        medicineId: 1,
-        quantity: 2,
-        source: 'SEARCH',
-        specialInstructions: null,
-      },
-      {
-        medicineId: 2,
-        quantity: 2,
-        source: 'SEARCH',
-        specialInstructions: null,
-      },
-    ],
-    addressName: 'Home',
-    address: 'Unit 243 Baranca Bldg, Mandaluyong Housing',
-    lat: 14.582019317323562,
-    lng: 121.01251092551259,
-  };
-}
 
 test.describe('GraphQL: Submit FindMyMeds Order', () => {
   test(
@@ -50,7 +26,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
       });
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
-      const orderDetails = orderDetailsInput();
+      const orderDetails = buildPatientFindMyMedsOrderInput();
       console.log('Order Details Input:', orderDetails);
       const submitFindMyMedsRes = await safeGraphQL(api, {
         query: SUBMIT_FINDMYMEDS_ORDER_QUERY,
@@ -80,7 +56,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
     async ({ api, noAuth }) => {
       const submitFindMyMedsResNoAuth = await safeGraphQL(api, {
         query: SUBMIT_FINDMYMEDS_ORDER_QUERY,
-        variables: { order: orderDetailsInput() },
+        variables: { order: buildPatientFindMyMedsOrderInput() },
         headers: noAuth,
       });
 
@@ -105,7 +81,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
     async ({ api, invalidAuth }) => {
       const submitFindMyMedsResInvalidAuth = await safeGraphQL(api, {
         query: SUBMIT_FINDMYMEDS_ORDER_QUERY,
-        variables: { order: orderDetailsInput() },
+        variables: { order: buildPatientFindMyMedsOrderInput() },
         headers: invalidAuth,
       });
 

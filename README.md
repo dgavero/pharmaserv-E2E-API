@@ -57,6 +57,28 @@ npm run test:all:stress
 DRY_RUN=1 npm run test:all
 ```
 
+## Environment Profiles (DEV/QA/PROD)
+
+Use profile files so test code never changes across environments:
+
+1. Keep shared defaults in `.env`.
+2. Put env-specific credentials/data in `.env.dev`, `.env.qa`, `.env.prod`.
+3. Optional local overrides: `.env.local` and `.env.<env>.local`.
+4. Switch environment only with `TEST_ENV`.
+
+```bash
+TEST_ENV=DEV PROJECT=api npx playwright test
+TEST_ENV=QA PROJECT=api npx playwright test
+TEST_ENV=PROD PROJECT=api npx playwright test
+```
+
+Load order is:
+`.env` -> `.env.<test_env>` -> `.env.local` -> `.env.<test_env>.local`
+(shell/CI vars override files).
+
+API URL resolution for API tests:
+`API_BASE_URL` (explicit override) -> `API_BASE_URL_<TEST_ENV>` (`API_BASE_URL_DEV|QA|PROD`).
+
 ## Safe vs Direct Run
 
 - `npm run test:all` uses safe batch sequencing with pauses.

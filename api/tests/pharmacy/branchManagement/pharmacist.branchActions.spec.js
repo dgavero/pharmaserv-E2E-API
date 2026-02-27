@@ -79,7 +79,7 @@ test.describe('GraphQL: Branch Management Actions', () => {
       const getBranchByIdRes = await safeGraphQL(api, {
         query: PHARMACIST_GET_BRANCH_BY_ID_QUERY,
         variables: {
-          branchId: 1,
+          branchId: process.env.PHARMACIST_BRANCHID_REG01,
         },
         headers: bearer(accessToken),
       });

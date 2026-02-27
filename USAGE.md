@@ -33,6 +33,7 @@ DRY_RUN=1 npm run test:all
 ## Environment Behavior
 
 - `TEST_ENV`: environment selector used by config routing. Empty means `DEV`.
+- Supported values: `DEV`, `QA`, `PROD`.
 - `THREADS`: Playwright workers count (default `4`).
 - `TAGS`: grep pattern used by the config; empty means no grep filter.
 - `PROJECT`: `api`, `e2e`, `e2e,api`; empty means both.
@@ -44,6 +45,27 @@ DRY_RUN=1 npm run test:all
 2. `QA_TESTING_CHANNELID`
 3. `PROD_TESTING_CHANNELID`
 4. `LOCAL_RUNS_CHANNELID`
+
+### Env File Strategy
+
+To avoid editing tests while switching environments, keep the same variable names and split values by profile:
+
+1. `.env` (shared defaults)
+2. `.env.dev` / `.env.qa` / `.env.prod` (env-specific creds + IDs)
+3. `.env.local` (machine-only overrides)
+4. `.env.<env>.local` (machine + env overrides)
+
+Load order:
+`.env` -> `.env.<test_env>` -> `.env.local` -> `.env.<test_env>.local`
+
+Shell/CI variables always override file values.
+
+### API URL Resolution
+
+API tests resolve base URL in this order:
+
+1. `API_BASE_URL` (explicit override)
+2. `API_BASE_URL_<TEST_ENV>` (`API_BASE_URL_DEV`, `API_BASE_URL_QA`, `API_BASE_URL_PROD`)
 
 ## Batch Modes
 

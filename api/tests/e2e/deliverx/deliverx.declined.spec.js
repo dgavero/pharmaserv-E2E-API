@@ -1,6 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { safeGraphQL, bearer, loginAndGetTokens, pharmacistLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
-import { buildDeliverXDeclinedOrderInput } from './deliverx.testData.js';
+import { buildDeliverXBaseOrderInput } from './deliverx.testData.js';
 import { PATIENT_SUBMIT_ORDER_QUERY } from '../shared/queries/patient.queries.js';
 import { PHARMACY_DECLINE_ORDER_QUERY } from '../shared/queries/pharmacist.queries.js';
 
@@ -21,7 +21,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
       // Submit DeliverX order as patient.
       const submitOrderRes = await safeGraphQL(api, {
         query: PATIENT_SUBMIT_ORDER_QUERY,
-        variables: { order: buildDeliverXDeclinedOrderInput() },
+        variables: { order: buildDeliverXBaseOrderInput() },
         headers: bearer(patientAccessToken),
       });
       expect(submitOrderRes.ok, submitOrderRes.error || 'Patient submit order failed').toBe(true);
