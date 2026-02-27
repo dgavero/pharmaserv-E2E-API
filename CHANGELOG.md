@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+# [3.0.5]
+
+### Changed
+
+- Added layered environment profile loading in runtime config:
+  - `.env` -> `.env.<test_env>` -> `.env.local` -> `.env.<test_env>.local`
+  - shell/CI variables remain highest-precedence overrides
+- Expanded `TEST_ENV` support and validation to `DEV`, `QA`, and `PROD`.
+- Updated API base URL resolution to support env-specific keys:
+  - `API_BASE_URL` explicit override
+  - fallback to `API_BASE_URL_<TEST_ENV>` (`DEV/QA/PROD`)
+- Updated `.env.example` to separate shared runtime config from env-specific credentials and document profile-based credential placement (`.env.dev`, `.env.qa`, `.env.prod`).
+
 # [3.0.4]
 
 ### Changed

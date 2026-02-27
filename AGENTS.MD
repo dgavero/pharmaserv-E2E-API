@@ -287,3 +287,33 @@ test('...', async ({ api }) => {
 ---
 
 **That’s it. Keep it neat, keep it fast.**
+
+---
+
+## 12) Documentation Drift Check (Scoped)
+
+Run this workflow only when the user explicitly asks for doc updates or repository sync.
+
+Before editing any file:
+
+1. Identify changed files using current branch diff vs `main`.
+2. Review only documentation files in scope unless user expands it:
+   - `README.md`
+   - `USAGE.md`
+   - `PROJECTVISIONS.md`
+   - `CHANGELOG.md`
+   - `AGENTS.MD` (only if standards/workflow changed)
+3. Check for drift in:
+   - runtime/config behavior (env vars, defaults, supported values, load order, URL resolution)
+   - CI/run behavior (workflow inputs, modes, batches, rerun examples)
+   - testing standards (only when helpers/fixtures/patterns changed)
+4. Share a brief summary and get user confirmation before editing.
+
+Preferred command pattern (strict and scoped):
+
+```bash
+git diff --name-only main...HEAD
+git diff main...HEAD -- playwright.config.js api/globalConfig.api.js .env.example .github/workflows README.md USAGE.md PROJECTVISIONS.md CHANGELOG.md AGENTS.MD
+rg -n "TEST_ENV|API_BASE_URL|BASE_URL_|GRAPHQL_PATH|REPORT_PUBLISH|run_mode|workflow_dispatch|safe|stress|tags"
+git diff main...HEAD -- README.md USAGE.md PROJECTVISIONS.md CHANGELOG.md AGENTS.MD
+```

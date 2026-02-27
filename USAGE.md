@@ -60,6 +60,13 @@ Load order:
 
 Shell/CI variables always override file values.
 
+### API URL Resolution
+
+API tests resolve base URL in this order:
+
+1. `API_BASE_URL` (explicit override)
+2. `API_BASE_URL_<TEST_ENV>` (`API_BASE_URL_DEV`, `API_BASE_URL_QA`, `API_BASE_URL_PROD`)
+
 ## Batch Modes
 
 - `safe` mode (default for `npm run test:all`):

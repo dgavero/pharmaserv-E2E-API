@@ -76,6 +76,9 @@ Load order is:
 `.env` -> `.env.<test_env>` -> `.env.local` -> `.env.<test_env>.local`
 (shell/CI vars override files).
 
+API URL resolution for API tests:
+`API_BASE_URL` (explicit override) -> `API_BASE_URL_<TEST_ENV>` (`API_BASE_URL_DEV|QA|PROD`).
+
 ## Safe vs Direct Run
 
 - `npm run test:all` uses safe batch sequencing with pauses.
