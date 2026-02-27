@@ -157,29 +157,38 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
+          echo "Resolved selector: mode=${{ steps.selector.outputs.mode }} test_env=${{ steps.selector.outputs.test_env }} threads=${{ steps.selector.outputs.threads }} safe_pause=${{ steps.selector.outputs.safe_pause }} run_tags=${{ steps.selector.outputs.run_tags }}"
+
           if [[ "${{ steps.selector.outputs.mode }}" == "stress" ]]; then
             echo "Running full suite in STRESS mode"
+            echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress"
             TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress
           elif [[ "${{ steps.selector.outputs.mode }}" == "safe" ]]; then
             if [[ "${{ github.event_name }}" == "push" ]]; then
               echo "Running SAFE mode smoke batches (push)"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=${{ steps.selector.outputs.run_tags }} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" DISCORD_GREP_LABEL=smoke npm run test:all:safe
             elif [[ "${{ github.event_name }}" == "schedule" ]]; then
               echo "Running SAFE mode full batches (schedule)"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=__ALL__ npm run test:all:safe"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
             elif [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
               echo "Running SAFE mode with specific TAGS in a single pass"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=${{ steps.selector.outputs.run_tags }} PROJECT=e2e,api npx playwright test"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
             else
               echo "Running full suite in SAFE mode"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=__ALL__ npm run test:all:safe"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
             fi
           else
             if [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
               echo "Running BASIC mode with specific TAGS"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=${{ steps.selector.outputs.run_tags }} PROJECT=e2e,api npx playwright test"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
             else
               echo "Running smoke suite in BASIC mode"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=smoke DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="smoke" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
             fi
           fi
