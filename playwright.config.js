@@ -11,15 +11,17 @@ import dotenv from 'dotenv';
 import { defineConfig } from '@playwright/test';
 
 const shellEnvKeys = new Set(Object.keys(process.env));
+const configDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
 
 function loadEnvFile(relPath) {
-  const absPath = path.join(process.cwd(), relPath);
+  const absPath = path.join(configDir, relPath);
   if (!fs.existsSync(absPath)) return false;
 
   const parsed = dotenv.parse(fs.readFileSync(absPath));
   for (const [key, value] of Object.entries(parsed)) {
     // Keep shell/CI-provided vars as highest precedence.
-    if (!shellEnvKeys.has(key)) {
+    const hasShellValue = shellEnvKeys.has(key) && String(process.env[key] ?? '').trim() !== '';
+    if (!hasShellValue) {
       process.env[key] = value;
     }
   }
