@@ -58,7 +58,7 @@ const uiBaseUrlByEnv = {
   QA: process.env.BASE_URL_QA,
   PROD: process.env.BASE_URL_PROD,
 };
-const baseURL = uiBaseUrlByEnv[testEnv] || process.env.BASE_URL;
+const baseURL = uiBaseUrlByEnv[testEnv] || process.env.BASE_URL || process.env.BASE_URL_DEV || '';
 
 // Keep API fixture compatible with existing tests while allowing env-specific API URLs.
 if (!process.env.API_BASE_URL) {
@@ -67,7 +67,8 @@ if (!process.env.API_BASE_URL) {
     QA: process.env.API_BASE_URL_QA,
     PROD: process.env.API_BASE_URL_PROD,
   };
-  process.env.API_BASE_URL = apiBaseUrlByEnv[testEnv] || '';
+  process.env.API_BASE_URL =
+    apiBaseUrlByEnv[testEnv] || process.env.API_BASE_URL_DEV || process.env.API_BASE_URL || '';
 }
 
 // 🔹 Fail fast if the URL is missing

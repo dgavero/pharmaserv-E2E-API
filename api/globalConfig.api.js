@@ -14,10 +14,12 @@ import { flushApiReports, INVALID_JWT } from './helpers/testUtilsAPI.js';
 // Avoid the macOS IPv6 localhost (::1) gotcha by normalizing to 127.0.0.1.
 const TEST_ENV = String(process.env.TEST_ENV || 'DEV').toUpperCase();
 const API_BASE_ENV_KEY = `API_BASE_URL_${TEST_ENV}`;
-const BASE_URL = (process.env.API_BASE_URL || process.env[API_BASE_ENV_KEY] || '').replace(
-  'localhost',
-  '127.0.0.1'
-);
+const BASE_URL = (
+  process.env.API_BASE_URL ||
+  process.env[API_BASE_ENV_KEY] ||
+  process.env.API_BASE_URL_DEV ||
+  ''
+).replace('localhost', '127.0.0.1');
 
 // After all API tests finish, flush any queued Discord reports (failures etc).
 base.afterAll(async () => {
