@@ -317,3 +317,78 @@ git diff main...HEAD -- playwright.config.js api/globalConfig.api.js .env.exampl
 rg -n "TEST_ENV|API_BASE_URL|BASE_URL_|GRAPHQL_PATH|REPORT_PUBLISH|run_mode|workflow_dispatch|safe|stress|tags"
 git diff main...HEAD -- README.md USAGE.md PROJECTVISIONS.md CHANGELOG.md AGENTS.MD
 ```
+
+---
+
+## 13) Hybrid UI + API Workflow Pattern (Merchant Portal)
+
+Use this section when building cross-role E2E workflows where **merchant actions are UI** and other actors remain **API-driven**.
+
+### Goal
+
+- Mirror API workflow behavior (e.g., PHARMA-334), but execute merchant/pharmacy operational steps in UI where available.
+- Keep the test deterministic and aligned with real user paths in the merchant portal.
+
+### Approved structure (recommended)
+
+1. API setup:
+   - Login as merchant via API and fetch merchant `myBranch.id`.
+   - Create patient order via API and force `order.branchId = merchantBranchId`.
+2. Merchant UI:
+   - Login via UI.
+   - Go to `Orders > New`, search by booking reference (tracking code), open exact target order.
+   - Perform merchant UI actions only (for DeliverX: `Accept -> Upload QR -> Update all item prices -> Request Payment`).
+3. API continuation:
+   - Patient accept quote + pay.
+   - Admin confirm payment + assign rider.
+   - Pharmacy prepare + set for pickup (API if merchant UI does not expose those actions).
+   - Rider complete delivery + patient rate rider.
+4. Merchant final verification (UI):
+   - Verify order appears in `Completed`.
+   - If not found, refresh once and re-check.
+   - Fail test if still not completed.
+
+### Selector and navigation rules
+
+**Do**
+
+- Derive selectors from actual UI DOM (run/inspect first), then codify in `e2e/selectors/*.selectors.json`.
+- Open orders by **exact booking reference** (`trackingCode`) and fail if not found.
+- Keep selectors generic/reusable when valid across delivery types.
+
+**Don’t**
+
+- Don’t guess selectors from assumptions.
+- Don’t use fallback behavior that opens the first order card if target booking ref is missing.
+- Don’t bypass the user path with direct route jumps if card navigation already opens the same details page.
+
+### Wait and stability rules
+
+**Do**
+
+- Use safe helpers that return boolean (`safeClick`, `safeInput`, `safeWaitForPageLoad`), then `markFailed(...)` on false.
+- Use `safeWaitForPageLoad` as source-of-truth for page readiness:
+  - wait for load state,
+  - wait for loaders/skeletons to clear,
+  - optional URL/selector readiness checks.
+- Use timeout constants from `e2e/Timeouts.js` (`short`, `standard`, `long`, `extraLong`) and override explicitly only when required.
+
+**Don’t**
+
+- Don’t hardcode ad-hoc waits/timeouts in tests (`waitForTimeout(...)`) for readiness.
+- Don’t add throw-based runtime control flow in safe utility helpers; keep them boolean-return style.
+
+### Query/document placement
+
+**Do**
+
+- Place reusable GraphQL docs in sibling query files (example: `merchantPortal.queries.js`).
+- Import queries into spec/page-step code; avoid inline long GraphQL strings in test files.
+
+### Data consistency safeguards
+
+**Do**
+
+- Always bind order creation to merchant’s actual branch (`myBranch.id`) to ensure order visibility in merchant queue.
+- When pricing in UI, update **all visible editable items**, not only a fixed count from test data builders.
+- Poll for quote readiness before patient accepts quote (eventual consistency between UI action and API state).

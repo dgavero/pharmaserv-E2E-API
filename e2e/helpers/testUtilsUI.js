@@ -281,6 +281,17 @@ export function getLastError(page) {
   return lastErrorMap.get(page) || '';
 }
 
+const DEFAULT_LOADING_SELECTORS = [
+  '[data-testid*="loader" i]',
+  '[data-testid*="loading" i]',
+  '[class*="loader" i]',
+  '[class*="loading" i]',
+  '[class*="skeleton" i]',
+  '.skeleton',
+  '[aria-busy="true"]',
+  '[role="progressbar"]',
+];
+
 /** Wait until an element is visible (boolean return). */
 export async function safeWaitForElementVisible(page, selector, { timeout = Timeouts.standard } = {}) {
   try {
@@ -291,6 +302,7 @@ export async function safeWaitForElementVisible(page, selector, { timeout = Time
     return false;
   }
 }
+
 
 /** Wait until an element is present in the DOM (boolean return). */
 export async function safeWaitForElementPresent(page, selector, { timeout = Timeouts.standard } = {}) {
@@ -368,16 +380,122 @@ export async function safeNavigateToUrl(page, url, { timeout = Timeouts.extraLon
   }
 }
 
-/** Wait for the page to load and URL to match the expected value (after a click or redirect). */
+/**
+ * Wait for page readiness using one source-of-truth helper:
+ * - URL mode: pass string/RegExp expectedUrlOrSelectors
+ * - Selector-any mode: pass array of selectors; resolves when any selector is visible
+ * - Default mode: with no expectedUrlOrSelectors, waits for loadState + no visible loaders/skeletons
+ * Returns true on success, false on failure.
+ */
 export async function safeWaitForPageLoad(
   page,
-  expectedUrl,
-  { timeout = Timeouts.extraLong, waitUntil = 'load' } = {}
+  expectedUrlOrSelectors,
+  { timeout = Timeouts.extraLong, waitUntil = 'load', loadingSelectors = DEFAULT_LOADING_SELECTORS } = {}
 ) {
+  console.log('Checking if page has loaded successfully...');
+  console.log(`safeWaitForPageLoad config: waitUntil=${waitUntil}, timeout=${timeout}ms`);
+  const startedAt = Date.now();
+  const remainingMs = () => Math.max(0, timeout - (Date.now() - startedAt));
+
   try {
-    await page.waitForURL(expectedUrl, { timeout, waitUntil });
+    // 1) Base document readiness.
+    const loadStateBudget = remainingMs();
+    if (loadStateBudget <= 0) {
+      setLastErrorForPage(page, new Error('Page load budget exhausted before load state check'));
+      return false;
+    }
+    await page.waitForLoadState(waitUntil, { timeout: loadStateBudget });
+    console.log(`Document load state reached: ${waitUntil}`);
+  } catch (error) {
+    console.log(`Page load state check failed: ${error?.message || error}`);
+    setLastErrorForPage(page, error);
+    return false;
+  }
+
+  // 2) Wait for loading/skeleton indicators to clear.
+  let sawVisibleLoader = false;
+  while (remainingMs() > 0) {
+    let hasVisibleLoader = false;
+
+    for (const selector of loadingSelectors) {
+      try {
+        if (await page.locator(selector).first().isVisible()) {
+          hasVisibleLoader = true;
+          sawVisibleLoader = true;
+          break;
+        }
+      } catch {
+        // ignore selector lookup errors while polling
+      }
+    }
+
+    if (!hasVisibleLoader) break;
+    await page.waitForTimeout(100);
+  }
+
+  // If loaders are still visible after timeout, fail.
+  for (const selector of loadingSelectors) {
+    try {
+      if (await page.locator(selector).first().isVisible()) {
+        console.log(`Loader/skeleton still visible: ${selector}`);
+        setLastErrorForPage(page, new Error(`Page still loading; visible selector: ${selector}`));
+        return false;
+      }
+    } catch {
+      // ignore selector lookup errors
+    }
+  }
+  if (sawVisibleLoader) console.log('Loaders/skeletons were detected and cleared.');
+  else console.log('No loaders/skeletons found.');
+
+  // 3) Optional target check: URL or any selector.
+  if (expectedUrlOrSelectors == null) {
+    console.log('No URL/selector target provided.');
+    console.log('Page has loaded successfully.');
+    return true;
+  }
+
+  try {
+    if (Array.isArray(expectedUrlOrSelectors)) {
+      const selectorList = expectedUrlOrSelectors.filter(Boolean);
+      if (selectorList.length === 0) {
+        console.log('Selector list is empty. Skipping selector target check.');
+        console.log('Page has loaded successfully.');
+        return true;
+      }
+      console.log(`Waiting for any target selector to be visible (${selectorList.length} selectors)...`);
+
+      while (remainingMs() > 0) {
+        for (const selector of selectorList) {
+          try {
+            if (await page.locator(selector).first().isVisible()) {
+              console.log(`Target selector is visible: ${selector}`);
+              console.log('Page has loaded successfully.');
+              return true;
+            }
+          } catch {
+            // keep polling remaining selectors
+          }
+        }
+        await page.waitForTimeout(100);
+      }
+      console.log('Target selector check failed: none became visible before timeout.');
+      setLastErrorForPage(page, new Error(`None of selectors became visible: ${selectorList.join(' | ')}`));
+      return false;
+    }
+
+    console.log(`Waiting for URL match: ${String(expectedUrlOrSelectors)}`);
+    const urlBudget = remainingMs();
+    if (urlBudget <= 0) {
+      setLastErrorForPage(page, new Error('Page load budget exhausted before URL check'));
+      return false;
+    }
+    await page.waitForURL(expectedUrlOrSelectors, { timeout: urlBudget, waitUntil });
+    console.log('URL matched expected target.');
+    console.log('Page has loaded successfully.');
     return true;
   } catch (error) {
+    console.log(`Page target check failed: ${error?.message || error}`);
     setLastErrorForPage(page, error);
     return false;
   }
