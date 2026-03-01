@@ -380,6 +380,10 @@ Use this section when building cross-role E2E workflows where **merchant actions
   - `hasCompletedOrderByBookingRef(bookingRef)`
   - `hasCancelledOrderByBookingRef(bookingRef)`
 - Centralize repeated `tab -> search -> bookingRef selector build` steps in one internal helper (`searchOrderInTab(...)`).
+- In `searchOrderInTab(...)`, validate both before proceeding:
+  - search bar still contains the expected `bookingRef` after submit,
+  - exact order card by booking ref is visible.
+- Keep search resiliency scoped inside `searchOrderInTab(...)` (bounded retry), not spread across spec files.
 - Keep order details readiness check inside open methods where navigation/click happens.
 
 **Don’t**
@@ -405,17 +409,19 @@ Use this section when building cross-role E2E workflows where **merchant actions
 
 **Do**
 
-- Use safe helpers that return boolean (`safeClick`, `safeInput`, `safeWaitForPageLoad`), then `markFailed(...)` on false.
+- Use safe helpers that return boolean (`safeClick`, `safeInput`, `safePressEnter`, `safeWaitForPageLoad`), then `markFailed(...)` on false.
 - Use `safeWaitForPageLoad` as source-of-truth for page readiness:
   - wait for load state,
   - wait for loaders/skeletons to clear,
   - optional URL/selector readiness checks.
-- Use timeout constants from `e2e/Timeouts.js` (`short`, `standard`, `long`, `extraLong`) and override explicitly only when required.
+- Use timeout constants from `e2e/Timeouts.js` (`short`, `standard`, `long`, `extraLong`, `superExtraLong`) and override explicitly only when required.
+- Use Playwright global test timeout from shared constants (`playwright.config.js -> timeout: Timeouts.superExtraLong`).
 
 **Don’t**
 
 - Don’t hardcode ad-hoc waits/timeouts in tests (`waitForTimeout(...)`) for readiness.
 - Don’t add throw-based runtime control flow in safe utility helpers; keep them boolean-return style.
+- Don’t introduce explicit `safeFill(...)` usage in `.page.js` files; use `safeInput(...)` (which already handles `safeFill` fallback internally).
 
 ### Query/document placement
 
