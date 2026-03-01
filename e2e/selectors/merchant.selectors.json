@@ -18,6 +18,7 @@
     "CompletedTab": "//button[@role='tab' and normalize-space()='Completed']",
     "CancelledTab": "//button[@role='tab' and normalize-space()='Cancelled']",
     "SearchInput": "//input[contains(@placeholder,'booking reference ID') or contains(@placeholder,'Booking Ref')]",
+    "NoResultsFoundMessage": "//*[@role='tabpanel' and @data-state='active']//p[normalize-space()='No results found']",
     "OrderCardBookingReferenceIDTemplate": "//*[@data-testid='order-link'][contains(normalize-space(),'{bookingRef}')]"
   },
   "OrderDetails": {

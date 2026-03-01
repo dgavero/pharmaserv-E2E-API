@@ -10,11 +10,13 @@ import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrderDetailsPage {
   constructor(page) {
+    // Stores page handle and selector map for order-details actions.
     this.page = page;
     this.sel = loadSelectors('merchant');
   }
 
   async acceptOrder() {
+    // Accepts the order and verifies next-stage UI (QR upload) is available.
     const acceptButton = getSelector(this.sel, 'OrderDetails.AcceptButton');
     if (!(await safeClick(this.page, acceptButton))) {
       markFailed('Unable to click accept order');
@@ -27,6 +29,7 @@ export default class MerchantOrderDetailsPage {
   }
 
   async updatePriceItems(priceItems) {
+    // Updates each editable item price; covers variable item counts from live orders.
     if (!Array.isArray(priceItems) || priceItems.length === 0) {
       markFailed('updatePriceItems requires at least one price item');
     }
@@ -63,6 +66,7 @@ export default class MerchantOrderDetailsPage {
   }
 
   async sendQuote() {
+    // Waits until request-payment is enabled, then submits quote to patient.
     const requestPaymentButton = getSelector(this.sel, 'OrderDetails.RequestPaymentButton');
     await expect
       .poll(
@@ -76,6 +80,7 @@ export default class MerchantOrderDetailsPage {
   }
 
   async uploadQRCode(imagePath) {
+    // Uploads QR code proof and validates request-payment CTA becomes visible.
     const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');
     if (!(await safeClick(this.page, uploadQRButton))) {
       markFailed('Unable to open upload QR dialog');

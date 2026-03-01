@@ -380,9 +380,9 @@ Use this section when building cross-role E2E workflows where **merchant actions
   - `hasCompletedOrderByBookingRef(bookingRef)`
   - `hasCancelledOrderByBookingRef(bookingRef)`
 - Centralize repeated `tab -> search -> bookingRef selector build` steps in one internal helper (`searchOrderInTab(...)`).
-- In `searchOrderInTab(...)`, validate both before proceeding:
-  - search bar still contains the expected `bookingRef` after submit,
-  - exact order card by booking ref is visible.
+- In `searchOrderInTab(...)`, clear active search input first using `safeClearText(...)`, then submit search.
+- In `searchOrderInTab(...)`, fail fast when `Orders.NoResultsFoundMessage` is visible after submit.
+- In `searchOrderInTab(...)`, after bounded retries, fail if exact order card by booking ref is still not visible.
 - Keep search resiliency scoped inside `searchOrderInTab(...)` (bounded retry), not spread across spec files.
 - Keep order details readiness check inside open methods where navigation/click happens.
 
@@ -409,7 +409,7 @@ Use this section when building cross-role E2E workflows where **merchant actions
 
 **Do**
 
-- Use safe helpers that return boolean (`safeClick`, `safeInput`, `safePressEnter`, `safeWaitForPageLoad`), then `markFailed(...)` on false.
+- Use safe helpers that return boolean (`safeClick`, `safeClearText`, `safeInput`, `safePressEnter`, `safeWaitForPageLoad`), then `markFailed(...)` on false.
 - Use `safeWaitForPageLoad` as source-of-truth for page readiness:
   - wait for load state,
   - wait for loaders/skeletons to clear,

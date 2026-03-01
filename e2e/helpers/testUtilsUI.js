@@ -351,6 +351,19 @@ export async function safeInput(page, selector, text, { timeout = Timeouts.stand
   }
 }
 
+/** Clear currently focused input/textarea content (no selector; active element only). */
+export async function safeClearText(page) {
+  try {
+    const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
+    await page.keyboard.press(selectAllShortcut);
+    await page.keyboard.press('Backspace');
+    return true;
+  } catch (error) {
+    setLastErrorForPage(page, error);
+    return false;
+  }
+}
+
 /** Hover over element. */
 export async function safeHover(page, selector, { timeout = Timeouts.standard } = {}) {
   try {
