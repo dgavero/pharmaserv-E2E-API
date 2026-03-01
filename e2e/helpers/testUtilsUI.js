@@ -548,6 +548,25 @@ export async function safeSelectOption(page, selector, value, { timeout = Timeou
   }
 }
 
+/** Press Enter key with optional scoped selector/locator target. */
+export async function safePressEnter(page, selectorOrLocator, { timeout = Timeouts.standard } = {}) {
+  try {
+    if (selectorOrLocator) {
+      const locator =
+        typeof selectorOrLocator === 'string' ? page.locator(selectorOrLocator) : selectorOrLocator;
+      await locator.waitFor({ state: 'visible', timeout });
+      await locator.press('Enter', { timeout });
+      return true;
+    }
+
+    await page.keyboard.press('Enter');
+    return true;
+  } catch (error) {
+    setLastErrorForPage(page, error);
+    return false;
+  }
+}
+
 /** Upload one or more files into a file input element. */
 export async function safeUploadFile(page, selector, files, { timeout = Timeouts.standard } = {}) {
   try {

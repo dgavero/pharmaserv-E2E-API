@@ -4,7 +4,6 @@ import {
   safeClick,
   safeInput,
   safeWaitForElementVisible,
-  safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
 import { Timeouts } from '../../Timeouts.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
@@ -22,7 +21,9 @@ export default class MerchantOrderDetailsPage {
     }
 
     const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');
-    await safeWaitForElementVisible(this.page, uploadQRButton);
+    if (!(await safeWaitForElementVisible(this.page, uploadQRButton))) {
+      markFailed('Upload QR button did not appear after accepting order');
+    }
   }
 
   async updatePriceItems(priceItems) {
@@ -49,7 +50,12 @@ export default class MerchantOrderDetailsPage {
       if (!(await safeInput(this.page, priceInput, String(price)))) {
         markFailed(`Unable to set unit price for item index ${index + 1}`);
       }
-      if (!(await safeClick(this.page, updateItemButton))) {
+      let updated = await safeClick(this.page, updateItemButton, { timeout: Timeouts.long });
+      if (!updated) {
+        // One retry for transient modal re-render/focus issues.
+        updated = await safeClick(this.page, updateItemButton, { timeout: Timeouts.long });
+      }
+      if (!updated) {
         markFailed(`Unable to update item index ${index + 1}`);
       }
       await this.page.locator(updateItemButton).waitFor({ state: 'hidden' });
@@ -84,6 +90,8 @@ export default class MerchantOrderDetailsPage {
     }
 
     const requestPaymentButton = getSelector(this.sel, 'OrderDetails.RequestPaymentButton');
-    await safeWaitForElementVisible(this.page, requestPaymentButton);
+    if (!(await safeWaitForElementVisible(this.page, requestPaymentButton))) {
+      markFailed('Request Payment button did not appear after uploading QR code');
+    }
   }
 }

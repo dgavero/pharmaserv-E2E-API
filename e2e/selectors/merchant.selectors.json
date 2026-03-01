@@ -13,15 +13,17 @@
   },
   "Orders": {
     "PageRoot": "//h1[normalize-space()='Orders']",
-    "NewTab": "//button[normalize-space()='New']",
-    "OngoingTab": "//button[normalize-space()='Ongoing']",
-    "CompletedTab": "//button[normalize-space()='Completed']",
+    "NewTab": "//button[@role='tab' and normalize-space()='New']",
+    "OngoingTab": "//button[@role='tab' and normalize-space()='Ongoing']",
+    "CompletedTab": "//button[@role='tab' and normalize-space()='Completed']",
+    "CancelledTab": "//button[@role='tab' and normalize-space()='Cancelled']",
     "SearchInput": "//input[contains(@placeholder,'booking reference ID') or contains(@placeholder,'Booking Ref')]",
-    "OrderLinkByBookingRefTemplate": "//*[@data-testid='order-link'][contains(normalize-space(),'{bookingRef}')]"
+    "OrderCardBookingReferenceIDTemplate": "//*[@data-testid='order-link'][contains(normalize-space(),'{bookingRef}')]"
   },
   "OrderDetails": {
     "PageRoot": "//*[contains(normalize-space(),'Booking Ref. ID')]",
     "BookingRefTextTemplate": "//*[contains(normalize-space(),'{bookingRef}')]",
+    "StatusCompletedByBookingReferenceIDTemplate": "//main[.//*[contains(normalize-space(),'Booking Ref. ID {bookingRef}')]]//h3[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'completed')]",
     "AcceptButton": "//*[@data-testid='accept-order-btn']",
     "UploadQRButton": "//button[normalize-space()='Upload QR']",
     "QRCodeFileInput": "//input[@id='qr-code' and @type='file']",

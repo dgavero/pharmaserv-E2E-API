@@ -2,7 +2,7 @@ import path from 'node:path';
 import { request as playwrightRequest } from '@playwright/test';
 import { test, expect } from '../../globalConfig.ui.js';
 import { Timeouts } from '../../Timeouts.js';
-import { markFailed, safeWaitForPageLoad } from '../../helpers/testUtilsUI.js';
+import { markFailed, safeWaitForElementVisible, safeWaitForPageLoad } from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
@@ -46,9 +46,9 @@ import { MERCHANT_MY_BRANCH_QUERY } from './merchantPortal.queries.js';
 
 test.describe('Merchant Portal | DeliverX Full Flow', () => {
   test(
-    '[P0] DeliverX Happy Path - DeliverNow',
+    'E2E-5 | [P0] DeliverX Happy Path - DeliverNow',
     {
-      tag: ['@ui', '@merchant', '@deliverx', '@workflow', '@hybrid', '@p0', '@smoke'],
+      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-5', '@workflow', '@hybrid'],
     },
     async ({ page }) => {
       if (!process.env.API_BASE_URL) {
@@ -61,15 +61,6 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
 
       try {
         const sel = loadSelectors('merchant');
-        const ordersReadySelectors = [
-          getSelector(sel, 'Orders.PageRoot'),
-          getSelector(sel, 'Orders.SearchInput'),
-        ];
-        const orderDetailsReadySelectors = [
-          getSelector(sel, 'OrderDetails.PageRoot'),
-          getSelector(sel, 'OrderDetails.AcceptButton'),
-          getSelector(sel, 'OrderDetails.RequestPaymentButton'),
-        ];
         const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
         const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
         const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
@@ -113,11 +104,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
         await login.assertSuccessLogin();
 
         await ordersPage.open();
-        await ordersPage.searchOrder(bookingRef);
-        await ordersPage.openOrderById(bookingRef);
-        if (!(await safeWaitForPageLoad(page, orderDetailsReadySelectors))) {
-          markFailed('Order details page did not load');
-        }
+        await ordersPage.openNewOrderByBookingRef(bookingRef);
         await orderDetailsPage.acceptOrder();
         await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
         await orderDetailsPage.updatePriceItems(buildDeliverXBasePriceItems());
@@ -216,12 +203,42 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
           riderId: assignedRiderId || process.env.RIDER_USERID,
         });
 
+        // UI (merchant): ensure current order details status is Completed before leaving details page.
+        const statusCompletedTemplate = getSelector(sel, 'OrderDetails.StatusCompletedByBookingReferenceIDTemplate');
+        const statusCompletedByBookingReferenceID = statusCompletedTemplate.replace(
+          '{bookingRef}',
+          String(bookingRef)
+        );
+        let isCompletedInOrderDetails = false;
+        const maxStatusCheckAttempts = 3;
+        for (let attempt = 1; attempt <= maxStatusCheckAttempts; attempt += 1) {
+          isCompletedInOrderDetails = await safeWaitForElementVisible(page, statusCompletedByBookingReferenceID, {
+            timeout: Timeouts.extraLong,
+          });
+          if (isCompletedInOrderDetails) break;
+
+          if (attempt < maxStatusCheckAttempts) {
+            await page.reload();
+            if (page.url().includes('/login')) {
+              markFailed(
+                'Merchant session redirected to login while waiting for Completed status on order details'
+              );
+            }
+            if (!(await safeWaitForPageLoad(page))) {
+              markFailed('Order details page did not load after refresh while verifying Completed status');
+            }
+          }
+        }
+        if (!isCompletedInOrderDetails) {
+          markFailed(`Order ${bookingRef} status is not Completed on order details page after retries`);
+        }
+
         // UI (merchant): final verification - order should be in Completed.
         await ordersPage.open();
         let isCompleted = await ordersPage.hasCompletedOrderByBookingRef(bookingRef);
         if (!isCompleted) {
           await page.reload();
-          if (!(await safeWaitForPageLoad(page, ordersReadySelectors))) {
+          if (!(await safeWaitForPageLoad(page))) {
             markFailed('Orders page did not load after refresh');
           }
           isCompleted = await ordersPage.hasCompletedOrderByBookingRef(bookingRef);

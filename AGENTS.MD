@@ -353,14 +353,53 @@ Use this section when building cross-role E2E workflows where **merchant actions
 **Do**
 
 - Derive selectors from actual UI DOM (run/inspect first), then codify in `e2e/selectors/*.selectors.json`.
+- Validate selectors against a real logged-in merchant session before finalizing changes (use the same login path as E2E-1).
 - Open orders by **exact booking reference** (`trackingCode`) and fail if not found.
 - Keep selectors generic/reusable when valid across delivery types.
+- Prefer role-aware tab selectors for order queue tabs:
+  - `Orders.NewTab`
+  - `Orders.OngoingTab`
+  - `Orders.CompletedTab`
+  - `Orders.CancelledTab`
 
 **Don’t**
 
 - Don’t guess selectors from assumptions.
 - Don’t use fallback behavior that opens the first order card if target booking ref is missing.
 - Don’t bypass the user path with direct route jumps if card navigation already opens the same details page.
+- Don’t keep stale selector keys or naming drift (`link` naming for non-URL locators, dead tab keys, etc.).
+
+### Merchant Orders page-object conventions (current baseline)
+
+**Do**
+
+- Keep the spec orchestration-focused and push Orders UI operations into `merchantOrders.page.js`.
+- Use explicit methods by tab intent:
+  - `openNewOrderByBookingRef(bookingRef)`
+  - `openOngoingOrderByBookingRef(bookingRef)`
+  - `hasCompletedOrderByBookingRef(bookingRef)`
+  - `hasCancelledOrderByBookingRef(bookingRef)`
+- Centralize repeated `tab -> search -> bookingRef selector build` steps in one internal helper (`searchOrderInTab(...)`).
+- Keep order details readiness check inside open methods where navigation/click happens.
+
+**Don’t**
+
+- Don’t duplicate search in spec and page object (avoid `search` then immediate `open...` when `open...` already searches).
+- Don’t create ambiguous method names (`openOrderById`) when behavior is booking-reference based.
+
+### Naming conventions for booking reference selectors
+
+**Do**
+
+- Use `OrderCard` terminology for queue-card locators.
+- Use template naming for reusable selector patterns:
+  - `Orders.OrderCardBookingReferenceIDTemplate`
+- Use non-template variable names for resolved runtime selectors:
+  - `orderCardBookingReferenceID`
+
+**Don’t**
+
+- Don’t use `Link` naming for selectors that target a card element unless it truly represents a URL concern.
 
 ### Wait and stability rules
 

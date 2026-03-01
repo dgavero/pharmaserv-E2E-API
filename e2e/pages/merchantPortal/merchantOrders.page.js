@@ -1,4 +1,10 @@
-import { markFailed, safeClick, safeInput, safeWaitForPageLoad } from '../../helpers/testUtilsUI.js';
+import {
+  markFailed,
+  safeClick,
+  safeInput,
+  safePressEnter,
+  safeWaitForPageLoad,
+} from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrdersPage {
@@ -15,58 +21,73 @@ export default class MerchantOrdersPage {
     }
   }
 
-  async searchOrder(orderId) {
-    const newTab = getSelector(this.sel, 'Orders.NewTab');
-    await safeClick(this.page, newTab);
-
-    const searchInput = getSelector(this.sel, 'Orders.SearchInput');
-    if (!(await safeInput(this.page, searchInput, String(orderId)))) {
-      markFailed(`Unable to search for order ${orderId}`);
-    }
-    await this.page.keyboard.press('Enter');
-  }
-
-  async openOrderById(orderRef) {
-    const linkByRefTemplate = getSelector(this.sel, 'Orders.OrderLinkByBookingRefTemplate');
-    const linkByRef = linkByRefTemplate.replace('{bookingRef}', String(orderRef));
-    if (!(await safeClick(this.page, linkByRef))) {
-      markFailed(`Unable to open order details for order ${orderRef}`);
+  async openNewOrderByBookingRef(bookingRef) {
+    const orderCardBookingReferenceID = await this.searchOrderInTab(
+      getSelector(this.sel, 'Orders.NewTab'),
+      bookingRef,
+      'New'
+    );
+    if (!(await safeClick(this.page, orderCardBookingReferenceID)))
+      markFailed(`Unable to open order details for booking ref ${bookingRef}`);
+    if (!(await safeWaitForPageLoad(this.page))) {
+      markFailed(`Order details page did not load for booking ref ${bookingRef}`);
     }
   }
 
   async openOngoingOrderByBookingRef(bookingRef) {
-    const ongoingTab = getSelector(this.sel, 'Orders.OngoingTab');
-    await safeClick(this.page, ongoingTab);
-
-    const searchInput = getSelector(this.sel, 'Orders.SearchInput');
-    if (!(await safeInput(this.page, searchInput, String(bookingRef)))) {
-      markFailed(`Unable to search ongoing order ${bookingRef}`);
-    }
-    await this.page.keyboard.press('Enter');
-
-    const linkByRefTemplate = getSelector(this.sel, 'Orders.OrderLinkByBookingRefTemplate');
-    const linkByRef = linkByRefTemplate.replace('{bookingRef}', String(bookingRef));
-    if (!(await safeClick(this.page, linkByRef))) {
+    const orderCardBookingReferenceID = await this.searchOrderInTab(
+      getSelector(this.sel, 'Orders.OngoingTab'),
+      bookingRef,
+      'Ongoing'
+    );
+    if (!(await safeClick(this.page, orderCardBookingReferenceID))) {
       markFailed(`Unable to open ongoing order details for booking ref ${bookingRef}`);
     }
   }
 
   async hasCompletedOrderByBookingRef(bookingRef) {
-    const completedTab = getSelector(this.sel, 'Orders.CompletedTab');
-    await safeClick(this.page, completedTab);
-
-    const searchInput = getSelector(this.sel, 'Orders.SearchInput');
-    if (!(await safeInput(this.page, searchInput, String(bookingRef)))) {
-      markFailed(`Unable to search completed order ${bookingRef}`);
-    }
-    await this.page.keyboard.press('Enter');
-
-    const linkByRefTemplate = getSelector(this.sel, 'Orders.OrderLinkByBookingRefTemplate');
-    const linkByRef = linkByRefTemplate.replace('{bookingRef}', String(bookingRef));
+    const orderCardBookingReferenceID = await this.searchOrderInTab(
+      getSelector(this.sel, 'Orders.CompletedTab'),
+      bookingRef,
+      'Completed'
+    );
     return this.page
-      .locator(linkByRef)
+      .locator(orderCardBookingReferenceID)
       .first()
       .isVisible()
       .catch(() => false);
+  }
+
+  async hasCancelledOrderByBookingRef(bookingRef) {
+    const orderCardBookingReferenceID = await this.searchOrderInTab(
+      getSelector(this.sel, 'Orders.CancelledTab'),
+      bookingRef,
+      'Cancelled'
+    );
+    return this.page
+      .locator(orderCardBookingReferenceID)
+      .first()
+      .isVisible()
+      .catch(() => false);
+  }
+
+  async searchOrderInTab(tabSelector, bookingRef, tabLabel = 'target') {
+    if (!(await safeClick(this.page, tabSelector))) {
+      markFailed(`Unable to open ${tabLabel} orders tab`);
+    }
+
+    const searchInput = getSelector(this.sel, 'Orders.SearchInput');
+    if (!(await safeInput(this.page, searchInput, String(bookingRef)))) {
+      markFailed(`Unable to search ${tabLabel.toLowerCase()} order ${bookingRef}`);
+    }
+    if (!(await safePressEnter(this.page, searchInput))) {
+      markFailed(`Unable to submit ${tabLabel.toLowerCase()} search for booking ref ${bookingRef}`);
+    }
+
+    const orderCardBookingReferenceIDTemplate = getSelector(
+      this.sel,
+      'Orders.OrderCardBookingReferenceIDTemplate'
+    );
+    return orderCardBookingReferenceIDTemplate.replace('{bookingRef}', String(bookingRef));
   }
 }
