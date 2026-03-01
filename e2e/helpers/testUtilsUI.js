@@ -328,17 +328,12 @@ export async function safeClick(page, selector, { timeout = Timeouts.standard } 
   }
 }
 
-/** Type into input/textarea with keystrokes (cross-platform select-all). */
+/** Type into input/textarea with keystrokes. */
 export async function safeInput(page, selector, text, { timeout = Timeouts.standard, delay: typeDelay = 15 } = {}) {
   try {
     const loc = page.locator(selector);
     await loc.waitFor({ state: 'visible', timeout });
     await loc.click({ timeout }); // focus
-
-    // Detect the right select-all combo for the current OS
-    const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
-    await page.keyboard.press(selectAllShortcut);
-    await page.keyboard.press('Backspace');
 
     if (text) {
       await page.keyboard.type(String(text), { delay: typeDelay });

@@ -1,10 +1,4 @@
-import {
-  markFailed,
-  safeClick,
-  safeInput,
-  safePressEnter,
-  safeWaitForPageLoad,
-} from '../../helpers/testUtilsUI.js';
+import { markFailed, safeClick, safeInput, safePressEnter, safeWaitForPageLoad } from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrdersPage {
@@ -72,22 +66,44 @@ export default class MerchantOrdersPage {
   }
 
   async searchOrderInTab(tabSelector, bookingRef, tabLabel = 'target') {
-    if (!(await safeClick(this.page, tabSelector))) {
-      markFailed(`Unable to open ${tabLabel} orders tab`);
-    }
+    const searchTerm = String(bookingRef);
+    const maxSearchAttempts = 2;
 
+    const orderCardBookingReferenceIDTemplate = getSelector(this.sel, 'Orders.OrderCardBookingReferenceIDTemplate');
+    const orderCardBookingReferenceID = orderCardBookingReferenceIDTemplate.replace('{bookingRef}', searchTerm);
     const searchInput = getSelector(this.sel, 'Orders.SearchInput');
-    if (!(await safeInput(this.page, searchInput, String(bookingRef)))) {
-      markFailed(`Unable to search ${tabLabel.toLowerCase()} order ${bookingRef}`);
-    }
-    if (!(await safePressEnter(this.page, searchInput))) {
-      markFailed(`Unable to submit ${tabLabel.toLowerCase()} search for booking ref ${bookingRef}`);
+
+    for (let attempt = 1; attempt <= maxSearchAttempts; attempt += 1) {
+      if (!(await safeClick(this.page, tabSelector))) {
+        markFailed(`Unable to open ${tabLabel} orders tab`);
+      }
+
+      if (!(await safeInput(this.page, searchInput, searchTerm))) {
+        markFailed(`Unable to search ${tabLabel.toLowerCase()} order ${searchTerm}`);
+      }
+      if (!(await safePressEnter(this.page, searchInput))) {
+        markFailed(`Unable to submit ${tabLabel.toLowerCase()} search for booking ref ${searchTerm}`);
+      }
+
+      const searchValueAfterEnter = await this.page
+        .locator(searchInput)
+        .first()
+        .inputValue()
+        .catch(() => '');
+      const isSearchValueRetained = searchValueAfterEnter.trim() === searchTerm;
+
+      const isOrderCardVisible = await this.page
+        .locator(orderCardBookingReferenceID)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (isSearchValueRetained && isOrderCardVisible) break;
+
+      if (attempt === maxSearchAttempts && !isSearchValueRetained) {
+        markFailed(`Search input did not retain booking ref ${searchTerm} in ${tabLabel} tab`);
+      }
     }
 
-    const orderCardBookingReferenceIDTemplate = getSelector(
-      this.sel,
-      'Orders.OrderCardBookingReferenceIDTemplate'
-    );
-    return orderCardBookingReferenceIDTemplate.replace('{bookingRef}', String(bookingRef));
+    return orderCardBookingReferenceID;
   }
 }
