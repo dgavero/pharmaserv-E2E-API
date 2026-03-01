@@ -46,7 +46,7 @@ import { MERCHANT_MY_BRANCH_QUERY } from './merchantPortal.queries.js';
 
 test.describe('Merchant Portal | DeliverX Full Flow', () => {
   test(
-    'E2E-5 | [P0] DeliverX Happy Path - DeliverNow',
+    'E2E-5 | DeliverX Happy Path - DeliverNow',
     {
       tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-5', '@workflow', '@hybrid'],
     },
@@ -205,10 +205,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
 
         // UI (merchant): ensure current order details status is Completed before leaving details page.
         const statusCompletedTemplate = getSelector(sel, 'OrderDetails.StatusCompletedByBookingReferenceIDTemplate');
-        const statusCompletedByBookingReferenceID = statusCompletedTemplate.replace(
-          '{bookingRef}',
-          String(bookingRef)
-        );
+        const statusCompletedByBookingReferenceID = statusCompletedTemplate.replace('{bookingRef}', String(bookingRef));
         let isCompletedInOrderDetails = false;
         const maxStatusCheckAttempts = 3;
         for (let attempt = 1; attempt <= maxStatusCheckAttempts; attempt += 1) {
@@ -220,9 +217,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
           if (attempt < maxStatusCheckAttempts) {
             await page.reload();
             if (page.url().includes('/login')) {
-              markFailed(
-                'Merchant session redirected to login while waiting for Completed status on order details'
-              );
+              markFailed('Merchant session redirected to login while waiting for Completed status on order details');
             }
             if (!(await safeWaitForPageLoad(page))) {
               markFailed('Order details page did not load after refresh while verifying Completed status');
