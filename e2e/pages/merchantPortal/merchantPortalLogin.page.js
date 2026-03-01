@@ -8,15 +8,18 @@ import {
 
 export default class MerchantPortalLoginPage {
   constructor(page) {
+    // Bind Playwright page and load merchant selectors once for reuse.
     this.page = page;
     this.sel = loadSelectors('merchant');
   }
 
   async open() {
+    // Opens merchant portal login route.
     await this.page.goto('/login');
   }
 
   async login(user, pass) {
+    // Signs in using provided credentials and fails fast on any missing step.
     if (!String(user ?? '').trim() || !String(pass ?? '').trim()) {
       markFailed('Merchant login requires non-empty username and password');
     }
@@ -35,6 +38,7 @@ export default class MerchantPortalLoginPage {
   }
 
   async assertSuccessLogin() {
+    // Confirms successful login by validating the Home sidebar entry is visible.
     const sidebarHomeLink = getSelector(this.sel, 'Apps.SidebarHomeLink');
     const sidebarHomeLinkVisible = await safeWaitForElementVisible(this.page, sidebarHomeLink);
     if (!sidebarHomeLinkVisible) {
@@ -43,6 +47,7 @@ export default class MerchantPortalLoginPage {
   }
 
   async assertFailedLogin() {
+    // Accepts either known login error variant shown by the current webapp behavior.
     const errorCredsVisible = await safeWaitForElementVisible(
       this.page,
       getSelector(this.sel, 'Login.ErrorMessageCredsValidation')
@@ -55,6 +60,5 @@ export default class MerchantPortalLoginPage {
 
     if (!(errorCredsVisible || errorUsernameVisible))
       markFailed('Expected either invalid credentials OR invalid username error to be visible');
-    console.log('Error Message for Failed Login is visible');
   }
 }

@@ -317,3 +317,123 @@ git diff main...HEAD -- playwright.config.js api/globalConfig.api.js .env.exampl
 rg -n "TEST_ENV|API_BASE_URL|BASE_URL_|GRAPHQL_PATH|REPORT_PUBLISH|run_mode|workflow_dispatch|safe|stress|tags"
 git diff main...HEAD -- README.md USAGE.md PROJECTVISIONS.md CHANGELOG.md AGENTS.MD
 ```
+
+---
+
+## 13) Hybrid UI + API Workflow Pattern (Merchant Portal)
+
+Use this section when building cross-role E2E workflows where **merchant actions are UI** and other actors remain **API-driven**.
+
+### Goal
+
+- Mirror API workflow behavior (e.g., PHARMA-334), but execute merchant/pharmacy operational steps in UI where available.
+- Keep the test deterministic and aligned with real user paths in the merchant portal.
+
+### Approved structure (recommended)
+
+1. API setup:
+   - Login as merchant via API and fetch merchant `myBranch.id`.
+   - Create patient order via API and force `order.branchId = merchantBranchId`.
+2. Merchant UI:
+   - Login via UI.
+   - Go to `Orders > New`, search by booking reference (tracking code), open exact target order.
+   - Perform merchant UI actions only (for DeliverX: `Accept -> Upload QR -> Update all item prices -> Request Payment`).
+3. API continuation:
+   - Patient accept quote + pay.
+   - Admin confirm payment + assign rider.
+   - Pharmacy prepare + set for pickup (API if merchant UI does not expose those actions).
+   - Rider complete delivery + patient rate rider.
+4. Merchant final verification (UI):
+   - Verify order appears in `Completed`.
+   - If not found, refresh once and re-check.
+   - Fail test if still not completed.
+
+### Selector and navigation rules
+
+**Do**
+
+- Derive selectors from actual UI DOM (run/inspect first), then codify in `e2e/selectors/*.selectors.json`.
+- Validate selectors against a real logged-in merchant session before finalizing changes (use the same login path as E2E-1).
+- Open orders by **exact booking reference** (`trackingCode`) and fail if not found.
+- Keep selectors generic/reusable when valid across delivery types.
+- Prefer role-aware tab selectors for order queue tabs:
+  - `Orders.NewTab`
+  - `Orders.OngoingTab`
+  - `Orders.CompletedTab`
+  - `Orders.CancelledTab`
+
+**Don’t**
+
+- Don’t guess selectors from assumptions.
+- Don’t use fallback behavior that opens the first order card if target booking ref is missing.
+- Don’t bypass the user path with direct route jumps if card navigation already opens the same details page.
+- Don’t keep stale selector keys or naming drift (`link` naming for non-URL locators, dead tab keys, etc.).
+
+### Merchant Orders page-object conventions (current baseline)
+
+**Do**
+
+- Keep the spec orchestration-focused and push Orders UI operations into `merchantOrders.page.js`.
+- Use explicit methods by tab intent:
+  - `openNewOrderByBookingRef(bookingRef)`
+  - `openOngoingOrderByBookingRef(bookingRef)`
+  - `hasCompletedOrderByBookingRef(bookingRef)`
+  - `hasCancelledOrderByBookingRef(bookingRef)`
+- Centralize repeated `tab -> search -> bookingRef selector build` steps in one internal helper (`searchOrderInTab(...)`).
+- In `searchOrderInTab(...)`, clear active search input first using `safeClearText(...)`, then submit search.
+- In `searchOrderInTab(...)`, fail fast when `Orders.NoResultsFoundMessage` is visible after submit.
+- In `searchOrderInTab(...)`, after bounded retries, fail if exact order card by booking ref is still not visible.
+- Keep search resiliency scoped inside `searchOrderInTab(...)` (bounded retry), not spread across spec files.
+- Keep order details readiness check inside open methods where navigation/click happens.
+
+**Don’t**
+
+- Don’t duplicate search in spec and page object (avoid `search` then immediate `open...` when `open...` already searches).
+- Don’t create ambiguous method names (`openOrderById`) when behavior is booking-reference based.
+
+### Naming conventions for booking reference selectors
+
+**Do**
+
+- Use `OrderCard` terminology for queue-card locators.
+- Use template naming for reusable selector patterns:
+  - `Orders.OrderCardBookingReferenceIDTemplate`
+- Use non-template variable names for resolved runtime selectors:
+  - `orderCardBookingReferenceID`
+
+**Don’t**
+
+- Don’t use `Link` naming for selectors that target a card element unless it truly represents a URL concern.
+
+### Wait and stability rules
+
+**Do**
+
+- Use safe helpers that return boolean (`safeClick`, `safeClearText`, `safeInput`, `safePressEnter`, `safeWaitForPageLoad`), then `markFailed(...)` on false.
+- Use `safeWaitForPageLoad` as source-of-truth for page readiness:
+  - wait for load state,
+  - wait for loaders/skeletons to clear,
+  - optional URL/selector readiness checks.
+- Use timeout constants from `e2e/Timeouts.js` (`short`, `standard`, `long`, `extraLong`, `superExtraLong`) and override explicitly only when required.
+- Use Playwright global test timeout from shared constants (`playwright.config.js -> timeout: Timeouts.superExtraLong`).
+
+**Don’t**
+
+- Don’t hardcode ad-hoc waits/timeouts in tests (`waitForTimeout(...)`) for readiness.
+- Don’t add throw-based runtime control flow in safe utility helpers; keep them boolean-return style.
+- Don’t introduce explicit `safeFill(...)` usage in `.page.js` files; use `safeInput(...)` (which already handles `safeFill` fallback internally).
+
+### Query/document placement
+
+**Do**
+
+- Place reusable GraphQL docs in sibling query files (example: `merchantPortal.queries.js`).
+- Import queries into spec/page-step code; avoid inline long GraphQL strings in test files.
+
+### Data consistency safeguards
+
+**Do**
+
+- Always bind order creation to merchant’s actual branch (`myBranch.id`) to ensure order visibility in merchant queue.
+- When pricing in UI, update **all visible editable items**, not only a fixed count from test data builders.
+- Poll for quote readiness before patient accepts quote (eventual consistency between UI action and API state).

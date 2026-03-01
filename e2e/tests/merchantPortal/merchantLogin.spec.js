@@ -17,7 +17,7 @@ test.describe('Merchant Portal | Login', () => {
   test(
     'E2E-1 | Merchant Should be able to Login Successfully',
     {
-      tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal', '@smoke'],
+      tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal', '@e2e-1', '@smoke'],
     },
     async ({ page }) => {
       const login = new MerchantPortalLoginPage(page);
@@ -30,7 +30,7 @@ test.describe('Merchant Portal | Login', () => {
 
   test(
     'E2E-2 | Merchant Should NOT be able login with incorrect credentials',
-    { tag: ['@ui', '@merchant', '@login', '@negative', '@merchant-portal'] },
+    { tag: ['@ui', '@merchant', '@login', '@negative', '@merchant-portal', '@e2e-2'] },
     async ({ page }) => {
       const sel = loadSelectors('merchant');
       const login = new MerchantPortalLoginPage(page);
@@ -55,7 +55,7 @@ test.describe('Merchant Portal | Login', () => {
   test(
     'E2E-3 | Merchant Should NOT be able login with empty credentials',
     {
-      tag: ['@ui', '@merchant', '@login', '@negative', '@merchant-portal'],
+      tag: ['@ui', '@merchant', '@login', '@negative', '@merchant-portal', '@e2e-3'],
     },
 
     async ({ page }) => {
@@ -79,7 +79,7 @@ test.describe('Merchant Portal | Login', () => {
   test(
     'E2E-4 | Merchant Can Re-Login After Opening A Fresh Context',
     {
-      tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal'],
+      tag: ['@ui', '@merchant', '@login', '@positive', '@merchant-portal', '@e2e-4'],
     },
     async ({ page, browser }) => {
       const firstLogin = new MerchantPortalLoginPage(page);

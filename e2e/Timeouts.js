@@ -19,12 +19,14 @@
  *   - short      = 5 seconds   → quick actions like button clicks or field visibility
  *   - standard   = 15 seconds  → common waits like navigation or login flows
  *   - long       = 30 seconds  → heavier flows, dashboards, or slower components
- *   - extraLong  = 45 seconds  → edge cases like file uploads or very slow pages
+ *   - extraLong  = 60 seconds  → edge cases like file uploads or very slow pages
+ *   - superExtraLong = 300 seconds → full hybrid workflows with multiple role handoffs
  */
 
 export const Timeouts = {
   short: 5_000,
   standard: 15_000,
   long: 30_000,
-  extraLong: 45_000,
+  extraLong: 60_000,
+  superExtraLong: 300_000,
 };

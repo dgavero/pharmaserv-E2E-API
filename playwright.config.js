@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { defineConfig } from '@playwright/test';
+import { Timeouts } from './e2e/Timeouts.js';
 
 const shellEnvKeys = new Set(Object.keys(process.env));
 const configDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
@@ -140,8 +141,9 @@ export default defineConfig({
   // Where Playwright looks for tests (env PROJECT filter; empty runs both)
   projects,
 
-  // Default timeout for each test (in ms) → 60s instead of default 30s
-  timeout: 60000,
+  // Default timeout for each test (in ms).
+  // Uses shared timeout constant so test budget is centralized.
+  timeout: Timeouts.superExtraLong,
 
   // 🔹 Reporters:
   // - list: console output
