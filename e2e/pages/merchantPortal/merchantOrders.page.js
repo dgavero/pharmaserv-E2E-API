@@ -4,8 +4,10 @@ import {
   safeClick,
   safeInput,
   safePressEnter,
+  safeWaitForElementVisible,
   safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
+import { Timeouts } from '../../Timeouts.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrdersPage {
@@ -22,6 +24,10 @@ export default class MerchantOrdersPage {
     this.searchInput = getSelector(this.sel, 'Orders.SearchInput');
     this.noResultsFoundMessage = getSelector(this.sel, 'Orders.NoResultsFoundMessage');
     this.orderCardBookingReferenceIDTemplate = getSelector(this.sel, 'Orders.OrderCardBookingReferenceIDTemplate');
+    this.orderDetailsStatusCompletedByBookingReferenceIDTemplate = getSelector(
+      this.sel,
+      'OrderDetails.StatusCompletedByBookingReferenceIDTemplate'
+    );
   }
 
   async open() {
@@ -136,5 +142,55 @@ export default class MerchantOrdersPage {
     }
 
     return orderCardBookingReferenceID;
+  }
+
+  async verifyOrderCompletedInDetailsAndCompletedTab(bookingRef) {
+    // Waits for Completed in order details first, then confirms the same booking in Orders > Completed.
+    const statusCompletedByBookingReferenceID = this.orderDetailsStatusCompletedByBookingReferenceIDTemplate.replace(
+      '{bookingRef}',
+      String(bookingRef)
+    );
+
+    let isCompletedInOrderDetails = false;
+    const maxStatusCheckAttempts = 3;
+    for (let attempt = 1; attempt <= maxStatusCheckAttempts; attempt += 1) {
+      isCompletedInOrderDetails = await safeWaitForElementVisible(this.page, statusCompletedByBookingReferenceID);
+      if (isCompletedInOrderDetails) break;
+
+      if (attempt < maxStatusCheckAttempts) {
+        await this.page.reload();
+        if (this.page.url().includes('/login')) {
+          markFailed('Merchant session redirected to login while waiting for Completed status on order details');
+        }
+        if (!(await safeWaitForPageLoad(this.page))) {
+          markFailed('Order details page did not load after refresh while verifying Completed status');
+        }
+      }
+    }
+    if (!isCompletedInOrderDetails) {
+      markFailed(`Order ${bookingRef} status is not Completed on order details page after retries`);
+    }
+
+    await this.open();
+    let isCompleted = false;
+    const maxCompletedTabAttempts = 2;
+    for (let attempt = 1; attempt <= maxCompletedTabAttempts; attempt += 1) {
+      try {
+        isCompleted = await this.hasCompletedOrderByBookingRef(bookingRef);
+      } catch {
+        isCompleted = false;
+      }
+      if (isCompleted) break;
+
+      if (attempt < maxCompletedTabAttempts) {
+        await this.page.reload();
+        if (!(await safeWaitForPageLoad(this.page))) {
+          markFailed('Orders page did not load after refresh');
+        }
+      }
+    }
+    if (!isCompleted) {
+      markFailed(`Order ${bookingRef} is not COMPLETED on merchant portal after refresh`);
+    }
   }
 }
