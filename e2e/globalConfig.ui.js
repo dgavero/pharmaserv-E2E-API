@@ -1,5 +1,5 @@
 // globalConfig.ui.js
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, request } from '@playwright/test';
 import {
   setCurrentTestTitle,
   setCurrentPage,
@@ -8,7 +8,16 @@ import {
   flushReports,
 } from '../e2e/helpers/testUtilsUI.js';
 
-export const test = base.extend({});
+export const test = base.extend({
+  // Provides isolated API context per UI test for hybrid UI+API workflows.
+  api: async ({}, use) => {
+    const api = await request.newContext({
+      baseURL: process.env.API_BASE_URL,
+    });
+    await use(api);
+    await api.dispose();
+  },
+});
 
 function resolveBaseUrlForLog() {
   const envName = String(process.env.TEST_ENV || 'DEV').toUpperCase();

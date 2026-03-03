@@ -71,12 +71,19 @@ if (!process.env.API_BASE_URL) {
   process.env.API_BASE_URL =
     apiBaseUrlByEnv[testEnv] || process.env.API_BASE_URL_DEV || process.env.API_BASE_URL || '';
 }
+const apiBaseURL = String(process.env.API_BASE_URL || '').trim();
 
-// 🔹 Fail fast if the URL is missing
+// 🔹 Fail fast if required URLs are missing
 if (!baseURL) {
   const requiredVar = `BASE_URL_${testEnv}`;
   throw new Error(
     `❌ Missing baseURL for TEST_ENV=${testEnv}. Set ${requiredVar} (or BASE_URL fallback).`
+  );
+}
+if (!apiBaseURL) {
+  const requiredVar = `API_BASE_URL_${testEnv}`;
+  throw new Error(
+    `❌ Missing API_BASE_URL for TEST_ENV=${testEnv}. Set ${requiredVar} (or API_BASE_URL fallback).`
   );
 }
 
