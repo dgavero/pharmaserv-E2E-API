@@ -53,10 +53,6 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-5', '@workflow', '@hybrid'],
     },
     async ({ page }) => {
-      if (!process.env.API_BASE_URL) {
-        markFailed('Missing API_BASE_URL environment variable');
-      }
-
       const api = await playwrightRequest.newContext({
         baseURL: process.env.API_BASE_URL,
       });
@@ -255,10 +251,6 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-6', '@workflow', '@hybrid', '@pickup'],
     },
     async ({ page }) => {
-      if (!process.env.API_BASE_URL) {
-        markFailed('Missing API_BASE_URL environment variable');
-      }
-
       const api = await playwrightRequest.newContext({
         baseURL: process.env.API_BASE_URL,
       });
@@ -383,7 +375,19 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
           markFailed(`Order ${bookingRef} status is not Completed on order details page after retries`);
         }
 
-        // UI (merchant): terminal check for pickup flow is Completed status on order details.
+        // UI (merchant): final verification - order should be in Completed.
+        await ordersPage.open();
+        let isCompleted = await ordersPage.hasCompletedOrderByBookingRef(bookingRef);
+        if (!isCompleted) {
+          await page.reload();
+          if (!(await safeWaitForPageLoad(page))) {
+            markFailed('Orders page did not load after refresh');
+          }
+          isCompleted = await ordersPage.hasCompletedOrderByBookingRef(bookingRef);
+        }
+        if (!isCompleted) {
+          markFailed(`Order ${bookingRef} is not COMPLETED on merchant portal after refresh`);
+        }
       } finally {
         await api.dispose();
       }
