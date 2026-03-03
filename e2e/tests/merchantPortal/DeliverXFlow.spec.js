@@ -17,6 +17,7 @@ import {
   submitOrderAsPatient,
   getProofOfPaymentUploadUrlAsPatient,
   payOrderAsPatient,
+  payOrderAsPatientForPickupOrder,
   rateRiderAsPatient,
   uploadImageToSignedUrl,
 } from '../../../api/tests/e2e/shared/steps/patient.steps.js';
@@ -29,6 +30,7 @@ import {
 import {
   prepareOrderAsPharmacist,
   setOrderForPickupAsPharmacist,
+  confirmPickupAsPharmacist,
 } from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
 import {
   loginRider,
@@ -241,6 +243,147 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
         if (!isCompleted) {
           markFailed(`Order ${bookingRef} is not COMPLETED on merchant portal after refresh`);
         }
+      } finally {
+        await api.dispose();
+      }
+    }
+  );
+
+  test(
+    'E2E-6 | DeliverX Happy Path - Pickup',
+    {
+      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-6', '@workflow', '@hybrid', '@pickup'],
+    },
+    async ({ page }) => {
+      if (!process.env.API_BASE_URL) {
+        markFailed('Missing API_BASE_URL environment variable');
+      }
+
+      const api = await playwrightRequest.newContext({
+        baseURL: process.env.API_BASE_URL,
+      });
+
+      try {
+        const sel = loadSelectors('merchant');
+        const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
+        const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
+          username: process.env.MERCHANT_USERNAME,
+          password: process.env.MERCHANT_PASSWORD,
+        });
+        const merchantBranchRes = await safeGraphQL(api, {
+          query: MERCHANT_MY_BRANCH_QUERY,
+          headers: bearer(merchantAccessToken),
+        });
+        if (!merchantBranchRes.ok) {
+          markFailed(`Failed to fetch merchant branch: ${merchantBranchRes.error || 'unknown error'}`);
+        }
+        const merchantBranchId = Number(merchantBranchRes.body?.data?.pharmacy?.branch?.myBranch?.id);
+        if (!merchantBranchId) {
+          markFailed('Missing merchant branch id');
+        }
+
+        // API (patient): create order.
+        const { patientAccessToken } = await loginPatient(api);
+        const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
+          patientAccessToken,
+          order: {
+            ...buildDeliverXBaseOrderInput(),
+            branchId: merchantBranchId,
+          },
+        });
+        const bookingRef = submitOrderNode?.trackingCode;
+        if (!bookingRef) {
+          markFailed('Missing trackingCode from submit order response');
+        }
+
+        // UI (merchant): accept, upload QR, update prices, request payment.
+        const login = new MerchantPortalLoginPage(page);
+        const ordersPage = new MerchantOrdersPage(page);
+        const orderDetailsPage = new MerchantOrderDetailsPage(page);
+
+        await login.open();
+        await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+        await login.assertSuccessLogin();
+
+        await ordersPage.open();
+        await ordersPage.openNewOrderByBookingRef(bookingRef);
+        await orderDetailsPage.acceptOrder();
+        await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+        await orderDetailsPage.updatePriceItems(buildDeliverXBasePriceItems());
+        await orderDetailsPage.sendQuote();
+
+        // API (patient): accept quote and pay (pickup mode).
+        await expect
+          .poll(
+            async () => {
+              const acceptQuoteRes = await safeGraphQL(api, {
+                query: PATIENT_ACCEPT_QUOTE_QUERY,
+                variables: { orderId },
+                headers: bearer(patientAccessToken),
+              });
+              return acceptQuoteRes.ok ? 'ok' : String(acceptQuoteRes.error || 'not ready');
+            },
+            { timeout: Timeouts.long }
+          )
+          .toBe('ok');
+        const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
+          patientAccessToken,
+        });
+        await uploadImageToSignedUrl(api, {
+          uploadUrl: proofOfPaymentUploadUrl,
+          imagePath: patientProofPaymentImagePath,
+        });
+        await payOrderAsPatientForPickupOrder(api, {
+          patientAccessToken,
+          orderId,
+          proofPhoto: proofOfPaymentBlobName,
+        });
+
+        // API (admin): confirm payment.
+        const { adminAccessToken } = await loginAdmin(api);
+        await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
+
+        // API (merchant/pharmacist): prepare, set for pickup, and confirm pickup.
+        await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+        const { patientQR } = await setOrderForPickupAsPharmacist(api, {
+          pharmacistAccessToken: merchantAccessToken,
+          orderId,
+        });
+        if (!patientQR) {
+          markFailed('Missing patientQR from set-for-pickup response');
+        }
+        await confirmPickupAsPharmacist(api, {
+          pharmacistAccessToken: merchantAccessToken,
+          orderId,
+          qrCode: patientQR,
+        });
+
+        // UI (merchant): ensure current order details status is Completed before leaving details page.
+        const statusCompletedTemplate = getSelector(sel, 'OrderDetails.StatusCompletedByBookingReferenceIDTemplate');
+        const statusCompletedByBookingReferenceID = statusCompletedTemplate.replace('{bookingRef}', String(bookingRef));
+        let isCompletedInOrderDetails = false;
+        const maxStatusCheckAttempts = 3;
+        for (let attempt = 1; attempt <= maxStatusCheckAttempts; attempt += 1) {
+          isCompletedInOrderDetails = await safeWaitForElementVisible(page, statusCompletedByBookingReferenceID, {
+            timeout: Timeouts.extraLong,
+          });
+          if (isCompletedInOrderDetails) break;
+
+          if (attempt < maxStatusCheckAttempts) {
+            await page.reload();
+            if (page.url().includes('/login')) {
+              markFailed('Merchant session redirected to login while waiting for Completed status on order details');
+            }
+            if (!(await safeWaitForPageLoad(page))) {
+              markFailed('Order details page did not load after refresh while verifying Completed status');
+            }
+          }
+        }
+        if (!isCompletedInOrderDetails) {
+          markFailed(`Order ${bookingRef} status is not Completed on order details page after retries`);
+        }
+
+        // UI (merchant): terminal check for pickup flow is Completed status on order details.
       } finally {
         await api.dispose();
       }
