@@ -344,9 +344,11 @@ Use this section when building cross-role E2E workflows where **merchant actions
    - Pharmacy prepare + set for pickup (API if merchant UI does not expose those actions).
    - Rider complete delivery + patient rate rider.
 4. Merchant final verification (UI):
-   - Verify order appears in `Completed`.
-   - If not found, refresh once and re-check.
-   - Fail test if still not completed.
+   - For full-flow tests (order creation -> terminal status), terminal UI verification is mandatory.
+   - Use centralized status verification from `merchantOrders.page.js`, not inline status logic in spec.
+   - `COMPLETED` flows: verify status in order details, then verify order appears in `Orders > Completed`.
+   - `CANCELLED` flows: verify status in order details, then verify order appears in `Orders > Cancelled`.
+   - If not found in target terminal tab, refresh once and re-check, then fail.
 
 ### Selector and navigation rules
 
@@ -379,6 +381,11 @@ Use this section when building cross-role E2E workflows where **merchant actions
   - `openOngoingOrderByBookingRef(bookingRef)`
   - `hasCompletedOrderByBookingRef(bookingRef)`
   - `hasCancelledOrderByBookingRef(bookingRef)`
+- Use centralized terminal-status verification methods for full-flow tests:
+  - `verifyOrderInDetailsAndTab(bookingRef, status)` (generic core)
+  - `verifyOrderCompletedInDetailsAndCompletedTab(bookingRef)` (wrapper)
+  - `verifyOrderCancelledInDetailsAndCancelledTab(bookingRef)` (wrapper)
+- Keep status verification inside page object methods (single source of truth), and call from spec as one orchestration step.
 - Centralize repeated `tab -> search -> bookingRef selector build` steps in one internal helper (`searchOrderInTab(...)`).
 - In `searchOrderInTab(...)`, clear active search input first using `safeClearText(...)`, then submit search.
 - In `searchOrderInTab(...)`, fail fast when `Orders.NoResultsFoundMessage` is visible after submit.
@@ -390,6 +397,7 @@ Use this section when building cross-role E2E workflows where **merchant actions
 
 - Don’t duplicate search in spec and page object (avoid `search` then immediate `open...` when `open...` already searches).
 - Don’t create ambiguous method names (`openOrderById`) when behavior is booking-reference based.
+- Don’t bypass centralized terminal-status checks with ad-hoc inline assertions in spec files for full-flow tests.
 
 ### Naming conventions for booking reference selectors
 

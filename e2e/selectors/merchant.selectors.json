@@ -25,6 +25,7 @@
     "PageRoot": "//*[contains(normalize-space(),'Booking Ref. ID')]",
     "BookingRefTextTemplate": "//*[contains(normalize-space(),'{bookingRef}')]",
     "StatusCompletedByBookingReferenceIDTemplate": "//main[.//*[contains(normalize-space(),'Booking Ref. ID {bookingRef}')]]//h3[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'completed')]",
+    "StatusCancelledByBookingReferenceIDTemplate": "//main[.//*[contains(normalize-space(),'Booking Ref. ID {bookingRef}')]]//h3[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'cancelled')]",
     "AcceptButton": "//*[@data-testid='accept-order-btn']",
     "UploadQRButton": "//button[normalize-space()='Upload QR']",
     "QRCodeFileInput": "//input[@id='qr-code' and @type='file']",

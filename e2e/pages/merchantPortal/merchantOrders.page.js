@@ -7,7 +7,6 @@ import {
   safeWaitForElementVisible,
   safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
-import { Timeouts } from '../../Timeouts.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrdersPage {
@@ -24,10 +23,18 @@ export default class MerchantOrdersPage {
     this.searchInput = getSelector(this.sel, 'Orders.SearchInput');
     this.noResultsFoundMessage = getSelector(this.sel, 'Orders.NoResultsFoundMessage');
     this.orderCardBookingReferenceIDTemplate = getSelector(this.sel, 'Orders.OrderCardBookingReferenceIDTemplate');
-    this.orderDetailsStatusCompletedByBookingReferenceIDTemplate = getSelector(
-      this.sel,
-      'OrderDetails.StatusCompletedByBookingReferenceIDTemplate'
-    );
+    this.orderStatusConfigs = {
+      COMPLETED: {
+        detailsTemplate: getSelector(this.sel, 'OrderDetails.StatusCompletedByBookingReferenceIDTemplate'),
+        tabSelector: this.tabs.completed,
+        tabLabel: 'Completed',
+      },
+      CANCELLED: {
+        detailsTemplate: getSelector(this.sel, 'OrderDetails.StatusCancelledByBookingReferenceIDTemplate'),
+        tabSelector: this.tabs.cancelled,
+        tabLabel: 'Cancelled',
+      },
+    };
   }
 
   async open() {
@@ -144,53 +151,70 @@ export default class MerchantOrdersPage {
     return orderCardBookingReferenceID;
   }
 
-  async verifyOrderCompletedInDetailsAndCompletedTab(bookingRef) {
-    // Waits for Completed in order details first, then confirms the same booking in Orders > Completed.
-    const statusCompletedByBookingReferenceID = this.orderDetailsStatusCompletedByBookingReferenceIDTemplate.replace(
-      '{bookingRef}',
-      String(bookingRef)
-    );
+  buildOrderDetailsStatusByBookingReferenceID(statusKey, bookingRef) {
+    const statusConfig = this.orderStatusConfigs[statusKey];
+    return statusConfig.detailsTemplate.replace('{bookingRef}', String(bookingRef));
+  }
 
-    let isCompletedInOrderDetails = false;
+  async verifyOrderInDetailsAndTab(bookingRef, status = 'COMPLETED') {
+    // Generic status verifier: checks details page status first, then confirms order in matching Orders tab.
+    const statusKey = String(status || '').trim().toUpperCase();
+    const statusConfig = this.orderStatusConfigs[statusKey];
+    if (!statusConfig) {
+      markFailed(`Unsupported status verification target: ${status}`);
+    }
+
+    const statusByBookingReferenceID = this.buildOrderDetailsStatusByBookingReferenceID(statusKey, bookingRef);
+    let isStatusInOrderDetails = false;
     const maxStatusCheckAttempts = 3;
     for (let attempt = 1; attempt <= maxStatusCheckAttempts; attempt += 1) {
-      isCompletedInOrderDetails = await safeWaitForElementVisible(this.page, statusCompletedByBookingReferenceID);
-      if (isCompletedInOrderDetails) break;
+      isStatusInOrderDetails = await safeWaitForElementVisible(this.page, statusByBookingReferenceID);
+      if (isStatusInOrderDetails) break;
 
       if (attempt < maxStatusCheckAttempts) {
         await this.page.reload();
         if (this.page.url().includes('/login')) {
-          markFailed('Merchant session redirected to login while waiting for Completed status on order details');
+          markFailed(`Merchant session redirected to login while waiting for ${statusConfig.tabLabel} status on order details`);
         }
         if (!(await safeWaitForPageLoad(this.page))) {
-          markFailed('Order details page did not load after refresh while verifying Completed status');
+          markFailed(`Order details page did not load after refresh while verifying ${statusConfig.tabLabel} status`);
         }
       }
     }
-    if (!isCompletedInOrderDetails) {
-      markFailed(`Order ${bookingRef} status is not Completed on order details page after retries`);
+    if (!isStatusInOrderDetails) {
+      markFailed(`Order ${bookingRef} status is not ${statusConfig.tabLabel} on order details page after retries`);
     }
 
     await this.open();
-    let isCompleted = false;
-    const maxCompletedTabAttempts = 2;
-    for (let attempt = 1; attempt <= maxCompletedTabAttempts; attempt += 1) {
+    let isStatusInTab = false;
+    const maxStatusTabAttempts = 2;
+    for (let attempt = 1; attempt <= maxStatusTabAttempts; attempt += 1) {
       try {
-        isCompleted = await this.hasCompletedOrderByBookingRef(bookingRef);
+        isStatusInTab = await this.hasOrderByBookingRefInTab(statusConfig.tabSelector, bookingRef, statusConfig.tabLabel);
       } catch {
-        isCompleted = false;
+        isStatusInTab = false;
       }
-      if (isCompleted) break;
+      if (isStatusInTab) break;
 
-      if (attempt < maxCompletedTabAttempts) {
+      if (attempt < maxStatusTabAttempts) {
         await this.page.reload();
         if (!(await safeWaitForPageLoad(this.page))) {
           markFailed('Orders page did not load after refresh');
         }
       }
     }
-    if (!isCompleted) {
-      markFailed(`Order ${bookingRef} is not COMPLETED on merchant portal after refresh`);
+    if (!isStatusInTab) {
+      markFailed(`Order ${bookingRef} is not ${statusConfig.tabLabel.toUpperCase()} on merchant portal after refresh`);
     }
+  }
+
+  async verifyOrderCompletedInDetailsAndCompletedTab(bookingRef) {
+    // Convenience wrapper for completed-status flows.
+    await this.verifyOrderInDetailsAndTab(bookingRef, 'COMPLETED');
+  }
+
+  async verifyOrderCancelledInDetailsAndCancelledTab(bookingRef) {
+    // Convenience wrapper for cancelled-status flows.
+    await this.verifyOrderInDetailsAndTab(bookingRef, 'CANCELLED');
   }
 }
