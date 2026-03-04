@@ -112,6 +112,7 @@ function parseHeadlessOverride(raw) {
 // You can intentionally override with HEADLESS=true/false.
 const headlessOverride = parseHeadlessOverride(process.env.HEADLESS);
 const headless = headlessOverride ?? isCI;
+const defaultViewport = isCI ? { width: 1920, height: 1080 } : null;
 
 // PROJECT selector via env (e.g., PROJECT=api or PROJECT=e2e,api). Empty/unset = run both.
 const allProjects = [
@@ -165,9 +166,9 @@ export default defineConfig({
   use: {
     baseURL, // ✅ Dynamic baseURL based on TEST_ENV
     headless,
-    viewport: null,
+    viewport: defaultViewport,
     launchOptions: {
-      args: ['--start-maximized'],
+      args: ['--start-maximized', '--window-size=1920,1080'],
     },
   },
   workers: threads, // Concurrency controlled by THREADS env
