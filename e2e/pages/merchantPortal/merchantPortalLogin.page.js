@@ -32,7 +32,11 @@ export default class MerchantPortalLoginPage {
       markFailed('Failed to input password');
     }
 
-    if (!(await safeClick(this.page, getSelector(this.sel, 'Login.Submit')))) {
+    const submitButton = getSelector(this.sel, 'Login.Submit');
+    if (!(await safeWaitForElementVisible(this.page, submitButton))) {
+      markFailed('Login submit button is not visible');
+    }
+    if (!(await safeClick(this.page, submitButton))) {
       markFailed('Failed to click login');
     }
   }
