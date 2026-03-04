@@ -1,4 +1,5 @@
 import {
+  delay,
   markFailed,
   safeClearText,
   safeClick,
@@ -73,6 +74,7 @@ export default class MerchantOrdersPage {
 
   async openOrderByBookingRefInTab(tabSelector, bookingRef, tabLabel = 'target') {
     // Shared opener: search exact booking ref in tab, click card, then wait details page ready.
+    await delay(5, 'Waiting 5 seconds to propagate order status');
     const orderCardBookingReferenceID = await this.searchOrderInTab(tabSelector, bookingRef, tabLabel);
     if (!(await safeClick(this.page, orderCardBookingReferenceID))) {
       markFailed(`Unable to open ${tabLabel.toLowerCase()} order details for booking ref ${bookingRef}`);
@@ -163,10 +165,11 @@ export default class MerchantOrdersPage {
     if (!statusConfig) {
       markFailed(`Unsupported status verification target: ${status}`);
     }
+    const maxStatusCheckAttempts = 3;
+    const maxStatusTabAttempts = 3;
 
     const statusByBookingReferenceID = this.buildOrderDetailsStatusByBookingReferenceID(statusKey, bookingRef);
     let isStatusInOrderDetails = false;
-    const maxStatusCheckAttempts = 3;
     for (let attempt = 1; attempt <= maxStatusCheckAttempts; attempt += 1) {
       isStatusInOrderDetails = await safeWaitForElementVisible(this.page, statusByBookingReferenceID);
       if (isStatusInOrderDetails) break;
@@ -187,7 +190,6 @@ export default class MerchantOrdersPage {
 
     await this.open();
     let isStatusInTab = false;
-    const maxStatusTabAttempts = 2;
     for (let attempt = 1; attempt <= maxStatusTabAttempts; attempt += 1) {
       try {
         isStatusInTab = await this.hasOrderByBookingRefInTab(statusConfig.tabSelector, bookingRef, statusConfig.tabLabel);

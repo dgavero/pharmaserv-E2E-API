@@ -401,6 +401,9 @@ Use this section when building cross-role E2E workflows where **merchant actions
 - Don’t duplicate search in spec and page object (avoid `search` then immediate `open...` when `open...` already searches).
 - Don’t create ambiguous method names (`openOrderById`) when behavior is booking-reference based.
 - Don’t bypass centralized terminal-status checks with ad-hoc inline assertions in spec files for full-flow tests.
+- Don’t add workaround logic to force test continuation when UI flow breaks unexpectedly (example: session redirects to `/login` mid-flow).
+- Don’t diverge from the API reference workflow (or explicitly approved product flow) just to make a failing hybrid test pass.
+- Treat unexpected flow breaks as potential product defects: fail fast and raise/report the issue instead of masking it in test code.
 
 ### Naming conventions for booking reference selectors
 

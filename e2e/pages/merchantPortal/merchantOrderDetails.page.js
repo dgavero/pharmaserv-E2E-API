@@ -28,6 +28,14 @@ export default class MerchantOrderDetailsPage {
     }
   }
 
+  async acceptOrderForRiderQuote() {
+    // Accepts order for rider-quote flows where payment QR is handled by rider, not merchant.
+    const acceptButton = getSelector(this.sel, 'OrderDetails.AcceptButton');
+    if (!(await safeClick(this.page, acceptButton))) {
+      markFailed('Unable to click accept order for rider-quote flow');
+    }
+  }
+
   async updatePriceItems(priceItems) {
     // Updates each editable item price; covers variable item counts from live orders.
     if (!Array.isArray(priceItems) || priceItems.length === 0) {
