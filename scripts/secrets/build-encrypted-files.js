@@ -107,6 +107,7 @@ function main() {
   const recipients = String(process.env.SOPS_AGE_RECIPIENTS || '').trim();
 
   fs.mkdirSync(path.resolve('secrets'), { recursive: true });
+  let processed = 0;
 
   for (const envName of args.envs) {
     validateEnv(envName);
@@ -115,7 +116,12 @@ function main() {
     const payload = buildEnvObject(envName);
     encryptJsonToFile(payload, outFile, recipients);
     process.stdout.write(`Encrypted ${outFile} with ${Object.keys(payload).length} keys\n`);
+    processed += 1;
   }
+
+  process.stdout.write(
+    `Completed secrets encryption for ${processed} environment(s): ${args.envs.join(', ')}\n`
+  );
 }
 
 try {
