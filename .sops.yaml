@@ -1,0 +1,3 @@
+creation_rules:
+  - path_regex: secrets/secrets\.(dev|qa|prod)\.enc\.json$
+    age: age1hdq3urhmarfzqkeatsm23s6k5tsnvpnmtz40f7zfnzfl60wtvdsqgszz9c

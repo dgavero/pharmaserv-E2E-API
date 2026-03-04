@@ -79,6 +79,29 @@ Load order is:
 API URL resolution for API tests:
 `API_BASE_URL` (explicit override) -> `API_BASE_URL_<TEST_ENV>` (`API_BASE_URL_DEV|QA|PROD`).
 
+## Encrypted Secrets (sops + age)
+
+Credential and environment data can be sourced from encrypted bundles in `secrets/` instead of GitHub repo secret-per-key mapping.
+
+1. Build encrypted files from local profile files:
+
+```bash
+SOPS_AGE_RECIPIENTS="age1..." npm run secrets:encrypt
+```
+
+2. Runtime load (local):
+
+```bash
+eval "$(TEST_ENV=DEV npm run -s secrets:load)"
+```
+
+3. CI load:
+
+- Set one bootstrap secret: `SOPS_AGE_KEY` (full age private key file content).
+- Workflow decrypts `secrets/secrets.<env>.enc.json` and exports vars to `GITHUB_ENV`.
+
+Details: [secrets/README.md](./secrets/README.md)
+
 ## Safe vs Direct Run
 
 - `npm run test:all` uses safe batch sequencing with pauses.
