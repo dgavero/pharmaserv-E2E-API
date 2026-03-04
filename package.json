@@ -8,7 +8,9 @@
     "test:all": "bash scripts/run-all.sh safe",
     "test:all:safe": "bash scripts/run-all.sh safe",
     "test:all:stress": "bash scripts/run-all.sh stress",
-    "report:publish": "node scripts/publish-report.js"
+    "report:publish": "node scripts/publish-report.js",
+    "secrets:encrypt": "node scripts/secrets/build-encrypted-files.js --all",
+    "secrets:load": "node scripts/secrets/load-secrets.js --shell --required"
   },
   "keywords": [],
   "author": "",

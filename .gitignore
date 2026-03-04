@@ -9,6 +9,10 @@ yarn-error.log*
 .env.*
 !.env.example
 .discord-run.json   # Discord thread metadata
+secrets/*.dec.json
+secrets/*.plain.json
+secrets/*age-key*
+.tools/
 
 # Playwright Outputs
 test-results/

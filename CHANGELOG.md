@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+# [3.0.6]
+
+### Changed
+
+- Migrated CI credential loading from per-key GitHub secrets mapping to encrypted env bundles:
+  - `secrets/secrets.dev.enc.json`
+  - `secrets/secrets.qa.enc.json`
+  - `secrets/secrets.prod.enc.json`
+- Added sops/age secret toolchain:
+  - `scripts/secrets/build-encrypted-files.js`
+  - `scripts/secrets/load-secrets.js`
+  - `scripts/secrets/install-sops.sh`
+  - `.sops.yaml` policy
+- Updated workflow to require only one bootstrap secret: `SOPS_AGE_KEY`.
+- Restored CI fullscreen browser settings in Playwright config:
+  - viewport `1920x1080`
+  - launch args `--start-maximized --window-size=1920,1080`
+
 # [3.0.5]
 
 ### Changed
