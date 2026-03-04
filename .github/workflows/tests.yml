@@ -137,11 +137,16 @@ jobs:
 
           TEST_ENV="${{ steps.selector.outputs.test_env }}" node scripts/secrets/load-secrets.js --env "${{ steps.selector.outputs.test_env }}" --github-env --required
 
-      - name: Force report publishing in CI
+      - name: Set report routing by branch
         shell: bash
         run: |
-          echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
-          echo "CI override applied: REPORT_PUBLISH=1"
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
+            echo "CI routing: main branch -> env test channels"
+          else
+            echo "REPORT_PUBLISH=0" >> "$GITHUB_ENV"
+            echo "CI routing: non-main branch -> LOCAL_RUNS_CHANNELID"
+          fi
 
       - name: Validate required credentials
         shell: bash
