@@ -34,6 +34,7 @@
     "PriceInput": "//input[@id='price' and @type='number']",
     "UpdateItemButton": "//button[normalize-space()='Update Item']",
     "RequestPaymentButton": "//*[@data-testid='request-payment-btn']",
+    "RequestPaymentLoadingButton": "//button[contains(normalize-space(),'Loading') and contains(normalize-space(),'Request Payment')]",
     "AskRiderToQuoteCheckbox": "//*[@role='checkbox' and (contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'ask rider to quote') or @aria-label='Ask rider to quote')]",
     "RequestForRiderButton": "//button[normalize-space()='Request for Rider']"
   },

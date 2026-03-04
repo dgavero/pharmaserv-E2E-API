@@ -3,6 +3,7 @@ import {
   markFailed,
   safeClick,
   safeInput,
+  safeWaitForElementHidden,
   safeWaitForElementVisible,
 } from '../../helpers/testUtilsUI.js';
 import { Timeouts } from '../../Timeouts.js';
@@ -130,13 +131,17 @@ export default class MerchantOrderDetailsPage {
   }
 
   async sendQuote() {
-    // Waits until request-payment is actionable, then submits quote to patient.
+    // Waits until request-payment is actionable, submits quote, and waits until loading state clears.
     const requestPaymentButton = getSelector(this.sel, 'OrderDetails.RequestPaymentButton');
+    const requestPaymentLoadingButton = getSelector(this.sel, 'OrderDetails.RequestPaymentLoadingButton');
     if (!(await safeWaitForElementVisible(this.page, requestPaymentButton))) {
       markFailed('Request payment button is not visible');
     }
     if (!(await safeClick(this.page, requestPaymentButton, { timeout: Timeouts.long }))) {
       markFailed('Unable to click request payment');
+    }
+    if (!(await safeWaitForElementHidden(this.page, requestPaymentLoadingButton, { timeout: Timeouts.long }))) {
+      markFailed('Request payment is still loading; quote submit did not finish');
     }
   }
 
