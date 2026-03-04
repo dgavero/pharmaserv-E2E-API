@@ -137,6 +137,12 @@ jobs:
 
           TEST_ENV="${{ steps.selector.outputs.test_env }}" node scripts/secrets/load-secrets.js --env "${{ steps.selector.outputs.test_env }}" --github-env --required
 
+      - name: Force report publishing in CI
+        shell: bash
+        run: |
+          echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
+          echo "CI override applied: REPORT_PUBLISH=1"
+
       - name: Validate required credentials
         shell: bash
         run: |
