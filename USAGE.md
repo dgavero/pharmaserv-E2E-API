@@ -60,6 +60,26 @@ Load order:
 
 Shell/CI variables always override file values.
 
+### Encrypted CI Secrets (sops + age)
+
+- CI no longer needs one GitHub secret per credential key.
+- CI decrypts the env bundle file for the selected `TEST_ENV`:
+  - `secrets/secrets.dev.enc.json`
+  - `secrets/secrets.qa.enc.json`
+  - `secrets/secrets.prod.enc.json`
+- Required GitHub secret: `SOPS_AGE_KEY` only (age private key content).
+
+Update flow for credential changes:
+
+1. Edit `.env.dev` / `.env.qa` / `.env.prod` (and `.env` for shared values only).
+2. Rebuild encrypted files:
+
+```bash
+npm run secrets:encrypt
+```
+
+3. Commit updated encrypted files in `secrets/`.
+
 ### API URL Resolution
 
 API tests resolve base URL in this order:

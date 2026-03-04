@@ -203,9 +203,12 @@ await test.info().attach('node', { body: JSON.stringify(node, null, 2), contentT
 
 - `API_BASE_URL` – consumed by `globalConfig.api.js` for the `api` fixture.
 - `GRAPHQL_PATH` – optional override for GraphQL path (defaults to `/api/v1/pharmaserv/graphql` in `api/helpers/graphqlClient.js`).
-- Credentials (examples; set in `.env` or CI secrets):
+- Credentials (examples; set in local env profiles and encrypted bundles):
   - `PATIENT_USER_USERNAME`, `PATIENT_USER_PASSWORD` (patient)
   - `ADMIN_USERNAME`, `ADMIN_PASSWORD` (admin)
+- CI runtime secret loading:
+  - encrypted files: `secrets/secrets.dev.enc.json`, `secrets/secrets.qa.enc.json`, `secrets/secrets.prod.enc.json`
+  - bootstrap secret only: `SOPS_AGE_KEY` (age private key content)
 - For GraphQL pathing, your client (`graphqlClient.js`) uses the configured base; do not hardcode hostnames in tests.
 
 ---
