@@ -165,6 +165,10 @@ export default defineConfig({
   use: {
     baseURL, // ✅ Dynamic baseURL based on TEST_ENV
     headless,
+    viewport: null,
+    launchOptions: {
+      args: ['--start-maximized'],
+    },
   },
   workers: threads, // Concurrency controlled by THREADS env
 
