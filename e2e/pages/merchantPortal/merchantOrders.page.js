@@ -1,13 +1,12 @@
 import {
-  delay,
   markFailed,
   safeClearText,
   safeClick,
   safeInput,
-  safePressEnter,
   safeWaitForElementVisible,
   safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
+import { Timeouts } from '../../Timeouts.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrdersPage {
@@ -74,8 +73,10 @@ export default class MerchantOrdersPage {
 
   async openOrderByBookingRefInTab(tabSelector, bookingRef, tabLabel = 'target') {
     // Shared opener: search exact booking ref in tab, click card, then wait details page ready.
-    await delay(5, 'Waiting 5 seconds to propagate order status');
     const orderCardBookingReferenceID = await this.searchOrderInTab(tabSelector, bookingRef, tabLabel);
+    if (!(await safeWaitForElementVisible(this.page, orderCardBookingReferenceID))) {
+      markFailed(`Order card is not visible for booking ref ${bookingRef} in ${tabLabel} tab`);
+    }
     if (!(await safeClick(this.page, orderCardBookingReferenceID))) {
       markFailed(`Unable to open ${tabLabel.toLowerCase()} order details for booking ref ${bookingRef}`);
     }
@@ -99,11 +100,21 @@ export default class MerchantOrdersPage {
     const searchTerm = String(bookingRef);
     const maxSearchAttempts = 2;
     const orderCardBookingReferenceID = this.buildOrderCardBookingReferenceID(searchTerm);
+    const tabLabelLower = String(tabLabel).toLowerCase();
     let isOrderCardVisible = false;
 
     for (let attempt = 1; attempt <= maxSearchAttempts; attempt += 1) {
+      if (!(await safeWaitForElementVisible(this.page, tabSelector))) {
+        markFailed(`Unable to find ${tabLabel} orders tab`);
+      }
       if (!(await safeClick(this.page, tabSelector))) {
         markFailed(`Unable to open ${tabLabel} orders tab`);
+      }
+      if (!(await safeWaitForPageLoad(this.page, [this.searchInput, tabSelector], { timeout: Timeouts.standard }))) {
+        markFailed(`Orders tab did not stabilize before searching in ${tabLabel} tab`);
+      }
+      if (!(await safeWaitForElementVisible(this.page, this.searchInput))) {
+        markFailed(`Unable to find search input in ${tabLabel} tab`);
       }
       if (!(await safeClick(this.page, this.searchInput))) {
         markFailed(`Unable to focus search input in ${tabLabel} tab`);
@@ -113,10 +124,18 @@ export default class MerchantOrdersPage {
       }
 
       if (!(await safeInput(this.page, this.searchInput, searchTerm))) {
-        markFailed(`Unable to search ${tabLabel.toLowerCase()} order ${searchTerm}`);
+        markFailed(`Unable to search ${tabLabelLower} order ${searchTerm}`);
       }
-      if (!(await safePressEnter(this.page, this.searchInput))) {
-        markFailed(`Unable to submit ${tabLabel.toLowerCase()} search for booking ref ${searchTerm}`);
+      if (
+        !(await safeWaitForPageLoad(
+          this.page,
+          [orderCardBookingReferenceID, this.noResultsFoundMessage, this.searchInput],
+          {
+            timeout: Timeouts.standard,
+          }
+        ))
+      ) {
+        markFailed(`Search results did not stabilize for ${tabLabelLower} booking ref ${searchTerm}`);
       }
 
       const searchValueAfterEnter = await this.page
@@ -131,11 +150,9 @@ export default class MerchantOrdersPage {
         .isVisible()
         .catch(() => false);
 
-      isOrderCardVisible = await this.page
-        .locator(orderCardBookingReferenceID)
-        .first()
-        .isVisible()
-        .catch(() => false);
+      isOrderCardVisible = await safeWaitForElementVisible(this.page, orderCardBookingReferenceID, {
+        timeout: Timeouts.short,
+      });
       if (isSearchValueRetained && isOrderCardVisible) break;
 
       if (attempt === maxSearchAttempts && !isSearchValueRetained) {
@@ -160,7 +177,9 @@ export default class MerchantOrdersPage {
 
   async verifyOrderInDetailsAndTab(bookingRef, status = 'COMPLETED') {
     // Generic status verifier: checks details page status first, then confirms order in matching Orders tab.
-    const statusKey = String(status || '').trim().toUpperCase();
+    const statusKey = String(status || '')
+      .trim()
+      .toUpperCase();
     const statusConfig = this.orderStatusConfigs[statusKey];
     if (!statusConfig) {
       markFailed(`Unsupported status verification target: ${status}`);
@@ -177,7 +196,9 @@ export default class MerchantOrdersPage {
       if (attempt < maxStatusCheckAttempts) {
         await this.page.reload();
         if (this.page.url().includes('/login')) {
-          markFailed(`Merchant session redirected to login while waiting for ${statusConfig.tabLabel} status on order details`);
+          markFailed(
+            `Merchant session redirected to login while waiting for ${statusConfig.tabLabel} status on order details`
+          );
         }
         if (!(await safeWaitForPageLoad(this.page))) {
           markFailed(`Order details page did not load after refresh while verifying ${statusConfig.tabLabel} status`);
@@ -192,7 +213,11 @@ export default class MerchantOrdersPage {
     let isStatusInTab = false;
     for (let attempt = 1; attempt <= maxStatusTabAttempts; attempt += 1) {
       try {
-        isStatusInTab = await this.hasOrderByBookingRefInTab(statusConfig.tabSelector, bookingRef, statusConfig.tabLabel);
+        isStatusInTab = await this.hasOrderByBookingRefInTab(
+          statusConfig.tabSelector,
+          bookingRef,
+          statusConfig.tabLabel
+        );
       } catch {
         isStatusInTab = false;
       }

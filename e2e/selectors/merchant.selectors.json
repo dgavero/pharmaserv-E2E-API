@@ -33,7 +33,10 @@
     "EditItemButtons": "//button[normalize-space()='EDIT']",
     "PriceInput": "//input[@id='price' and @type='number']",
     "UpdateItemButton": "//button[normalize-space()='Update Item']",
-    "RequestPaymentButton": "//*[@data-testid='request-payment-btn']"
+    "RequestPaymentButton": "//*[@data-testid='request-payment-btn']",
+    "RequestPaymentLoadingButton": "//button[contains(normalize-space(),'Loading') and contains(normalize-space(),'Request Payment')]",
+    "AskRiderToQuoteCheckbox": "//*[@role='checkbox' and (contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'ask rider to quote') or @aria-label='Ask rider to quote')]",
+    "RequestForRiderButton": "//button[normalize-space()='Request for Rider']"
   },
   "Common": {
     "SuccessToast": "//*[@role='alert' or contains(@class,'toast')][contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'success') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'updated') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'sent')]"
