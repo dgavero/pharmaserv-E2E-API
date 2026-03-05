@@ -74,6 +74,7 @@ export function buildHybridOrderInput({
   deliveryInstructions = 'API automated test only',
   lat = 10.36,
   lng = 123.93,
+  ...additionalOrderFields
 } = {}) {
   const normalizedDeliveryType = normalizeDeliveryType(deliveryType);
   const normalizedBranchId = Number(branchId);
@@ -95,6 +96,7 @@ export function buildHybridOrderInput({
     deliveryInstructions,
     lat,
     lng,
+    ...additionalOrderFields,
   };
 }
 
@@ -103,6 +105,21 @@ export function buildDeliverXHybridOrderInput({ branchId, ...overrides } = {}) {
     deliveryType: HybridDeliveryTypes.DELIVER_X,
     branchId,
     ...overrides,
+  });
+}
+
+export function buildDeliverXAttachmentNoPrescriptionHybridOrderInput({ branchId } = {}) {
+  return buildDeliverXHybridOrderInput({
+    branchId,
+    discountCardIds: [],
+    prescriptionItems: [],
+    attachmentPhotos: [
+      {
+        photo: 'att-qa-deliverx-no-prescription.png',
+        specialInstructions: 'Attachment only order',
+      },
+    ],
+    deliveryInstructions: 'Deliver with care',
   });
 }
 

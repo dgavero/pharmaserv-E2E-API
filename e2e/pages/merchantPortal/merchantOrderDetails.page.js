@@ -235,4 +235,69 @@ export default class MerchantOrderDetailsPage {
       markFailed('Request Payment button did not appear after uploading QR code');
     }
   }
+
+  async addItemToOrder(medicineName, medicinePrice, medicineQty) {
+    // Adds medicine from Add Item modal: search -> pick second result -> set qty/price -> add.
+    const name = String(medicineName || '').trim();
+    const price = String(medicinePrice ?? '').trim();
+    const qty = Number(medicineQty);
+    if (!name) {
+      markFailed('addItemToOrder requires a non-empty medicineName');
+    }
+    if (!price) {
+      markFailed(`addItemToOrder requires medicinePrice for ${name}`);
+    }
+    if (!Number.isFinite(qty) || qty < 1) {
+      markFailed(`addItemToOrder requires medicineQty >= 1 for ${name}`);
+    }
+
+    const addItemsButton = getSelector(this.sel, 'OrderDetails.AddItemsButton');
+    const addItemModal = getSelector(this.sel, 'OrderDetails.AddItemModal');
+    const addItemSearchInput = getSelector(this.sel, 'OrderDetails.AddItemSearchInput');
+    const addItemSearchSecondResult = getSelector(this.sel, 'OrderDetails.AddItemSearchSecondResult');
+    const addItemQuantityIncreaseButton = getSelector(this.sel, 'OrderDetails.AddItemQuantityIncreaseButton');
+    const addItemPriceInput = getSelector(this.sel, 'OrderDetails.AddItemPriceInput');
+    const addItemConfirmButton = getSelector(this.sel, 'OrderDetails.AddItemConfirmButton');
+
+    if (!(await safeWaitForElementVisible(this.page, addItemsButton, { timeout: Timeouts.long }))) {
+      markFailed('Add Items button is not visible');
+    }
+    if (!(await safeClick(this.page, addItemsButton, { timeout: Timeouts.long }))) {
+      markFailed('Unable to open Add Item modal');
+    }
+    if (!(await safeWaitForElementVisible(this.page, addItemModal, { timeout: Timeouts.long }))) {
+      markFailed('Add Item modal is not visible');
+    }
+    if (!(await safeWaitForElementVisible(this.page, addItemSearchInput, { timeout: Timeouts.long }))) {
+      markFailed('Add Item search input is not visible');
+    }
+    if (!(await safeInput(this.page, addItemSearchInput, name))) {
+      markFailed(`Unable to search medicine "${name}"`);
+    }
+    if (!(await safeWaitForElementVisible(this.page, addItemSearchSecondResult, { timeout: Timeouts.long }))) {
+      markFailed(`Second search result is not visible for medicine "${name}"`);
+    }
+    if (!(await safeClick(this.page, addItemSearchSecondResult, { timeout: Timeouts.long }))) {
+      markFailed(`Unable to select second search result for medicine "${name}"`);
+    }
+
+    for (let count = 1; count < qty; count += 1) {
+      if (!(await safeClick(this.page, addItemQuantityIncreaseButton, { timeout: Timeouts.standard }))) {
+        markFailed(`Unable to increase quantity for medicine "${name}" to ${qty}`);
+      }
+    }
+
+    if (!(await safeClick(this.page, addItemPriceInput, { timeout: Timeouts.standard }))) {
+      markFailed(`Unable to focus price input for medicine "${name}"`);
+    }
+    const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
+    await this.page.keyboard.press(selectAllShortcut).catch(() => {});
+    if (!(await this.page.keyboard.type(price).then(() => true).catch(() => false))) {
+      markFailed(`Unable to set price for medicine "${name}"`);
+    }
+    if (!(await safeClick(this.page, addItemConfirmButton, { timeout: Timeouts.long }))) {
+      markFailed(`Unable to click Add for medicine "${name}"`);
+    }
+    await this.page.locator(addItemModal).waitFor({ state: 'hidden' }).catch(() => {});
+  }
 }
