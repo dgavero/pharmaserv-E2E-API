@@ -390,6 +390,8 @@ Use this section when building cross-role E2E workflows where **merchant actions
 
 - Use safe helpers (`safeClick`, `safeClearText`, `safeInput`, `safePressEnter`, `safeWaitForPageLoad`) and `markFailed(...)` on false.
 - Use `safeWaitForPageLoad` as readiness source-of-truth.
+- Prefer built-in safe wait helpers for standard readiness checks (visible/attached/hidden) before actions.
+- Use probe-based bounded retries (`isVisible`, `inputValue`, `count` with capped attempts) only for compound/stateful checks where a single wait is not enough (example: booking-ref search retention + exact order card visibility + no-results state).
 - Default to helper built-in timeout (`Timeouts.standard`) for safe helper calls.
 - Only pass explicit timeout overrides when a step is known to be slower than standard and the reason is clear.
 - Use timeout constants from `e2e/Timeouts.js` only when overriding; do not hardcode ad-hoc waits.

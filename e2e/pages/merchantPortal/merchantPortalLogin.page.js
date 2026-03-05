@@ -1,6 +1,7 @@
 import { markFailed } from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import { safeClick, safeInput, safeWaitForElementVisible } from '../../helpers/testUtilsUI.js';
+import { Timeouts } from '../../Timeouts.js';
 
 export default class MerchantPortalLoginPage {
   constructor(page) {
@@ -47,18 +48,30 @@ export default class MerchantPortalLoginPage {
   }
 
   async assertFailedLogin() {
-    // Accepts either known login error variant shown by the current webapp behavior.
-    const errorCredsVisible = await safeWaitForElementVisible(
-      this.page,
-      getSelector(this.sel, 'Login.ErrorMessageCredsValidation')
-    );
+    // Accepts either known login error variant using one shared wait window, then probes both.
+    const errorCredsSelector = getSelector(this.sel, 'Login.ErrorMessageCredsValidation');
+    const errorUsernameSelector = getSelector(this.sel, 'Login.ErrorMessageInvalidUserName');
+    const deadline = Date.now() + Timeouts.standard;
 
-    const errorUsernameVisible = await safeWaitForElementVisible(
-      this.page,
-      getSelector(this.sel, 'Login.ErrorMessageInvalidUserName')
-    );
+    let errorCredsVisible = false;
+    let errorUsernameVisible = false;
+    while (Date.now() < deadline) {
+      errorCredsVisible = await this.page
+        .locator(errorCredsSelector)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      errorUsernameVisible = await this.page
+        .locator(errorUsernameSelector)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (errorCredsVisible || errorUsernameVisible) break;
+      await this.page.waitForTimeout(200);
+    }
 
-    if (!(errorCredsVisible || errorUsernameVisible))
+    if (!(errorCredsVisible || errorUsernameVisible)) {
       markFailed('Expected either invalid credentials OR invalid username error to be visible');
+    }
   }
 }

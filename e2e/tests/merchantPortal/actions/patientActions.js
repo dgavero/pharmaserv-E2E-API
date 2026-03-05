@@ -2,7 +2,10 @@ import { expect } from '../../../globalConfig.ui.js';
 import { Timeouts } from '../../../Timeouts.js';
 import { markFailed } from '../../../helpers/testUtilsUI.js';
 import { safeGraphQL, bearer } from '../../../../api/helpers/testUtilsAPI.js';
-import { PATIENT_ACCEPT_QUOTE_QUERY } from '../../../../api/tests/e2e/shared/queries/patient.queries.js';
+import {
+  PATIENT_ACCEPT_QUOTE_QUERY,
+  PATIENT_REQUEST_REQUOTE_QUERY,
+} from '../../../../api/tests/e2e/shared/queries/patient.queries.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -90,8 +93,9 @@ export async function ensurePatientPaymentQRCodeAccessible(api, { patientAccessT
   return { paymentQRCodePhoto };
 }
 
-export async function payOrderAsPatientWithProof(api, { patientAccessToken, orderId, proofImagePath, mode }) {
+export async function payOrderAsPatientWithProof(api, { patientAccessToken, orderId, proofImagePath, mode, quantities }) {
   const normalizedMode = String(mode || PatientPayModes.DEFAULT).toUpperCase();
+  const hasQuantities = Array.isArray(quantities) && quantities.length > 0;
   const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
     patientAccessToken,
   });
@@ -101,6 +105,18 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
   });
 
   if (normalizedMode === PatientPayModes.PICKUP) {
+    if (hasQuantities) {
+      await payOrderAsPatient(api, {
+        patientAccessToken,
+        orderId,
+        proof: {
+          fulfillmentMode: 'PICKUP',
+          photo: proofOfPaymentBlobName,
+          quantities,
+        },
+      });
+      return;
+    }
     await payOrderAsPatientForPickupOrder(api, {
       patientAccessToken,
       orderId,
@@ -110,6 +126,18 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
   }
 
   if (normalizedMode === PatientPayModes.SCHEDULED) {
+    if (hasQuantities) {
+      await payOrderAsPatient(api, {
+        patientAccessToken,
+        orderId,
+        proof: {
+          fulfillmentMode: 'SCHEDULED',
+          photo: proofOfPaymentBlobName,
+          quantities,
+        },
+      });
+      return;
+    }
     await payOrderAsPatientForScheduledDelivery(api, {
       patientAccessToken,
       orderId,
@@ -125,6 +153,7 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
       proof: {
         fulfillmentMode: 'DELIVERY',
         photo: proofOfPaymentBlobName,
+        ...(hasQuantities ? { quantities } : {}),
       },
     });
     return;
@@ -134,7 +163,10 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
     await payOrderAsPatient(api, {
       patientAccessToken,
       orderId,
-      proof: { photo: proofOfPaymentBlobName },
+      proof: {
+        photo: proofOfPaymentBlobName,
+        ...(hasQuantities ? { quantities } : {}),
+      },
     });
     return;
   }
@@ -147,4 +179,54 @@ export async function rateRiderAsPatientAction(api, { patientAccessToken, riderI
     patientAccessToken,
     riderId,
   });
+}
+
+export async function requestReQuoteAsPatientAction(
+  api,
+  { patientAccessToken, orderId, timeout = Timeouts.long }
+) {
+  await expect
+    .poll(
+      async () => {
+        const requestReQuoteRes = await safeGraphQL(api, {
+          query: PATIENT_REQUEST_REQUOTE_QUERY,
+          variables: { orderId },
+          headers: bearer(patientAccessToken),
+        });
+        if (requestReQuoteRes.ok) {
+          const requestReQuoteNode = requestReQuoteRes.body?.data?.patient?.order?.requestReQuote;
+          if (requestReQuoteNode?.id === orderId) {
+            return 'ok';
+          }
+        }
+
+        const errorMessage = String(
+          requestReQuoteRes.errorMessage ||
+            requestReQuoteRes.error ||
+            requestReQuoteRes.body?.errors?.[0]?.message ||
+            ''
+        ).toLowerCase();
+        if (errorMessage.includes('set for re-quoting already')) {
+          return 'ok';
+        }
+        if (errorMessage.includes('cannot be re-quoted yet')) {
+          return 'retry';
+        }
+        return `error:${requestReQuoteRes.error || requestReQuoteRes.errorMessage || 'unknown error'}`;
+      },
+      { timeout }
+    )
+    .toBe('ok');
+}
+
+export function buildReducedQuantitiesFromAcceptQuote(acceptQuoteNode, reducedQuantity = 1) {
+  const prescriptionItems = acceptQuoteNode?.legs?.[0]?.prescriptionItems || [];
+  if (!Array.isArray(prescriptionItems) || prescriptionItems.length === 0) {
+    markFailed('Missing prescription items from patient accept quote for quantity reduction');
+  }
+
+  return prescriptionItems.map((item) => ({
+    prescriptionItemId: Number(item?.id),
+    quantity: Number(reducedQuantity),
+  }));
 }

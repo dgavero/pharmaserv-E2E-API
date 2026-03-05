@@ -3,6 +3,7 @@ import {
   markFailed,
   safeClick,
   safeInput,
+  safeUploadFile,
   safeWaitForElementHidden,
   safeWaitForElementVisible,
   safeWaitForPageLoad,
@@ -128,7 +129,9 @@ export default class MerchantOrderDetailsPage {
       if (!updated) {
         markFailed(`Unable to update item index ${index + 1}`);
       }
-      await this.page.locator(updateItemButton).waitFor({ state: 'hidden' });
+      if (!(await safeWaitForElementHidden(this.page, updateItemButton))) {
+        markFailed(`Update item dialog did not close for item index ${index + 1}`);
+      }
     }
   }
 
@@ -217,7 +220,9 @@ export default class MerchantOrderDetailsPage {
     }
 
     const fileInput = getSelector(this.sel, 'OrderDetails.QRCodeFileInput');
-    await this.page.locator(fileInput).setInputFiles(imagePath);
+    if (!(await safeUploadFile(this.page, fileInput, imagePath))) {
+      markFailed('Unable to set QR code file for upload');
+    }
 
     const uploadButton = getSelector(this.sel, 'OrderDetails.UploadQRSubmitButton');
     if (!(await safeWaitForElementVisible(this.page, uploadButton))) {
@@ -289,12 +294,55 @@ export default class MerchantOrderDetailsPage {
     }
     const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
     await this.page.keyboard.press(selectAllShortcut).catch(() => {});
-    if (!(await this.page.keyboard.type(price).then(() => true).catch(() => false))) {
+    if (
+      !(await this.page.keyboard
+        .type(price)
+        .then(() => true)
+        .catch(() => false))
+    ) {
       markFailed(`Unable to set price for medicine "${name}"`);
     }
     if (!(await safeClick(this.page, addItemConfirmButton))) {
       markFailed(`Unable to click Add for medicine "${name}"`);
     }
-    await this.page.locator(addItemModal).waitFor({ state: 'hidden' }).catch(() => {});
+    if (!(await safeWaitForElementHidden(this.page, addItemModal))) {
+      markFailed(`Add Item modal did not close after adding medicine "${name}"`);
+    }
+  }
+
+  async verifyQuantityChangedModalAppeared() {
+    // Verifies merchant receives the quantity-change modal after patient requote/payment update.
+    const quantityChangeModalMessage = getSelector(this.sel, 'OrderDetails.QuantityChangeModalMessage');
+    const quantityChangeModalCloseButton = getSelector(this.sel, 'OrderDetails.QuantityChangeModalCloseButton');
+
+    if (!(await safeWaitForElementVisible(this.page, quantityChangeModalMessage))) {
+      markFailed('Expected quantity-change modal was not shown on merchant portal');
+    }
+    console.log('Quantity-change modal appeared as expected');
+
+    const closeVisible = await safeWaitForElementVisible(this.page, quantityChangeModalCloseButton);
+    if (!closeVisible) {
+      markFailed('Quantity-change modal close button is not visible');
+    }
+    if (!(await safeClick(this.page, quantityChangeModalCloseButton))) {
+      markFailed('Unable to close quantity-change modal');
+    }
+  }
+
+  async closeRequoteRequestModalIfVisible() {
+    // Closes the re-quote request modal when present so later merchant actions/modal checks are not blocked.
+    const requoteRequestModalMessage = getSelector(this.sel, 'OrderDetails.RequoteRequestModalMessage');
+    const requoteRequestModalCloseButton = getSelector(this.sel, 'OrderDetails.RequoteRequestModalCloseButton');
+    const modalVisible = await this.page
+      .locator(requoteRequestModalMessage)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (!modalVisible) {
+      return;
+    }
+    if (!(await safeClick(this.page, requoteRequestModalCloseButton))) {
+      markFailed('Unable to close re-quote request modal');
+    }
   }
 }
