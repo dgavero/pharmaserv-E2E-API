@@ -12,6 +12,7 @@ import {
   payOrderAsPatient,
   payOrderAsPatientForPickupOrder,
   payOrderAsPatientForScheduledDelivery,
+  requestReQuoteAsPatient,
   rateRiderAsPatient,
   uploadImageToSignedUrl,
 } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
@@ -90,8 +91,9 @@ export async function ensurePatientPaymentQRCodeAccessible(api, { patientAccessT
   return { paymentQRCodePhoto };
 }
 
-export async function payOrderAsPatientWithProof(api, { patientAccessToken, orderId, proofImagePath, mode }) {
+export async function payOrderAsPatientWithProof(api, { patientAccessToken, orderId, proofImagePath, mode, quantities }) {
   const normalizedMode = String(mode || PatientPayModes.DEFAULT).toUpperCase();
+  const hasQuantities = Array.isArray(quantities) && quantities.length > 0;
   const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
     patientAccessToken,
   });
@@ -101,6 +103,18 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
   });
 
   if (normalizedMode === PatientPayModes.PICKUP) {
+    if (hasQuantities) {
+      await payOrderAsPatient(api, {
+        patientAccessToken,
+        orderId,
+        proof: {
+          fulfillmentMode: 'PICKUP',
+          photo: proofOfPaymentBlobName,
+          quantities,
+        },
+      });
+      return;
+    }
     await payOrderAsPatientForPickupOrder(api, {
       patientAccessToken,
       orderId,
@@ -110,6 +124,18 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
   }
 
   if (normalizedMode === PatientPayModes.SCHEDULED) {
+    if (hasQuantities) {
+      await payOrderAsPatient(api, {
+        patientAccessToken,
+        orderId,
+        proof: {
+          fulfillmentMode: 'SCHEDULED',
+          photo: proofOfPaymentBlobName,
+          quantities,
+        },
+      });
+      return;
+    }
     await payOrderAsPatientForScheduledDelivery(api, {
       patientAccessToken,
       orderId,
@@ -125,6 +151,7 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
       proof: {
         fulfillmentMode: 'DELIVERY',
         photo: proofOfPaymentBlobName,
+        ...(hasQuantities ? { quantities } : {}),
       },
     });
     return;
@@ -134,7 +161,10 @@ export async function payOrderAsPatientWithProof(api, { patientAccessToken, orde
     await payOrderAsPatient(api, {
       patientAccessToken,
       orderId,
-      proof: { photo: proofOfPaymentBlobName },
+      proof: {
+        photo: proofOfPaymentBlobName,
+        ...(hasQuantities ? { quantities } : {}),
+      },
     });
     return;
   }
@@ -147,4 +177,20 @@ export async function rateRiderAsPatientAction(api, { patientAccessToken, riderI
     patientAccessToken,
     riderId,
   });
+}
+
+export async function requestReQuoteAsPatientAction(api, { patientAccessToken, orderId }) {
+  await requestReQuoteAsPatient(api, { patientAccessToken, orderId });
+}
+
+export function buildReducedQuantitiesFromAcceptQuote(acceptQuoteNode, reducedQuantity = 1) {
+  const prescriptionItems = acceptQuoteNode?.legs?.[0]?.prescriptionItems || [];
+  if (!Array.isArray(prescriptionItems) || prescriptionItems.length === 0) {
+    markFailed('Missing prescription items from patient accept quote for quantity reduction');
+  }
+
+  return prescriptionItems.map((item) => ({
+    prescriptionItemId: Number(item?.id),
+    quantity: Number(reducedQuantity),
+  }));
 }

@@ -19,9 +19,11 @@ import {
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
+  buildReducedQuantitiesFromAcceptQuote,
   createHybridOrder,
   createHybridOrderForBranch,
   payOrderAsPatientWithProof,
+  requestReQuoteAsPatientAction,
   rateRiderAsPatientAction,
 } from './actions/patientActions.js';
 import {
@@ -343,6 +345,108 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
         proofImagePath: patientProofPaymentImagePath,
         mode: PatientPayModes.DELIVERY,
       });
+
+      // API (admin): confirm payment.
+      const { adminAccessToken } = await loginAdminForHybrid(api);
+      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+
+      // API (merchant/pharmacist): prepare then set for pickup.
+      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+
+      // API (admin): assign rider.
+      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+        adminAccessToken,
+        orderId,
+        riderId: process.env.RIDER_USERID,
+      });
+
+      // API (rider): complete fulfillment.
+      await riderCompleteDeliveryFlow(api, {
+        orderId,
+        branchId: merchantBranchId,
+        pickupProofImagePath: riderPickupProofImagePath,
+        deliveryProofImagePath: riderDeliveryProofImagePath,
+      });
+
+      // API (patient): rate rider.
+      await rateRiderAsPatientAction(api, {
+        patientAccessToken,
+        riderId: assignedRiderId || process.env.RIDER_USERID,
+      });
+
+      // UI (merchant): verify Completed in details + Orders > Completed tab.
+      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+    }
+  );
+
+  test(
+    'E2E-12 | DeliverX - Patient to request requote and reduce item quantity before paying',
+    {
+      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-12', '@workflow', '@hybrid', '@deliverx'],
+      // Flow summary: patient creates DeliverX order -> merchant accepts/quotes in UI -> patient accepts then requests requote ->
+      // merchant re-sends quote in UI -> patient accepts and pays -> merchant verifies quantity-change modal ->
+      // admin confirms/assigns rider -> pharmacist sets for pickup -> rider completes -> patient rates ->
+      // merchant verifies COMPLETED in details and Completed tab.
+    },
+    async ({ page, api }) => {
+      const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
+      const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
+      const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
+
+      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
+        username: process.env.MERCHANT_USERNAME,
+        password: process.env.MERCHANT_PASSWORD,
+      });
+      const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
+
+      // API (patient): create order.
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
+        deliveryType: HybridDeliveryTypes.DELIVER_X,
+        branchId: merchantBranchId,
+      });
+
+      // UI (merchant): accept, upload QR, update prices, request payment.
+      const login = new MerchantPortalLoginPage(page);
+      const ordersPage = new MerchantOrdersPage(page);
+      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+
+      await login.open();
+      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.assertSuccessLogin();
+
+      await ordersPage.open();
+      await ordersPage.openNewOrderByBookingRef(bookingRef);
+      await orderDetailsPage.acceptOrder();
+      await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await orderDetailsPage.sendQuote();
+
+      // API (patient): accept quote, then request requote.
+      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
+      await requestReQuoteAsPatientAction(api, { patientAccessToken, orderId });
+      await orderDetailsPage.closeRequoteRequestModalIfVisible();
+
+      // UI (merchant): re-send quote after patient requote/quantity change.
+      await orderDetailsPage.sendQuote();
+
+      // API (patient): accept updated quote, reduce quantities, then pay.
+      const { acceptQuoteNode: reQuotedAcceptNode } = await acceptQuoteAsPatientWhenReady(api, {
+        patientAccessToken,
+        orderId,
+        timeout: Timeouts.long,
+      });
+      const reducedQuantities = buildReducedQuantitiesFromAcceptQuote(reQuotedAcceptNode, 1);
+      await payOrderAsPatientWithProof(api, {
+        patientAccessToken,
+        orderId,
+        proofImagePath: patientProofPaymentImagePath,
+        mode: PatientPayModes.DELIVERY,
+        quantities: reducedQuantities,
+      });
+
+      // UI (merchant): verify quantity-change modal appears.
+      await orderDetailsPage.verifyQuantityChangedModalAppeared();
 
       // API (admin): confirm payment.
       const { adminAccessToken } = await loginAdminForHybrid(api);
