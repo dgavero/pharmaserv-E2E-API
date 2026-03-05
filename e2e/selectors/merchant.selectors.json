@@ -9,13 +9,7 @@
   },
   "Apps": {
     "SidebarHomeLink": "//a[@href='/' and (.//*[normalize-space()='Home'] or normalize-space()='Home')]",
-    "SidebarOrdersLink": "//a[@href='/orders/new' or @href='/orders' or .//*[normalize-space()='Orders'] or normalize-space()='Orders']",
-    "DashboardSeeAllOrdersButton": "(//a[@href='/orders/new' and (contains(normalize-space(),'See All Orders') or .//*[contains(normalize-space(),'See All Orders')])])[1]"
-  },
-  "Dashboard": {
-    "OrderPopupOverlay": "(//*[@data-slot='dialog-overlay' and @data-state='open'])[1]",
-    "OrderPopupCloseButton": "(//*[@data-slot='dialog-close'] | //*[@role='dialog']//button[@data-slot='dialog-close'])[1]",
-    "OrderPopupGoToNewOrdersButton": "//*[self::button or self::a][contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'go to new orders')]"
+    "SidebarOrdersLink": "//a[@href='/orders/new' or @href='/orders' or .//*[normalize-space()='Orders'] or normalize-space()='Orders']"
   },
   "Orders": {
     "PageRoot": "//h1[normalize-space()='Orders']",
@@ -47,7 +41,14 @@
     "RequestPaymentButton": "//*[@data-testid='request-payment-btn']",
     "RequestPaymentLoadingButton": "//button[contains(normalize-space(),'Loading') and contains(normalize-space(),'Request Payment')]",
     "AskRiderToQuoteCheckbox": "//*[@role='checkbox' and (contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'ask rider to quote') or @aria-label='Ask rider to quote')]",
-    "RequestForRiderButton": "//button[normalize-space()='Request for Rider']"
+    "RequestForRiderButton": "//button[normalize-space()='Request for Rider']",
+    "AddItemsButton": "//*[@data-name='add-items-button' or @data-testid='add-items-btn' or self::button[normalize-space()='Add Items'] or self::button[normalize-space()='Add Item']]",
+    "AddItemModal": "//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]",
+    "AddItemSearchInput": "(//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]//input[@data-name='search-input' or @placeholder='Search' or @type='text'])[1]",
+    "AddItemSearchSecondResult": "((//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]//*[@role='option' or @cmdk-item])[2] | (//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]//li[.//span or .//p])[2])[1]",
+    "AddItemQuantityIncreaseButton": "(//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]//*[contains(normalize-space(),'Qty.')]/following::button[@data-name='quantity-increase' or normalize-space()='+' or .//*[contains(@class,'plus')]][1])[1]",
+    "AddItemPriceInput": "(//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]//*[contains(normalize-space(),'Price per Item')]/following::input[@data-name='price-per-item' or @id='price' or @type='number'][1])[1]",
+    "AddItemConfirmButton": "(//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]//button[@data-name='add-item-submit' or normalize-space()='Add'])[1]"
   },
   "Common": {
     "SuccessToast": "//*[@role='alert' or contains(@class,'toast')][contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'success') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'updated') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'sent')]"

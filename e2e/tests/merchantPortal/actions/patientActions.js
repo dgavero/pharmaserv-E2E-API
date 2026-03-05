@@ -24,19 +24,11 @@ export const PatientPayModes = Object.freeze({
   DEFAULT: 'DEFAULT',
 });
 
-export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {
+export async function createHybridOrder(api, { order }) {
   const { patientAccessToken } = await loginPatient(api);
-  const orderInput = buildHybridOrderInput({
-    deliveryType,
-    branchId,
-  });
-  // FindMyMeds branch assignment is done in merchant UI after accept.
-  if (omitBranchId) {
-    delete orderInput.branchId;
-  }
   const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
     patientAccessToken,
-    order: orderInput,
+    order,
   });
 
   const bookingRef = submitOrderNode?.trackingCode;
@@ -49,6 +41,18 @@ export async function createHybridOrderForBranch(api, { deliveryType, branchId, 
     orderId,
     bookingRef,
   };
+}
+
+export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {
+  const orderInput = buildHybridOrderInput({
+    deliveryType,
+    branchId,
+  });
+  // FindMyMeds branch assignment is done in merchant UI after accept.
+  if (omitBranchId) {
+    delete orderInput.branchId;
+  }
+  return createHybridOrder(api, { order: orderInput });
 }
 
 export async function acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout = Timeouts.long }) {

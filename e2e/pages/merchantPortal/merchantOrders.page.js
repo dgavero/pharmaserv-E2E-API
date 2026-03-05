@@ -6,7 +6,6 @@ import {
   safeWaitForElementVisible,
   safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
-import { Timeouts } from '../../Timeouts.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrdersPage {
@@ -113,7 +112,7 @@ export default class MerchantOrdersPage {
       if (!(await safeClick(this.page, tabSelector))) {
         markFailed(`Unable to open ${tabLabel} orders tab`);
       }
-      if (!(await safeWaitForPageLoad(this.page, [this.searchInput, tabSelector], { timeout: Timeouts.standard }))) {
+      if (!(await safeWaitForPageLoad(this.page, [this.searchInput, tabSelector]))) {
         markFailed(`Orders tab did not stabilize before searching in ${tabLabel} tab`);
       }
       if (!(await safeWaitForElementVisible(this.page, this.searchInput))) {
@@ -132,10 +131,7 @@ export default class MerchantOrdersPage {
       if (
         !(await safeWaitForPageLoad(
           this.page,
-          [orderCardBookingReferenceID, this.noResultsFoundMessage, this.searchInput],
-          {
-            timeout: Timeouts.standard,
-          }
+          [orderCardBookingReferenceID, this.noResultsFoundMessage, this.searchInput]
         ))
       ) {
         markFailed(`Search results did not stabilize for ${tabLabelLower} booking ref ${searchTerm}`);
@@ -153,9 +149,7 @@ export default class MerchantOrdersPage {
         .isVisible()
         .catch(() => false);
 
-      isOrderCardVisible = await safeWaitForElementVisible(this.page, orderCardBookingReferenceID, {
-        timeout: Timeouts.short,
-      });
+      isOrderCardVisible = await safeWaitForElementVisible(this.page, orderCardBookingReferenceID);
       if (isSearchValueRetained && isOrderCardVisible) break;
 
       if (attempt === maxSearchAttempts && !isSearchValueRetained) {

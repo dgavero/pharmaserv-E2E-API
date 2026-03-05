@@ -348,6 +348,12 @@ Use this section when building cross-role E2E workflows where **merchant actions
    - `CANCELLED`: verify in details and `Orders > Cancelled`.
    - Refresh once if not visible, then fail.
 
+### Merchant UI-only rule (hybrid)
+
+- Merchant operational actions must be UI-only in hybrid tests; do not move merchant actions back to API for convenience.
+- For attachment-only DeliverX flows, keep medicine-item creation in merchant UI (`Add Items` modal), then continue with UI quote send.
+- API should remain for non-merchant actors (patient/admin/rider) unless a merchant UI action truly does not exist.
+
 ### Required file structure
 
 - Keep hybrid API orchestration in role-scoped modules under `e2e/tests/merchantPortal/actions/`:
@@ -368,6 +374,7 @@ Use this section when building cross-role E2E workflows where **merchant actions
 
 - Keep search/open/status logic in `merchantOrders.page.js`; avoid duplicating logic in specs.
 - Open by exact booking reference and fail if not found (no first-order fallback).
+- Prefer stable direct navigation (`/orders/new`) when dashboard popup/CTA behavior is flaky in automation.
 - Use these methods for flow clarity:
   - `openNewOrderByBookingRef(bookingRef)`
   - `openOngoingOrderByBookingRef(bookingRef)`
@@ -383,8 +390,11 @@ Use this section when building cross-role E2E workflows where **merchant actions
 
 - Use safe helpers (`safeClick`, `safeClearText`, `safeInput`, `safePressEnter`, `safeWaitForPageLoad`) and `markFailed(...)` on false.
 - Use `safeWaitForPageLoad` as readiness source-of-truth.
-- Use timeout constants from `e2e/Timeouts.js`; do not hardcode ad-hoc waits.
+- Default to helper built-in timeout (`Timeouts.standard`) for safe helper calls.
+- Only pass explicit timeout overrides when a step is known to be slower than standard and the reason is clear.
+- Use timeout constants from `e2e/Timeouts.js` only when overriding; do not hardcode ad-hoc waits.
 - Keep utility behavior boolean-return based; avoid throw-driven control flow in safe helpers.
+- In Add Item modal flows, clear/replace numeric defaults explicitly (select-all then type) to avoid leading `0` appends.
 
 ### Non-negotiable safeguards
 
@@ -394,3 +404,4 @@ Use this section when building cross-role E2E workflows where **merchant actions
 - Always bind order creation to the active merchant branch.
 - When pricing in UI, update all visible editable items.
 - Poll for quote readiness before patient accept-quote steps.
+- For add-item search flows that require deterministic selection, encode the agreed behavior in page-object methods (example: select second result for the current Add Item modal behavior).

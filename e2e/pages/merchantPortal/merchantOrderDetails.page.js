@@ -7,7 +7,6 @@ import {
   safeWaitForElementVisible,
   safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
-import { Timeouts } from '../../Timeouts.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 
 export default class MerchantOrderDetailsPage {
@@ -30,7 +29,7 @@ export default class MerchantOrderDetailsPage {
 
     const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');
     const assignBranchButton = getSelector(this.sel, 'OrderDetails.AssignBranchButton');
-    if (!(await safeWaitForPageLoad(this.page, [uploadQRButton, assignBranchButton], { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForPageLoad(this.page, [uploadQRButton, assignBranchButton]))) {
       markFailed('Neither Upload QR nor Assign Branch action appeared after accepting order');
     }
   }
@@ -53,15 +52,15 @@ export default class MerchantOrderDetailsPage {
     const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');
 
     if (Boolean(askRiderToQuote)) {
-      if (!(await safeWaitForElementVisible(this.page, askRiderToQuoteCheckbox, { timeout: Timeouts.standard }))) {
+      if (!(await safeWaitForElementVisible(this.page, askRiderToQuoteCheckbox))) {
         markFailed('Ask rider to quote toggle is not visible');
       }
-      if (!(await safeClick(this.page, askRiderToQuoteCheckbox, { timeout: Timeouts.standard }))) {
+      if (!(await safeClick(this.page, askRiderToQuoteCheckbox))) {
         markFailed('Unable to enable Ask rider to quote toggle');
       }
     }
 
-    if (!(await safeWaitForElementVisible(this.page, requestForRiderButton, { timeout: Timeouts.standard }))) {
+    if (!(await safeWaitForElementVisible(this.page, requestForRiderButton))) {
       markFailed('Request for Rider button is not visible');
     }
     if (!(await safeClick(this.page, requestForRiderButton))) {
@@ -69,7 +68,7 @@ export default class MerchantOrderDetailsPage {
     }
 
     // Wait until quotation actions are ready after request rider transition.
-    if (!(await safeWaitForElementVisible(this.page, uploadQRButton, { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForElementVisible(this.page, uploadQRButton))) {
       markFailed('Quotation actions did not appear after requesting rider');
     }
   }
@@ -86,7 +85,7 @@ export default class MerchantOrderDetailsPage {
 
     // Wait for the first EDIT button to be visible before validating counts.
     const firstEditButton = `(${editButtons})[1]`;
-    if (!(await safeWaitForElementVisible(this.page, firstEditButton, { timeout: Timeouts.standard }))) {
+    if (!(await safeWaitForElementVisible(this.page, firstEditButton))) {
       markFailed('First edit button is not visible for pricing');
     }
 
@@ -118,13 +117,13 @@ export default class MerchantOrderDetailsPage {
       if (!(await safeInput(this.page, priceInput, String(price)))) {
         markFailed(`Unable to set unit price for item index ${index + 1}`);
       }
-      let updated = await safeClick(this.page, updateItemButton, { timeout: Timeouts.long });
+      let updated = await safeClick(this.page, updateItemButton);
       if (!updated) {
-        if (!(await safeWaitForElementVisible(this.page, updateItemButton, { timeout: Timeouts.long }))) {
+        if (!(await safeWaitForElementVisible(this.page, updateItemButton))) {
           markFailed(`Update item button is not visible for item index ${index + 1}`);
         }
         // One retry for transient modal re-render/focus issues.
-        updated = await safeClick(this.page, updateItemButton, { timeout: Timeouts.long });
+        updated = await safeClick(this.page, updateItemButton);
       }
       if (!updated) {
         markFailed(`Unable to update item index ${index + 1}`);
@@ -151,13 +150,13 @@ export default class MerchantOrderDetailsPage {
     const assignBranchConfirmButton = getSelector(this.sel, 'OrderDetails.AssignBranchConfirmButton');
     const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');
 
-    if (!(await safeWaitForElementVisible(this.page, assignBranchButton, { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForElementVisible(this.page, assignBranchButton))) {
       markFailed('Assign branch button is not visible');
     }
     if (!(await safeClick(this.page, assignBranchButton))) {
       markFailed('Unable to open assign branch dialog');
     }
-    if (!(await safeWaitForElementVisible(this.page, assignBranchSearchInput, { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForElementVisible(this.page, assignBranchSearchInput))) {
       markFailed('Assign branch search input is not visible');
     }
     if (!(await safeInput(this.page, assignBranchSearchInput, searchKeyword))) {
@@ -165,30 +164,28 @@ export default class MerchantOrderDetailsPage {
     }
 
     const assignBranchResultByKeyword = assignBranchResultByKeywordTemplate.replace('{keyword}', keywordForMatch);
-    const keywordResultVisible = await safeWaitForElementVisible(this.page, assignBranchResultByKeyword, {
-      timeout: Timeouts.long,
-    });
+    const keywordResultVisible = await safeWaitForElementVisible(this.page, assignBranchResultByKeyword);
     if (keywordResultVisible) {
       if (!(await safeClick(this.page, assignBranchResultByKeyword))) {
-        markFailed(`Unable to select assign-branch result for keyword "${normalizedKeyword}"`);
+        markFailed(`Unable to select assign-branch result for keyword "${keywordForMatch}"`);
       }
     } else {
-      if (!(await safeWaitForElementVisible(this.page, assignBranchFirstResult, { timeout: Timeouts.short }))) {
+      if (!(await safeWaitForElementVisible(this.page, assignBranchFirstResult))) {
         markFailed(`No assign-branch result found for keyword "${searchKeyword}"`);
       }
       if (!(await safeClick(this.page, assignBranchFirstResult))) {
         markFailed(`Unable to select first assign-branch result after searching "${searchKeyword}"`);
       }
     }
-    if (!(await safeWaitForElementVisible(this.page, assignBranchConfirmButton, { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForElementVisible(this.page, assignBranchConfirmButton))) {
       markFailed('Assign branch confirm button is not visible');
     }
-    if (!(await safeClick(this.page, assignBranchConfirmButton, { timeout: Timeouts.long }))) {
+    if (!(await safeClick(this.page, assignBranchConfirmButton))) {
       markFailed('Unable to confirm assign branch');
     }
 
     // Assignment should unlock quote actions (Upload QR).
-    if (!(await safeWaitForElementVisible(this.page, uploadQRButton, { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForElementVisible(this.page, uploadQRButton))) {
       markFailed('Upload QR button did not appear after assigning branch');
     }
     await delay(1, 'Waiting 1 second after assigning branch');
@@ -201,10 +198,10 @@ export default class MerchantOrderDetailsPage {
     if (!(await safeWaitForElementVisible(this.page, requestPaymentButton))) {
       markFailed('Request payment button is not visible');
     }
-    if (!(await safeClick(this.page, requestPaymentButton, { timeout: Timeouts.long }))) {
+    if (!(await safeClick(this.page, requestPaymentButton))) {
       markFailed('Unable to click request payment');
     }
-    if (!(await safeWaitForElementHidden(this.page, requestPaymentLoadingButton, { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForElementHidden(this.page, requestPaymentLoadingButton))) {
       markFailed('Request payment is still loading; quote submit did not finish');
     }
   }
@@ -223,7 +220,7 @@ export default class MerchantOrderDetailsPage {
     await this.page.locator(fileInput).setInputFiles(imagePath);
 
     const uploadButton = getSelector(this.sel, 'OrderDetails.UploadQRSubmitButton');
-    if (!(await safeWaitForElementVisible(this.page, uploadButton, { timeout: Timeouts.long }))) {
+    if (!(await safeWaitForElementVisible(this.page, uploadButton))) {
       markFailed('Upload submit button is not visible');
     }
     if (!(await safeClick(this.page, uploadButton))) {
@@ -234,5 +231,70 @@ export default class MerchantOrderDetailsPage {
     if (!(await safeWaitForElementVisible(this.page, requestPaymentButton))) {
       markFailed('Request Payment button did not appear after uploading QR code');
     }
+  }
+
+  async addItemToOrder(medicineName, medicinePrice, medicineQty) {
+    // Adds medicine from Add Item modal: search -> pick second result -> set qty/price -> add.
+    const name = String(medicineName || '').trim();
+    const price = String(medicinePrice ?? '').trim();
+    const qty = Number(medicineQty);
+    if (!name) {
+      markFailed('addItemToOrder requires a non-empty medicineName');
+    }
+    if (!price) {
+      markFailed(`addItemToOrder requires medicinePrice for ${name}`);
+    }
+    if (!Number.isFinite(qty) || qty < 1) {
+      markFailed(`addItemToOrder requires medicineQty >= 1 for ${name}`);
+    }
+
+    const addItemsButton = getSelector(this.sel, 'OrderDetails.AddItemsButton');
+    const addItemModal = getSelector(this.sel, 'OrderDetails.AddItemModal');
+    const addItemSearchInput = getSelector(this.sel, 'OrderDetails.AddItemSearchInput');
+    const addItemSearchSecondResult = getSelector(this.sel, 'OrderDetails.AddItemSearchSecondResult');
+    const addItemQuantityIncreaseButton = getSelector(this.sel, 'OrderDetails.AddItemQuantityIncreaseButton');
+    const addItemPriceInput = getSelector(this.sel, 'OrderDetails.AddItemPriceInput');
+    const addItemConfirmButton = getSelector(this.sel, 'OrderDetails.AddItemConfirmButton');
+
+    if (!(await safeWaitForElementVisible(this.page, addItemsButton))) {
+      markFailed('Add Items button is not visible');
+    }
+    if (!(await safeClick(this.page, addItemsButton))) {
+      markFailed('Unable to open Add Item modal');
+    }
+    if (!(await safeWaitForElementVisible(this.page, addItemModal))) {
+      markFailed('Add Item modal is not visible');
+    }
+    if (!(await safeWaitForElementVisible(this.page, addItemSearchInput))) {
+      markFailed('Add Item search input is not visible');
+    }
+    if (!(await safeInput(this.page, addItemSearchInput, name))) {
+      markFailed(`Unable to search medicine "${name}"`);
+    }
+    if (!(await safeWaitForElementVisible(this.page, addItemSearchSecondResult))) {
+      markFailed(`Second search result is not visible for medicine "${name}"`);
+    }
+    if (!(await safeClick(this.page, addItemSearchSecondResult))) {
+      markFailed(`Unable to select second search result for medicine "${name}"`);
+    }
+
+    for (let count = 1; count < qty; count += 1) {
+      if (!(await safeClick(this.page, addItemQuantityIncreaseButton))) {
+        markFailed(`Unable to increase quantity for medicine "${name}" to ${qty}`);
+      }
+    }
+
+    if (!(await safeClick(this.page, addItemPriceInput))) {
+      markFailed(`Unable to focus price input for medicine "${name}"`);
+    }
+    const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
+    await this.page.keyboard.press(selectAllShortcut).catch(() => {});
+    if (!(await this.page.keyboard.type(price).then(() => true).catch(() => false))) {
+      markFailed(`Unable to set price for medicine "${name}"`);
+    }
+    if (!(await safeClick(this.page, addItemConfirmButton))) {
+      markFailed(`Unable to click Add for medicine "${name}"`);
+    }
+    await this.page.locator(addItemModal).waitFor({ state: 'hidden' }).catch(() => {});
   }
 }

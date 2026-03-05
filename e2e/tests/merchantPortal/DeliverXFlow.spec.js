@@ -13,11 +13,13 @@ import {
 } from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
 import {
   buildBasePriceItems,
+  buildDeliverXAttachmentNoPrescriptionHybridOrderInput,
   HybridDeliveryTypes,
 } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
+  createHybridOrder,
   createHybridOrderForBranch,
   payOrderAsPatientWithProof,
   rateRiderAsPatientAction,
@@ -252,6 +254,94 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
         orderId,
         proofImagePath: patientProofPaymentImagePath,
         mode: PatientPayModes.SCHEDULED,
+      });
+
+      // API (admin): confirm payment.
+      const { adminAccessToken } = await loginAdminForHybrid(api);
+      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+
+      // API (merchant/pharmacist): prepare then set for pickup.
+      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+
+      // API (admin): assign rider.
+      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+        adminAccessToken,
+        orderId,
+        riderId: process.env.RIDER_USERID,
+      });
+
+      // API (rider): complete fulfillment.
+      await riderCompleteDeliveryFlow(api, {
+        orderId,
+        branchId: merchantBranchId,
+        pickupProofImagePath: riderPickupProofImagePath,
+        deliveryProofImagePath: riderDeliveryProofImagePath,
+      });
+
+      // API (patient): rate rider.
+      await rateRiderAsPatientAction(api, {
+        patientAccessToken,
+        riderId: assignedRiderId || process.env.RIDER_USERID,
+      });
+
+      // UI (merchant): verify Completed in details + Orders > Completed tab.
+      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+    }
+  );
+
+  test(
+    'E2E-11 | DeliverX - Patient only sends an attachment for submitted order',
+    {
+      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-11', '@workflow', '@hybrid', '@deliverx'],
+      // Flow summary: patient submits DeliverX attachment-only order -> merchant accepts in UI ->
+      // pharmacist adds/replaces items and sends quote via API -> patient pays -> admin confirms and assigns rider ->
+      // pharmacist sets for pickup -> rider completes -> patient rates -> merchant verifies COMPLETED in UI.
+    },
+    async ({ page, api }) => {
+      const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
+      const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
+      const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
+
+      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
+        username: process.env.MERCHANT_USERNAME,
+        password: process.env.MERCHANT_PASSWORD,
+      });
+      const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
+
+      // API (patient): create attachment-only order with no prescription items.
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildDeliverXAttachmentNoPrescriptionHybridOrderInput({
+          branchId: merchantBranchId,
+        }),
+      });
+
+      // UI (merchant): login and accept order.
+      const login = new MerchantPortalLoginPage(page);
+      const ordersPage = new MerchantOrdersPage(page);
+      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+
+      await login.open();
+      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.assertSuccessLogin();
+
+      await ordersPage.open();
+      await ordersPage.openNewOrderByBookingRef(bookingRef);
+      await orderDetailsPage.acceptOrder();
+
+      // UI (merchant): add medicines with qty/price, upload QR, then send quote.
+      await orderDetailsPage.addItemToOrder('Biogesic', 200, 2);
+      await orderDetailsPage.addItemToOrder('Maalox', 400, 5);
+      await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await orderDetailsPage.sendQuote();
+
+      // API (patient): accept quote and pay.
+      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
+      await payOrderAsPatientWithProof(api, {
+        patientAccessToken,
+        orderId,
+        proofImagePath: patientProofPaymentImagePath,
+        mode: PatientPayModes.DELIVERY,
       });
 
       // API (admin): confirm payment.
