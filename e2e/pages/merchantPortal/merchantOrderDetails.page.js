@@ -3,6 +3,7 @@ import {
   markFailed,
   safeClick,
   safeInput,
+  safeUploadFile,
   safeWaitForElementHidden,
   safeWaitForElementVisible,
   safeWaitForPageLoad,
@@ -128,7 +129,9 @@ export default class MerchantOrderDetailsPage {
       if (!updated) {
         markFailed(`Unable to update item index ${index + 1}`);
       }
-      await this.page.locator(updateItemButton).waitFor({ state: 'hidden' });
+      if (!(await safeWaitForElementHidden(this.page, updateItemButton))) {
+        markFailed(`Update item dialog did not close for item index ${index + 1}`);
+      }
     }
   }
 
@@ -217,7 +220,9 @@ export default class MerchantOrderDetailsPage {
     }
 
     const fileInput = getSelector(this.sel, 'OrderDetails.QRCodeFileInput');
-    await this.page.locator(fileInput).setInputFiles(imagePath);
+    if (!(await safeUploadFile(this.page, fileInput, imagePath))) {
+      markFailed('Unable to set QR code file for upload');
+    }
 
     const uploadButton = getSelector(this.sel, 'OrderDetails.UploadQRSubmitButton');
     if (!(await safeWaitForElementVisible(this.page, uploadButton))) {
@@ -300,10 +305,9 @@ export default class MerchantOrderDetailsPage {
     if (!(await safeClick(this.page, addItemConfirmButton))) {
       markFailed(`Unable to click Add for medicine "${name}"`);
     }
-    await this.page
-      .locator(addItemModal)
-      .waitFor({ state: 'hidden' })
-      .catch(() => {});
+    if (!(await safeWaitForElementHidden(this.page, addItemModal))) {
+      markFailed(`Add Item modal did not close after adding medicine "${name}"`);
+    }
   }
 
   async verifyQuantityChangedModalAppeared() {

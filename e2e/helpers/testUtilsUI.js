@@ -400,28 +400,31 @@ export async function safeWaitForPageLoad(
   expectedUrlOrSelectors,
   { timeout = Timeouts.extraLong, waitUntil = 'load', loadingSelectors = DEFAULT_LOADING_SELECTORS } = {}
 ) {
-  console.log('Checking if page has loaded successfully...');
-  console.log(`safeWaitForPageLoad config: waitUntil=${waitUntil}, timeout=${timeout}ms`);
   const startedAt = Date.now();
+  const startUrl = page.url();
+  console.log(`Checking if page loaded successfully: ${startUrl}`);
   const remainingMs = () => Math.max(0, timeout - (Date.now() - startedAt));
+  const elapsedSeconds = () => ((Date.now() - startedAt) / 1000).toFixed(1);
+  const logFailureAndReturn = () => {
+    console.log(`Page load failed after ${elapsedSeconds()} seconds`);
+    return false;
+  };
 
   try {
     // 1) Base document readiness.
     const loadStateBudget = remainingMs();
     if (loadStateBudget <= 0) {
       setLastErrorForPage(page, new Error('Page load budget exhausted before load state check'));
-      return false;
+      return logFailureAndReturn();
     }
     await page.waitForLoadState(waitUntil, { timeout: loadStateBudget });
-    console.log(`Document load state reached: ${waitUntil}`);
   } catch (error) {
     console.log(`Page load state check failed: ${error?.message || error}`);
     setLastErrorForPage(page, error);
-    return false;
+    return logFailureAndReturn();
   }
 
   // 2) Wait for loading/skeleton indicators to clear.
-  let sawVisibleLoader = false;
   while (remainingMs() > 0) {
     let hasVisibleLoader = false;
 
@@ -429,7 +432,6 @@ export async function safeWaitForPageLoad(
       try {
         if (await page.locator(selector).first().isVisible()) {
           hasVisibleLoader = true;
-          sawVisibleLoader = true;
           break;
         }
       } catch {
@@ -447,39 +449,34 @@ export async function safeWaitForPageLoad(
       if (await page.locator(selector).first().isVisible()) {
         console.log(`Loader/skeleton still visible: ${selector}`);
         setLastErrorForPage(page, new Error(`Page still loading; visible selector: ${selector}`));
-        return false;
+        return logFailureAndReturn();
       }
     } catch {
       // ignore selector lookup errors
     }
   }
-  if (sawVisibleLoader) console.log('Loaders/skeletons were detected and cleared.');
-  else console.log('No loaders/skeletons found.');
+  const logSuccessAndReturn = () => {
+    console.log(`Page loaded successfully after ${elapsedSeconds()} seconds`);
+    return true;
+  };
 
   // 3) Optional target check: URL or any selector.
   if (expectedUrlOrSelectors == null) {
-    console.log('No URL/selector target provided.');
-    console.log('Page has loaded successfully.');
-    return true;
+    return logSuccessAndReturn();
   }
 
   try {
     if (Array.isArray(expectedUrlOrSelectors)) {
       const selectorList = expectedUrlOrSelectors.filter(Boolean);
       if (selectorList.length === 0) {
-        console.log('Selector list is empty. Skipping selector target check.');
-        console.log('Page has loaded successfully.');
-        return true;
+        return logSuccessAndReturn();
       }
-      console.log(`Waiting for any target selector to be visible (${selectorList.length} selectors)...`);
 
       while (remainingMs() > 0) {
         for (const selector of selectorList) {
           try {
             if (await page.locator(selector).first().isVisible()) {
-              console.log(`Target selector is visible: ${selector}`);
-              console.log('Page has loaded successfully.');
-              return true;
+              return logSuccessAndReturn();
             }
           } catch {
             // keep polling remaining selectors
@@ -489,23 +486,20 @@ export async function safeWaitForPageLoad(
       }
       console.log('Target selector check failed: none became visible before timeout.');
       setLastErrorForPage(page, new Error(`None of selectors became visible: ${selectorList.join(' | ')}`));
-      return false;
+      return logFailureAndReturn();
     }
 
-    console.log(`Waiting for URL match: ${String(expectedUrlOrSelectors)}`);
     const urlBudget = remainingMs();
     if (urlBudget <= 0) {
       setLastErrorForPage(page, new Error('Page load budget exhausted before URL check'));
-      return false;
+      return logFailureAndReturn();
     }
     await page.waitForURL(expectedUrlOrSelectors, { timeout: urlBudget, waitUntil });
-    console.log('URL matched expected target.');
-    console.log('Page has loaded successfully.');
-    return true;
+    return logSuccessAndReturn();
   } catch (error) {
     console.log(`Page target check failed: ${error?.message || error}`);
     setLastErrorForPage(page, error);
-    return false;
+    return logFailureAndReturn();
   }
 }
 

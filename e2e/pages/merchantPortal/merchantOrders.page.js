@@ -7,6 +7,7 @@ import {
   safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
+import { Timeouts } from '../../Timeouts.js';
 
 export default class MerchantOrdersPage {
   constructor(page) {
@@ -101,6 +102,8 @@ export default class MerchantOrdersPage {
     // Runs bounded retries to search exact booking ref and validates retained input + card match.
     const searchTerm = String(bookingRef);
     const maxSearchAttempts = 2;
+    const perAttemptProbeBudgetMs = Timeouts.long;
+    const probeIntervalMs = 300;
     const orderCardBookingReferenceID = this.buildOrderCardBookingReferenceID(searchTerm);
     const tabLabelLower = String(tabLabel).toLowerCase();
     let isOrderCardVisible = false;
@@ -128,28 +131,35 @@ export default class MerchantOrdersPage {
       if (!(await safeInput(this.page, this.searchInput, searchTerm))) {
         markFailed(`Unable to search ${tabLabelLower} order ${searchTerm}`);
       }
-      if (
-        !(await safeWaitForPageLoad(
-          this.page,
-          [orderCardBookingReferenceID, this.noResultsFoundMessage, this.searchInput]
-        ))
-      ) {
+      if (!(await safeWaitForPageLoad(this.page, [orderCardBookingReferenceID, this.noResultsFoundMessage]))) {
         markFailed(`Search results did not stabilize for ${tabLabelLower} booking ref ${searchTerm}`);
       }
 
-      const searchValueAfterEnter = await this.page
-        .locator(this.searchInput)
-        .first()
-        .inputValue()
-        .catch(() => '');
-      const isSearchValueRetained = searchValueAfterEnter.trim() === searchTerm;
-      const isNoResultsVisible = await this.page
-        .locator(this.noResultsFoundMessage)
-        .first()
-        .isVisible()
-        .catch(() => false);
+      let isSearchValueRetained = false;
+      let isNoResultsVisible = false;
+      const probeDeadline = Date.now() + perAttemptProbeBudgetMs;
+      while (Date.now() < probeDeadline) {
+        const searchValueAfterEnter = await this.page
+          .locator(this.searchInput)
+          .first()
+          .inputValue()
+          .catch(() => '');
+        isSearchValueRetained = searchValueAfterEnter.trim() === searchTerm;
+        isNoResultsVisible = await this.page
+          .locator(this.noResultsFoundMessage)
+          .first()
+          .isVisible()
+          .catch(() => false);
+        isOrderCardVisible = await this.page
+          .locator(orderCardBookingReferenceID)
+          .first()
+          .isVisible()
+          .catch(() => false);
 
-      isOrderCardVisible = await safeWaitForElementVisible(this.page, orderCardBookingReferenceID);
+        if (isSearchValueRetained && (isOrderCardVisible || isNoResultsVisible)) break;
+        await this.page.waitForTimeout(probeIntervalMs);
+      }
+
       if (isSearchValueRetained && isOrderCardVisible) break;
 
       if (attempt === maxSearchAttempts && !isSearchValueRetained) {
