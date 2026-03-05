@@ -40,6 +40,7 @@ export default class MerchantOrdersPage {
   async open() {
     // Navigates to New Orders view and waits for portal readiness.
     await this.page.goto('/orders/new');
+
     const loaded = await safeWaitForPageLoad(this.page);
     if (!loaded) {
       markFailed('Orders page did not load');
