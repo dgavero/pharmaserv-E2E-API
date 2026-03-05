@@ -1,10 +1,6 @@
 import { markFailed } from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import {
-  safeClick,
-  safeInput,
-  safeWaitForElementVisible,
-} from '../../helpers/testUtilsUI.js';
+import { safeClick, safeInput, safeWaitForElementVisible } from '../../helpers/testUtilsUI.js';
 
 export default class MerchantPortalLoginPage {
   constructor(page) {

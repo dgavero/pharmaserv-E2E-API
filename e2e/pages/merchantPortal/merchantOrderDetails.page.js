@@ -5,6 +5,7 @@ import {
   safeInput,
   safeWaitForElementHidden,
   safeWaitForElementVisible,
+  safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
 import { Timeouts } from '../../Timeouts.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
@@ -17,7 +18,8 @@ export default class MerchantOrderDetailsPage {
   }
 
   async acceptOrder() {
-    // Accepts the order and verifies next-stage UI (QR upload) is available.
+    // Accepts the order and verifies next-stage quotation actions are available.
+    console.log('Accepting order in merchant portal...');
     const acceptButton = getSelector(this.sel, 'OrderDetails.AcceptButton');
     if (!(await safeWaitForElementVisible(this.page, acceptButton))) {
       markFailed('Accept order button is not visible');
@@ -27,8 +29,9 @@ export default class MerchantOrderDetailsPage {
     }
 
     const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');
-    if (!(await safeWaitForElementVisible(this.page, uploadQRButton))) {
-      markFailed('Upload QR button did not appear after accepting order');
+    const assignBranchButton = getSelector(this.sel, 'OrderDetails.AssignBranchButton');
+    if (!(await safeWaitForPageLoad(this.page, [uploadQRButton, assignBranchButton], { timeout: Timeouts.long }))) {
+      markFailed('Neither Upload QR nor Assign Branch action appeared after accepting order');
     }
   }
 
@@ -128,6 +131,67 @@ export default class MerchantOrderDetailsPage {
       }
       await this.page.locator(updateItemButton).waitFor({ state: 'hidden' });
     }
+  }
+
+  async assignBranchToFirstMatchingPharmacy(keyword = 'dev') {
+    // Assigns branch using search and selects the first matching pharmacy result.
+    const searchKeyword = String(keyword || '').trim();
+    const keywordForMatch = searchKeyword.toLowerCase();
+    if (!searchKeyword) {
+      markFailed('assignBranchToFirstMatchingPharmacy requires a non-empty keyword');
+    }
+
+    const assignBranchButton = getSelector(this.sel, 'OrderDetails.AssignBranchButton');
+    const assignBranchSearchInput = getSelector(this.sel, 'OrderDetails.AssignBranchSearchInput');
+    const assignBranchResultByKeywordTemplate = getSelector(
+      this.sel,
+      'OrderDetails.AssignBranchResultByKeywordTemplate'
+    );
+    const assignBranchFirstResult = getSelector(this.sel, 'OrderDetails.AssignBranchFirstResult');
+    const assignBranchConfirmButton = getSelector(this.sel, 'OrderDetails.AssignBranchConfirmButton');
+    const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');
+
+    if (!(await safeWaitForElementVisible(this.page, assignBranchButton, { timeout: Timeouts.long }))) {
+      markFailed('Assign branch button is not visible');
+    }
+    if (!(await safeClick(this.page, assignBranchButton))) {
+      markFailed('Unable to open assign branch dialog');
+    }
+    if (!(await safeWaitForElementVisible(this.page, assignBranchSearchInput, { timeout: Timeouts.long }))) {
+      markFailed('Assign branch search input is not visible');
+    }
+    if (!(await safeInput(this.page, assignBranchSearchInput, searchKeyword))) {
+      markFailed(`Unable to search branch keyword "${searchKeyword}"`);
+    }
+
+    const assignBranchResultByKeyword = assignBranchResultByKeywordTemplate.replace('{keyword}', keywordForMatch);
+    const keywordResultVisible = await safeWaitForElementVisible(this.page, assignBranchResultByKeyword, {
+      timeout: Timeouts.long,
+    });
+    if (keywordResultVisible) {
+      if (!(await safeClick(this.page, assignBranchResultByKeyword))) {
+        markFailed(`Unable to select assign-branch result for keyword "${normalizedKeyword}"`);
+      }
+    } else {
+      if (!(await safeWaitForElementVisible(this.page, assignBranchFirstResult, { timeout: Timeouts.short }))) {
+        markFailed(`No assign-branch result found for keyword "${searchKeyword}"`);
+      }
+      if (!(await safeClick(this.page, assignBranchFirstResult))) {
+        markFailed(`Unable to select first assign-branch result after searching "${searchKeyword}"`);
+      }
+    }
+    if (!(await safeWaitForElementVisible(this.page, assignBranchConfirmButton, { timeout: Timeouts.long }))) {
+      markFailed('Assign branch confirm button is not visible');
+    }
+    if (!(await safeClick(this.page, assignBranchConfirmButton, { timeout: Timeouts.long }))) {
+      markFailed('Unable to confirm assign branch');
+    }
+
+    // Assignment should unlock quote actions (Upload QR).
+    if (!(await safeWaitForElementVisible(this.page, uploadQRButton, { timeout: Timeouts.long }))) {
+      markFailed('Upload QR button did not appear after assigning branch');
+    }
+    await delay(1, 'Waiting 1 second after assigning branch');
   }
 
   async sendQuote() {
