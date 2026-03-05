@@ -168,6 +168,14 @@ If no failures exist, summary shows: `Yay. No failures!`
 REPORT_PUBLISH=0 npx playwright test
 ```
 
+## Trace Replay (Local)
+
+Open the latest trace from local runs:
+
+```bash
+npx playwright show-trace $(find test-results -name trace.zip | head -n 1)
+```
+
 ## API Authoring Rules
 
 For API test creation/update conventions, follow:

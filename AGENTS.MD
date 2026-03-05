@@ -390,7 +390,9 @@ Use this section when building cross-role E2E workflows where **merchant actions
 
 - Use safe helpers (`safeClick`, `safeClearText`, `safeInput`, `safePressEnter`, `safeWaitForPageLoad`) and `markFailed(...)` on false.
 - Use `safeWaitForPageLoad` as readiness source-of-truth.
-- Use timeout constants from `e2e/Timeouts.js`; do not hardcode ad-hoc waits.
+- Default to helper built-in timeout (`Timeouts.standard`) for safe helper calls.
+- Only pass explicit timeout overrides when a step is known to be slower than standard and the reason is clear.
+- Use timeout constants from `e2e/Timeouts.js` only when overriding; do not hardcode ad-hoc waits.
 - Keep utility behavior boolean-return based; avoid throw-driven control flow in safe helpers.
 - In Add Item modal flows, clear/replace numeric defaults explicitly (select-all then type) to avoid leading `0` appends.
 
