@@ -384,7 +384,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
     'E2E-12 | DeliverX - Patient to request requote and reduce item quantity before paying',
     {
       tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-12', '@workflow', '@hybrid', '@deliverx'],
-      // Flow summary: patient creates DeliverX order -> merchant accepts/quotes in UI -> patient accepts then requests requote ->
+      // Flow summary: patient creates DeliverX order -> merchant accepts/quotes in UI -> patient requests requote ->
       // merchant re-sends quote in UI -> patient accepts and pays -> merchant verifies quantity-change modal ->
       // admin confirms/assigns rider -> pharmacist sets for pickup -> rider completes -> patient rates ->
       // merchant verifies COMPLETED in details and Completed tab.
@@ -422,8 +422,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await orderDetailsPage.updatePriceItems(buildBasePriceItems());
       await orderDetailsPage.sendQuote();
 
-      // API (patient): accept quote, then request requote.
-      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
+      // API (patient): request requote directly after initial quote.
       await requestReQuoteAsPatientAction(api, { patientAccessToken, orderId });
       await orderDetailsPage.closeRequoteRequestModalIfVisible();
 

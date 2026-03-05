@@ -2,7 +2,10 @@ import { expect } from '../../../globalConfig.ui.js';
 import { Timeouts } from '../../../Timeouts.js';
 import { markFailed } from '../../../helpers/testUtilsUI.js';
 import { safeGraphQL, bearer } from '../../../../api/helpers/testUtilsAPI.js';
-import { PATIENT_ACCEPT_QUOTE_QUERY } from '../../../../api/tests/e2e/shared/queries/patient.queries.js';
+import {
+  PATIENT_ACCEPT_QUOTE_QUERY,
+  PATIENT_REQUEST_REQUOTE_QUERY,
+} from '../../../../api/tests/e2e/shared/queries/patient.queries.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -12,7 +15,6 @@ import {
   payOrderAsPatient,
   payOrderAsPatientForPickupOrder,
   payOrderAsPatientForScheduledDelivery,
-  requestReQuoteAsPatient,
   rateRiderAsPatient,
   uploadImageToSignedUrl,
 } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
@@ -179,8 +181,42 @@ export async function rateRiderAsPatientAction(api, { patientAccessToken, riderI
   });
 }
 
-export async function requestReQuoteAsPatientAction(api, { patientAccessToken, orderId }) {
-  await requestReQuoteAsPatient(api, { patientAccessToken, orderId });
+export async function requestReQuoteAsPatientAction(
+  api,
+  { patientAccessToken, orderId, timeout = Timeouts.long }
+) {
+  await expect
+    .poll(
+      async () => {
+        const requestReQuoteRes = await safeGraphQL(api, {
+          query: PATIENT_REQUEST_REQUOTE_QUERY,
+          variables: { orderId },
+          headers: bearer(patientAccessToken),
+        });
+        if (requestReQuoteRes.ok) {
+          const requestReQuoteNode = requestReQuoteRes.body?.data?.patient?.order?.requestReQuote;
+          if (requestReQuoteNode?.id === orderId) {
+            return 'ok';
+          }
+        }
+
+        const errorMessage = String(
+          requestReQuoteRes.errorMessage ||
+            requestReQuoteRes.error ||
+            requestReQuoteRes.body?.errors?.[0]?.message ||
+            ''
+        ).toLowerCase();
+        if (errorMessage.includes('set for re-quoting already')) {
+          return 'ok';
+        }
+        if (errorMessage.includes('cannot be re-quoted yet')) {
+          return 'retry';
+        }
+        return `error:${requestReQuoteRes.error || requestReQuoteRes.errorMessage || 'unknown error'}`;
+      },
+      { timeout }
+    )
+    .toBe('ok');
 }
 
 export function buildReducedQuantitiesFromAcceptQuote(acceptQuoteNode, reducedQuantity = 1) {
