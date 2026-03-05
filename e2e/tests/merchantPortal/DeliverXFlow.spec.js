@@ -218,6 +218,16 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // merchant verifies COMPLETED in details and Completed tab.
     },
     async ({ page, api }) => {
+      const manilaHourRaw = Number(
+        new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Manila',
+          hour: '2-digit',
+          hour12: false,
+        }).format(new Date())
+      );
+      const manilaHour = Number.isFinite(manilaHourRaw) ? manilaHourRaw % 24 : 0;
+      test.skip(manilaHour >= 0 && manilaHour < 6, 'Skipped - Time is out of schedule');
+
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');

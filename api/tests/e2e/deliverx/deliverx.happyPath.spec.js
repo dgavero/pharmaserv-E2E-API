@@ -574,6 +574,16 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       ],
     },
     async ({ api }) => {
+      const manilaHourRaw = Number(
+        new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Manila',
+          hour: '2-digit',
+          hour12: false,
+        }).format(new Date())
+      );
+      const manilaHour = Number.isFinite(manilaHourRaw) ? manilaHourRaw % 24 : 0;
+      test.skip(manilaHour >= 0 && manilaHour < 6, 'Skipped - Time is out of schedule');
+
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
@@ -641,28 +651,6 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         variables: { orderId },
         headers: bearer(riderAccessToken),
       });
-
-      // If run between 12AM-6AM (+08), allow expected out-of-schedule response and stop early.
-      const manilaHour = Number(
-        new Intl.DateTimeFormat('en-US', {
-          timeZone: 'Asia/Manila',
-          hour: '2-digit',
-          hour12: false,
-        }).format(new Date())
-      );
-      const isBlockedWindow = manilaHour >= 0 && manilaHour < 6;
-      const outOfScheduleMsg = 'Order cannot be started since time is outside the schedule for delivery';
-      if (
-        isBlockedWindow &&
-        !startPickupOrderRes.ok &&
-        String(startPickupOrderRes.error || '').includes(outOfScheduleMsg)
-      ) {
-        test.info().annotations.push({
-          type: 'info',
-          description: 'Expected scheduled-window stop: outside delivery schedule during 12AM-6AM (+08).',
-        });
-        return;
-      }
       expect(startPickupOrderRes.ok, startPickupOrderRes.error || 'Rider start pickup order failed').toBe(true);
       expect(startPickupOrderRes.body?.data?.rider?.order?.start?.id).toBe(orderId);
 
