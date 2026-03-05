@@ -9,13 +9,7 @@
   },
   "Apps": {
     "SidebarHomeLink": "//a[@href='/' and (.//*[normalize-space()='Home'] or normalize-space()='Home')]",
-    "SidebarOrdersLink": "//a[@href='/orders/new' or @href='/orders' or .//*[normalize-space()='Orders'] or normalize-space()='Orders']",
-    "DashboardSeeAllOrdersButton": "(//a[@href='/orders/new' and (contains(normalize-space(),'See All Orders') or .//*[contains(normalize-space(),'See All Orders')])])[1]"
-  },
-  "Dashboard": {
-    "OrderPopupOverlay": "(//*[@data-slot='dialog-overlay' and @data-state='open'])[1]",
-    "OrderPopupCloseButton": "(//*[@data-slot='dialog-close'] | //*[@role='dialog']//button[@data-slot='dialog-close'])[1]",
-    "OrderPopupGoToNewOrdersButton": "//*[self::button or self::a][contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'go to new orders')]"
+    "SidebarOrdersLink": "//a[@href='/orders/new' or @href='/orders' or .//*[normalize-space()='Orders'] or normalize-space()='Orders']"
   },
   "Orders": {
     "PageRoot": "//h1[normalize-space()='Orders']",

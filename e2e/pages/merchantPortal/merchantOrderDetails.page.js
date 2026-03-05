@@ -170,7 +170,7 @@ export default class MerchantOrderDetailsPage {
     });
     if (keywordResultVisible) {
       if (!(await safeClick(this.page, assignBranchResultByKeyword))) {
-        markFailed(`Unable to select assign-branch result for keyword "${normalizedKeyword}"`);
+        markFailed(`Unable to select assign-branch result for keyword "${keywordForMatch}"`);
       }
     } else {
       if (!(await safeWaitForElementVisible(this.page, assignBranchFirstResult, { timeout: Timeouts.short }))) {
