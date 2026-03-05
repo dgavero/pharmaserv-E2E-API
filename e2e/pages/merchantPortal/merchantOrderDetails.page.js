@@ -19,6 +19,7 @@ export default class MerchantOrderDetailsPage {
 
   async acceptOrder() {
     // Accepts the order and verifies next-stage quotation actions are available.
+    console.log('Accepting order in merchant portal...');
     const acceptButton = getSelector(this.sel, 'OrderDetails.AcceptButton');
     if (!(await safeWaitForElementVisible(this.page, acceptButton))) {
       markFailed('Accept order button is not visible');
@@ -142,7 +143,10 @@ export default class MerchantOrderDetailsPage {
 
     const assignBranchButton = getSelector(this.sel, 'OrderDetails.AssignBranchButton');
     const assignBranchSearchInput = getSelector(this.sel, 'OrderDetails.AssignBranchSearchInput');
-    const assignBranchResultByKeywordTemplate = getSelector(this.sel, 'OrderDetails.AssignBranchResultByKeywordTemplate');
+    const assignBranchResultByKeywordTemplate = getSelector(
+      this.sel,
+      'OrderDetails.AssignBranchResultByKeywordTemplate'
+    );
     const assignBranchFirstResult = getSelector(this.sel, 'OrderDetails.AssignBranchFirstResult');
     const assignBranchConfirmButton = getSelector(this.sel, 'OrderDetails.AssignBranchConfirmButton');
     const uploadQRButton = getSelector(this.sel, 'OrderDetails.UploadQRButton');

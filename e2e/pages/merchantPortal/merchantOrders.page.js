@@ -74,6 +74,7 @@ export default class MerchantOrdersPage {
 
   async openOrderByBookingRefInTab(tabSelector, bookingRef, tabLabel = 'target') {
     // Shared opener: search exact booking ref in tab, click card, then wait details page ready.
+    console.log(`Opening [${tabLabel.toLowerCase()} order] details for booking ref: ${bookingRef}`);
     const orderCardBookingReferenceID = await this.searchOrderInTab(tabSelector, bookingRef, tabLabel);
     if (!(await safeWaitForElementVisible(this.page, orderCardBookingReferenceID))) {
       markFailed(`Order card is not visible for booking ref ${bookingRef} in ${tabLabel} tab`);
@@ -84,6 +85,7 @@ export default class MerchantOrdersPage {
     if (!(await safeWaitForPageLoad(this.page))) {
       markFailed(`Order details page did not load for booking ref ${bookingRef}`);
     }
+    console.log(`Opened [${tabLabel.toLowerCase()} order] details for booking ref: ${bookingRef}`);
   }
 
   async hasOrderByBookingRefInTab(tabSelector, bookingRef, tabLabel = 'target') {
