@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
 import { Timeouts } from '../../Timeouts.js';
-import { markFailed } from '../../helpers/testUtilsUI.js';
+import { markFailed, safeWaitForElementHidden } from '../../helpers/testUtilsUI.js';
+import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
 import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
@@ -13,13 +14,14 @@ import {
 } from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
 import {
   buildBasePriceItems,
+  buildBasePrescriptionItems,
   buildDeliverXAttachmentNoPrescriptionHybridOrderInput,
+  buildHybridOrderInput,
   HybridDeliveryTypes,
 } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
-  buildReducedQuantitiesFromAcceptQuote,
   createHybridOrder,
   createHybridOrderForBranch,
   payOrderAsPatientWithProof,
@@ -57,10 +59,17 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
       const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
 
-      // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.DELIVER_X,
-        branchId: merchantBranchId,
+      // API (patient): create order with higher submitted quantities (5, 7).
+      const submittedPrescriptionItems = buildBasePrescriptionItems().map((item, index) => ({
+        ...item,
+        quantity: index === 0 ? 5 : 7,
+      }));
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildHybridOrderInput({
+          deliveryType: HybridDeliveryTypes.DELIVER_X,
+          branchId: merchantBranchId,
+          prescriptionItems: submittedPrescriptionItems,
+        }),
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
@@ -432,29 +441,52 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await orderDetailsPage.updatePriceItems(buildBasePriceItems());
       await orderDetailsPage.sendQuote();
 
-      // API (patient): request requote directly after initial quote.
+      // API (patient): accept initial quote, then request requote.
+      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
       await requestReQuoteAsPatientAction(api, { patientAccessToken, orderId });
-      await orderDetailsPage.closeRequoteRequestModalIfVisible();
+      await orderDetailsPage.closeRequoteRequestModal();
 
       // UI (merchant): re-send quote after patient requote/quantity change.
+      const sel = loadSelectors('merchant');
+      const requestPaymentLoadingButton = getSelector(sel, 'OrderDetails.RequestPaymentLoadingButton');
+      if (!(await safeWaitForElementHidden(page, requestPaymentLoadingButton))) {
+        markFailed('Request payment is still loading before re-send quote');
+      }
       await orderDetailsPage.sendQuote();
 
-      // API (patient): accept updated quote, reduce quantities, then pay.
+      // API (patient): accept updated quote, reduce quantities (3, 4), then pay.
       const { acceptQuoteNode: reQuotedAcceptNode } = await acceptQuoteAsPatientWhenReady(api, {
         patientAccessToken,
         orderId,
         timeout: Timeouts.long,
       });
-      const reducedQuantities = buildReducedQuantitiesFromAcceptQuote(reQuotedAcceptNode, 1);
+      const reQuotedPrescriptionItems = reQuotedAcceptNode?.legs?.[0]?.prescriptionItems || [];
+      if (reQuotedPrescriptionItems.length < 2) {
+        markFailed('Missing prescription items from updated quote for quantity reduction');
+      }
+      const firstPrescriptionItemId = Number(reQuotedPrescriptionItems[0]?.id);
+      const secondPrescriptionItemId = Number(reQuotedPrescriptionItems[1]?.id);
+      if (!firstPrescriptionItemId || !secondPrescriptionItemId) {
+        markFailed('Missing prescription item IDs from updated quote for quantity reduction');
+      }
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
         proofImagePath: patientProofPaymentImagePath,
         mode: PatientPayModes.DELIVERY,
-        quantities: reducedQuantities,
+        quantities: [
+          {
+            prescriptionItemId: firstPrescriptionItemId,
+            quantity: 3,
+          },
+          {
+            prescriptionItemId: secondPrescriptionItemId,
+            quantity: 4,
+          },
+        ],
       });
 
-      // UI (merchant): verify quantity-change modal appears.
+      // UI (merchant): verify quantity-change modal appears and close it.
       await orderDetailsPage.verifyQuantityChangedModalAppeared();
 
       // API (admin): confirm payment.

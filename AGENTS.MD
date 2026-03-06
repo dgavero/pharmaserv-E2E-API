@@ -393,8 +393,10 @@ Use this section when building cross-role E2E workflows where **merchant actions
 - Prefer built-in safe wait helpers for standard readiness checks (visible/attached/hidden) before actions.
 - Use probe-based bounded retries (`isVisible`, `inputValue`, `count` with capped attempts) only for compound/stateful checks where a single wait is not enough (example: booking-ref search retention + exact order card visibility + no-results state).
 - Default to helper built-in timeout (`Timeouts.standard`) for safe helper calls.
+- Keep timeout overrides scoped to specific slow/fragile paths only (example: order search/open checks using `Timeouts.short` for faster fail/retry); do not change global defaults.
 - Only pass explicit timeout overrides when a step is known to be slower than standard and the reason is clear.
 - Use timeout constants from `e2e/Timeouts.js` only when overriding; do not hardcode ad-hoc waits.
+- `delay(seconds, message)` accepts seconds, not milliseconds. If using timeout constants, convert explicitly (example: `Timeouts.short / 1000`).
 - Keep utility behavior boolean-return based; avoid throw-driven control flow in safe helpers.
 - In Add Item modal flows, clear/replace numeric defaults explicitly (select-all then type) to avoid leading `0` appends.
 
@@ -406,4 +408,6 @@ Use this section when building cross-role E2E workflows where **merchant actions
 - Always bind order creation to the active merchant branch.
 - When pricing in UI, update all visible editable items.
 - Poll for quote readiness before patient accept-quote steps.
+- For requote flows, align with API reference sequence: initial patient `acceptQuote` before `requestReQuote`, then merchant sends updated quote.
+- `closeRequoteRequestModal()` may be conditional in runtime: close it when visible, proceed when not shown.
 - For add-item search flows that require deterministic selection, encode the agreed behavior in page-object methods (example: select second result for the current Add Item modal behavior).

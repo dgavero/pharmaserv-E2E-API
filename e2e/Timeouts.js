@@ -30,3 +30,12 @@ export const Timeouts = {
   extraLong: 60_000,
   superExtraLong: 300_000,
 };
+
+// Seconds view for helpers that accept seconds (for example: delay()).
+export const TimeoutsSec = {
+  short: Timeouts.short / 1000,
+  standard: Timeouts.standard / 1000,
+  long: Timeouts.long / 1000,
+  extraLong: Timeouts.extraLong / 1000,
+  superExtraLong: Timeouts.superExtraLong / 1000,
+};

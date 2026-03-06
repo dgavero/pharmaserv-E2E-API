@@ -8,6 +8,14 @@ export default class MerchantPortalLoginPage {
     // Bind Playwright page and load merchant selectors once for reuse.
     this.page = page;
     this.sel = loadSelectors('merchant');
+    this.s = {
+      loginUsername: getSelector(this.sel, 'Login.Username'),
+      loginPassword: getSelector(this.sel, 'Login.Password'),
+      loginSubmit: getSelector(this.sel, 'Login.Submit'),
+      sidebarHomeLink: getSelector(this.sel, 'Apps.SidebarHomeLink'),
+      errorCredsValidation: getSelector(this.sel, 'Login.ErrorMessageCredsValidation'),
+      errorInvalidUsername: getSelector(this.sel, 'Login.ErrorMessageInvalidUserName'),
+    };
   }
 
   async open() {
@@ -21,27 +29,25 @@ export default class MerchantPortalLoginPage {
       markFailed('Merchant login requires non-empty username and password');
     }
 
-    if (!(await safeInput(this.page, getSelector(this.sel, 'Login.Username'), user))) {
+    if (!(await safeInput(this.page, this.s.loginUsername, user))) {
       markFailed('Failed to input username');
     }
 
-    if (!(await safeInput(this.page, getSelector(this.sel, 'Login.Password'), pass))) {
+    if (!(await safeInput(this.page, this.s.loginPassword, pass))) {
       markFailed('Failed to input password');
     }
 
-    const submitButton = getSelector(this.sel, 'Login.Submit');
-    if (!(await safeWaitForElementVisible(this.page, submitButton))) {
+    if (!(await safeWaitForElementVisible(this.page, this.s.loginSubmit))) {
       markFailed('Login submit button is not visible');
     }
-    if (!(await safeClick(this.page, submitButton))) {
+    if (!(await safeClick(this.page, this.s.loginSubmit))) {
       markFailed('Failed to click login');
     }
   }
 
   async assertSuccessLogin() {
     // Confirms successful login by validating the Home sidebar entry is visible.
-    const sidebarHomeLink = getSelector(this.sel, 'Apps.SidebarHomeLink');
-    const sidebarHomeLinkVisible = await safeWaitForElementVisible(this.page, sidebarHomeLink);
+    const sidebarHomeLinkVisible = await safeWaitForElementVisible(this.page, this.s.sidebarHomeLink);
     if (!sidebarHomeLinkVisible) {
       markFailed('Expected Home sidebar link to be visible after login');
     }
@@ -49,20 +55,18 @@ export default class MerchantPortalLoginPage {
 
   async assertFailedLogin() {
     // Accepts either known login error variant using one shared wait window, then probes both.
-    const errorCredsSelector = getSelector(this.sel, 'Login.ErrorMessageCredsValidation');
-    const errorUsernameSelector = getSelector(this.sel, 'Login.ErrorMessageInvalidUserName');
     const deadline = Date.now() + Timeouts.standard;
 
     let errorCredsVisible = false;
     let errorUsernameVisible = false;
     while (Date.now() < deadline) {
       errorCredsVisible = await this.page
-        .locator(errorCredsSelector)
+        .locator(this.s.errorCredsValidation)
         .first()
         .isVisible()
         .catch(() => false);
       errorUsernameVisible = await this.page
-        .locator(errorUsernameSelector)
+        .locator(this.s.errorInvalidUsername)
         .first()
         .isVisible()
         .catch(() => false);

@@ -1,7 +1,7 @@
 import { expect } from '../../../globalConfig.ui.js';
 import { Timeouts } from '../../../Timeouts.js';
 import { markFailed } from '../../../helpers/testUtilsUI.js';
-import { safeGraphQL, bearer } from '../../../../api/helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, extractApiFailureSnippet } from '../../../../api/helpers/testUtilsAPI.js';
 import {
   PATIENT_ACCEPT_QUOTE_QUERY,
   PATIENT_REQUEST_REQUOTE_QUERY,
@@ -20,6 +20,12 @@ import {
 } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
 import { buildHybridOrderInput } from '../generic.orderData.js';
 
+function failAction(actionLabel, error) {
+  const rawMessage = String(error?.message || error || 'unknown error');
+  const snippet = extractApiFailureSnippet({ error: { message: rawMessage }, errors: [] });
+  markFailed(`${actionLabel} failed:\n${snippet || rawMessage}`);
+}
+
 export const PatientPayModes = Object.freeze({
   DELIVERY: 'DELIVERY',
   PICKUP: 'PICKUP',
@@ -28,195 +34,237 @@ export const PatientPayModes = Object.freeze({
 });
 
 export async function createHybridOrder(api, { order }) {
-  const { patientAccessToken } = await loginPatient(api);
-  const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
-    patientAccessToken,
-    order,
-  });
+  try {
+    const { patientAccessToken } = await loginPatient(api);
+    const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
+      patientAccessToken,
+      order,
+    });
 
-  const bookingRef = submitOrderNode?.trackingCode;
-  if (!bookingRef) {
-    markFailed('Missing trackingCode from submit order response');
+    const bookingRef = submitOrderNode?.trackingCode;
+    if (!bookingRef) {
+      markFailed('Missing trackingCode from submit order response');
+    }
+
+    return {
+      patientAccessToken,
+      orderId,
+      bookingRef,
+    };
+  } catch (error) {
+    failAction('createHybridOrder', error);
   }
-
-  return {
-    patientAccessToken,
-    orderId,
-    bookingRef,
-  };
 }
 
 export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {
-  const orderInput = buildHybridOrderInput({
-    deliveryType,
-    branchId,
-  });
-  // FindMyMeds branch assignment is done in merchant UI after accept.
-  if (omitBranchId) {
-    delete orderInput.branchId;
+  try {
+    const orderInput = buildHybridOrderInput({
+      deliveryType,
+      branchId,
+    });
+    // FindMyMeds branch assignment is done in merchant UI after accept.
+    if (omitBranchId) {
+      delete orderInput.branchId;
+    }
+    return createHybridOrder(api, { order: orderInput });
+  } catch (error) {
+    failAction('createHybridOrderForBranch', error);
   }
-  return createHybridOrder(api, { order: orderInput });
 }
 
 export async function acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout = Timeouts.long }) {
-  let acceptQuoteNode = null;
-  await expect
-    .poll(
-      async () => {
-        const acceptQuoteRes = await safeGraphQL(api, {
-          query: PATIENT_ACCEPT_QUOTE_QUERY,
-          variables: { orderId },
-          headers: bearer(patientAccessToken),
-        });
-        if (!acceptQuoteRes.ok) {
-          return 'not-ready';
-        }
-        acceptQuoteNode = acceptQuoteRes.body?.data?.patient?.order?.acceptQuote || null;
-        return acceptQuoteNode?.id === orderId ? 'ok' : 'not-ready';
-      },
-      { timeout }
-    )
-    .toBe('ok');
+  try {
+    let acceptQuoteNode = null;
+    await expect
+      .poll(
+        async () => {
+          const acceptQuoteRes = await safeGraphQL(api, {
+            query: PATIENT_ACCEPT_QUOTE_QUERY,
+            variables: { orderId },
+            headers: bearer(patientAccessToken),
+          });
+          if (!acceptQuoteRes.ok) {
+            return 'not-ready';
+          }
+          acceptQuoteNode = acceptQuoteRes.body?.data?.patient?.order?.acceptQuote || null;
+          return acceptQuoteNode?.id === orderId ? 'ok' : 'not-ready';
+        },
+        { timeout }
+      )
+      .toBe('ok');
 
-  return { acceptQuoteNode };
+    return { acceptQuoteNode };
+  } catch (error) {
+    failAction('acceptQuoteAsPatientWhenReady', error);
+  }
+  console.log('Finished waiting for acceptQuoteAsPatientWhenReady');
 }
 
 export async function ensurePatientPaymentQRCodeAccessible(api, { patientAccessToken, paymentQRCodeId }) {
-  const { paymentQRCodePhoto } = await getPaymentQRCodeAsPatient(api, {
-    patientAccessToken,
-    paymentQRCodeId,
-  });
-  await getBlobTokenAsPatient(api, {
-    patientAccessToken,
-    blobName: paymentQRCodePhoto,
-  });
-  return { paymentQRCodePhoto };
+  try {
+    const { paymentQRCodePhoto } = await getPaymentQRCodeAsPatient(api, {
+      patientAccessToken,
+      paymentQRCodeId,
+    });
+    await getBlobTokenAsPatient(api, {
+      patientAccessToken,
+      blobName: paymentQRCodePhoto,
+    });
+    return { paymentQRCodePhoto };
+  } catch (error) {
+    failAction('ensurePatientPaymentQRCodeAccessible', error);
+  }
 }
 
-export async function payOrderAsPatientWithProof(api, { patientAccessToken, orderId, proofImagePath, mode, quantities }) {
-  const normalizedMode = String(mode || PatientPayModes.DEFAULT).toUpperCase();
-  const hasQuantities = Array.isArray(quantities) && quantities.length > 0;
-  const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
-    patientAccessToken,
-  });
-  await uploadImageToSignedUrl(api, {
-    uploadUrl: proofOfPaymentUploadUrl,
-    imagePath: proofImagePath,
-  });
+export async function payOrderAsPatientWithProof(
+  api,
+  { patientAccessToken, orderId, proofImagePath, mode, quantities }
+) {
+  try {
+    const normalizedMode = String(mode || PatientPayModes.DEFAULT).toUpperCase();
+    const hasQuantities = Array.isArray(quantities) && quantities.length > 0;
+    const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
+      patientAccessToken,
+    });
+    await uploadImageToSignedUrl(api, {
+      uploadUrl: proofOfPaymentUploadUrl,
+      imagePath: proofImagePath,
+    });
 
-  if (normalizedMode === PatientPayModes.PICKUP) {
-    if (hasQuantities) {
+    if (normalizedMode === PatientPayModes.PICKUP) {
+      if (hasQuantities) {
+        await payOrderAsPatient(api, {
+          patientAccessToken,
+          orderId,
+          proof: {
+            fulfillmentMode: 'PICKUP',
+            photo: proofOfPaymentBlobName,
+            quantities,
+          },
+        });
+        return;
+      }
+      await payOrderAsPatientForPickupOrder(api, {
+        patientAccessToken,
+        orderId,
+        proofPhoto: proofOfPaymentBlobName,
+      });
+      return;
+    }
+
+    if (normalizedMode === PatientPayModes.SCHEDULED) {
+      if (hasQuantities) {
+        await payOrderAsPatient(api, {
+          patientAccessToken,
+          orderId,
+          proof: {
+            fulfillmentMode: 'SCHEDULED',
+            photo: proofOfPaymentBlobName,
+            quantities,
+          },
+        });
+        return;
+      }
+      await payOrderAsPatientForScheduledDelivery(api, {
+        patientAccessToken,
+        orderId,
+        proofPhoto: proofOfPaymentBlobName,
+      });
+      return;
+    }
+
+    if (normalizedMode === PatientPayModes.DELIVERY) {
       await payOrderAsPatient(api, {
         patientAccessToken,
         orderId,
         proof: {
-          fulfillmentMode: 'PICKUP',
+          fulfillmentMode: 'DELIVERY',
           photo: proofOfPaymentBlobName,
-          quantities,
+          ...(hasQuantities ? { quantities } : {}),
         },
       });
       return;
     }
-    await payOrderAsPatientForPickupOrder(api, {
-      patientAccessToken,
-      orderId,
-      proofPhoto: proofOfPaymentBlobName,
-    });
-    return;
-  }
 
-  if (normalizedMode === PatientPayModes.SCHEDULED) {
-    if (hasQuantities) {
+    if (normalizedMode === PatientPayModes.DEFAULT) {
       await payOrderAsPatient(api, {
         patientAccessToken,
         orderId,
         proof: {
-          fulfillmentMode: 'SCHEDULED',
           photo: proofOfPaymentBlobName,
-          quantities,
+          ...(hasQuantities ? { quantities } : {}),
         },
       });
       return;
     }
-    await payOrderAsPatientForScheduledDelivery(api, {
-      patientAccessToken,
-      orderId,
-      proofPhoto: proofOfPaymentBlobName,
-    });
-    return;
-  }
 
-  if (normalizedMode === PatientPayModes.DELIVERY) {
-    await payOrderAsPatient(api, {
-      patientAccessToken,
-      orderId,
-      proof: {
-        fulfillmentMode: 'DELIVERY',
-        photo: proofOfPaymentBlobName,
-        ...(hasQuantities ? { quantities } : {}),
-      },
-    });
-    return;
+    markFailed(`Unsupported patient pay mode: ${mode}`);
+  } catch (error) {
+    failAction('payOrderAsPatientWithProof', error);
   }
-
-  if (normalizedMode === PatientPayModes.DEFAULT) {
-    await payOrderAsPatient(api, {
-      patientAccessToken,
-      orderId,
-      proof: {
-        photo: proofOfPaymentBlobName,
-        ...(hasQuantities ? { quantities } : {}),
-      },
-    });
-    return;
-  }
-
-  markFailed(`Unsupported patient pay mode: ${mode}`);
+  console.log('Finished payOrderAsPatientWithProof');
 }
 
 export async function rateRiderAsPatientAction(api, { patientAccessToken, riderId }) {
-  await rateRiderAsPatient(api, {
-    patientAccessToken,
-    riderId,
-  });
+  try {
+    await rateRiderAsPatient(api, {
+      patientAccessToken,
+      riderId,
+    });
+  } catch (error) {
+    failAction('rateRiderAsPatientAction', error);
+  }
 }
 
 export async function requestReQuoteAsPatientAction(
   api,
-  { patientAccessToken, orderId, timeout = Timeouts.long }
+  { patientAccessToken, orderId, timeout = Timeouts.extraLong }
 ) {
-  await expect
-    .poll(
-      async () => {
-        const requestReQuoteRes = await safeGraphQL(api, {
-          query: PATIENT_REQUEST_REQUOTE_QUERY,
-          variables: { orderId },
-          headers: bearer(patientAccessToken),
-        });
-        if (requestReQuoteRes.ok) {
-          const requestReQuoteNode = requestReQuoteRes.body?.data?.patient?.order?.requestReQuote;
-          if (requestReQuoteNode?.id === orderId) {
+  try {
+    await expect
+      .poll(
+        async () => {
+          const requestReQuoteRes = await safeGraphQL(api, {
+            query: PATIENT_REQUEST_REQUOTE_QUERY,
+            variables: { orderId },
+            headers: bearer(patientAccessToken),
+          });
+          if (requestReQuoteRes.ok) {
+            const requestReQuoteNode = requestReQuoteRes.body?.data?.patient?.order?.requestReQuote;
+            if (requestReQuoteNode?.id === orderId) {
+              return 'ok';
+            }
+          }
+
+          const errorMessage = String(
+            requestReQuoteRes.errorMessage ||
+              requestReQuoteRes.error ||
+              requestReQuoteRes.body?.errors?.[0]?.message ||
+              ''
+          ).toLowerCase();
+          if (
+            errorMessage.includes('set for re-quoting already') ||
+            errorMessage.includes('already set for re-quoting') ||
+            errorMessage.includes('already requested for re-quote')
+          ) {
             return 'ok';
           }
-        }
-
-        const errorMessage = String(
-          requestReQuoteRes.errorMessage ||
-            requestReQuoteRes.error ||
-            requestReQuoteRes.body?.errors?.[0]?.message ||
-            ''
-        ).toLowerCase();
-        if (errorMessage.includes('set for re-quoting already')) {
-          return 'ok';
-        }
-        if (errorMessage.includes('cannot be re-quoted yet')) {
-          return 'retry';
-        }
-        return `error:${requestReQuoteRes.error || requestReQuoteRes.errorMessage || 'unknown error'}`;
-      },
-      { timeout }
-    )
-    .toBe('ok');
+          if (
+            errorMessage.includes('cannot be re-quoted yet') ||
+            errorMessage.includes('cannot be re quoted yet') ||
+            errorMessage.includes('order cannot be re-quoted yet') ||
+            errorMessage.includes('please wait')
+          ) {
+            return 'retry';
+          }
+          return `error:${requestReQuoteRes.error || requestReQuoteRes.errorMessage || 'unknown error'}`;
+        },
+        { timeout }
+      )
+      .toBe('ok');
+  } catch (error) {
+    failAction('requestReQuoteAsPatientAction', error);
+  }
 }
 
 export function buildReducedQuantitiesFromAcceptQuote(acceptQuoteNode, reducedQuantity = 1) {

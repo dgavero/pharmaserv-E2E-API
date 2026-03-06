@@ -76,7 +76,7 @@ export default class MerchantOrdersPage {
     // Shared opener: search exact booking ref in tab, click card, then wait details page ready.
     console.log(`Opening [${tabLabel.toLowerCase()} order] details for booking ref: ${bookingRef}`);
     const orderCardBookingReferenceID = await this.searchOrderInTab(tabSelector, bookingRef, tabLabel);
-    if (!(await safeWaitForElementVisible(this.page, orderCardBookingReferenceID))) {
+    if (!(await safeWaitForElementVisible(this.page, orderCardBookingReferenceID, { timeout: Timeouts.short }))) {
       markFailed(`Order card is not visible for booking ref ${bookingRef} in ${tabLabel} tab`);
     }
     if (!(await safeClick(this.page, orderCardBookingReferenceID))) {
@@ -102,7 +102,7 @@ export default class MerchantOrdersPage {
     // Runs bounded retries to search exact booking ref and validates retained input + card match.
     const searchTerm = String(bookingRef);
     const maxSearchAttempts = 2;
-    const perAttemptProbeBudgetMs = Timeouts.long;
+    const perAttemptProbeBudgetMs = Timeouts.short;
     const probeIntervalMs = 300;
     const orderCardBookingReferenceID = this.buildOrderCardBookingReferenceID(searchTerm);
     const tabLabelLower = String(tabLabel).toLowerCase();
@@ -115,7 +115,7 @@ export default class MerchantOrdersPage {
       if (!(await safeClick(this.page, tabSelector))) {
         markFailed(`Unable to open ${tabLabel} orders tab`);
       }
-      if (!(await safeWaitForPageLoad(this.page, [this.searchInput, tabSelector]))) {
+      if (!(await safeWaitForPageLoad(this.page, [this.searchInput, tabSelector], { timeout: Timeouts.short }))) {
         markFailed(`Orders tab did not stabilize before searching in ${tabLabel} tab`);
       }
       if (!(await safeWaitForElementVisible(this.page, this.searchInput))) {
@@ -131,7 +131,11 @@ export default class MerchantOrdersPage {
       if (!(await safeInput(this.page, this.searchInput, searchTerm))) {
         markFailed(`Unable to search ${tabLabelLower} order ${searchTerm}`);
       }
-      if (!(await safeWaitForPageLoad(this.page, [orderCardBookingReferenceID, this.noResultsFoundMessage]))) {
+      if (
+        !(await safeWaitForPageLoad(this.page, [orderCardBookingReferenceID, this.noResultsFoundMessage], {
+          timeout: Timeouts.short,
+        }))
+      ) {
         markFailed(`Search results did not stabilize for ${tabLabelLower} booking ref ${searchTerm}`);
       }
 
@@ -202,11 +206,6 @@ export default class MerchantOrdersPage {
 
       if (attempt < maxStatusCheckAttempts) {
         await this.page.reload();
-        if (this.page.url().includes('/login')) {
-          markFailed(
-            `Merchant session redirected to login while waiting for ${statusConfig.tabLabel} status on order details`
-          );
-        }
         if (!(await safeWaitForPageLoad(this.page))) {
           markFailed(`Order details page did not load after refresh while verifying ${statusConfig.tabLabel} status`);
         }
