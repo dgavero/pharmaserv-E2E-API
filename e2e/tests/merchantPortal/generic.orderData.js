@@ -24,7 +24,9 @@ function resolveMedicineIds() {
 }
 
 function normalizeDeliveryType(deliveryType) {
-  const normalized = String(deliveryType || '').trim().toUpperCase();
+  const normalized = String(deliveryType || '')
+    .trim()
+    .toUpperCase();
   if (!HybridDeliveryTypes[normalized]) {
     throw new Error(`Unsupported deliveryType="${deliveryType}" for hybrid order data`);
   }
@@ -32,7 +34,7 @@ function normalizeDeliveryType(deliveryType) {
 }
 
 export function buildBasePrescriptionItems({
-  quantity = 2,
+  quantity = 10,
   firstSource = 'SEARCH',
   secondSource = 'E_PRESCRIPTION',
   firstSpecialInstructions = null,

@@ -405,6 +405,8 @@ export async function safeWaitForPageLoad(
   console.log(`Checking if page loaded successfully: ${startUrl}`);
   const remainingMs = () => Math.max(0, timeout - (Date.now() - startedAt));
   const elapsedSeconds = () => ((Date.now() - startedAt) / 1000).toFixed(1);
+  const startedFromLogin = String(startUrl).includes('/login');
+  const hasUnexpectedLoginRedirect = () => !startedFromLogin && String(page.url()).includes('/login');
   const logFailureAndReturn = () => {
     console.log(`Page load failed after ${elapsedSeconds()} seconds`);
     return false;
@@ -418,6 +420,10 @@ export async function safeWaitForPageLoad(
       return logFailureAndReturn();
     }
     await page.waitForLoadState(waitUntil, { timeout: loadStateBudget });
+    if (hasUnexpectedLoginRedirect()) {
+      setLastErrorForPage(page, new Error('Unexpected redirect to /login'));
+      return logFailureAndReturn();
+    }
   } catch (error) {
     console.log(`Page load state check failed: ${error?.message || error}`);
     setLastErrorForPage(page, error);
@@ -462,6 +468,10 @@ export async function safeWaitForPageLoad(
 
   // 3) Optional target check: URL or any selector.
   if (expectedUrlOrSelectors == null) {
+    if (hasUnexpectedLoginRedirect()) {
+      setLastErrorForPage(page, new Error('Unexpected redirect to /login'));
+      return logFailureAndReturn();
+    }
     return logSuccessAndReturn();
   }
 
@@ -476,6 +486,10 @@ export async function safeWaitForPageLoad(
         for (const selector of selectorList) {
           try {
             if (await page.locator(selector).first().isVisible()) {
+              if (hasUnexpectedLoginRedirect()) {
+                setLastErrorForPage(page, new Error('Unexpected redirect to /login'));
+                return logFailureAndReturn();
+              }
               return logSuccessAndReturn();
             }
           } catch {
@@ -495,6 +509,10 @@ export async function safeWaitForPageLoad(
       return logFailureAndReturn();
     }
     await page.waitForURL(expectedUrlOrSelectors, { timeout: urlBudget, waitUntil });
+    if (hasUnexpectedLoginRedirect()) {
+      setLastErrorForPage(page, new Error('Unexpected redirect to /login'));
+      return logFailureAndReturn();
+    }
     return logSuccessAndReturn();
   } catch (error) {
     console.log(`Page target check failed: ${error?.message || error}`);

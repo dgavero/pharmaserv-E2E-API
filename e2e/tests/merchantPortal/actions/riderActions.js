@@ -1,4 +1,4 @@
-import { safeGraphQL, bearer } from '../../../../api/helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, extractApiFailureSnippet } from '../../../../api/helpers/testUtilsAPI.js';
 import { RIDER_START_PICKUP_ORDER_QUERY } from '../../../../api/tests/e2e/shared/queries/rider.queries.js';
 import {
   loginRider,
@@ -17,37 +17,52 @@ import {
   sendQuoteAsRider,
 } from '../../../../api/tests/e2e/shared/steps/rider.steps.js';
 import { uploadImageToSignedUrl } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
+import { markFailed } from '../../../helpers/testUtilsUI.js';
+
+function failAction(actionLabel, error) {
+  const rawMessage = String(error?.message || error || 'unknown error');
+  const snippet = extractApiFailureSnippet({ error: { message: rawMessage }, errors: [] });
+  markFailed(`${actionLabel} failed:\n${snippet || rawMessage}`);
+}
 
 export async function loginRiderForHybrid(api) {
-  const { riderAccessToken } = await loginRider(api);
-  return { riderAccessToken };
+  try {
+    const { riderAccessToken } = await loginRider(api);
+    return { riderAccessToken };
+  } catch (error) {
+    failAction('loginRiderForHybrid', error);
+  }
 }
 
 export async function getDeliverXStartPickupStatus(api, { riderAccessToken, orderId }) {
-  const startPickupOrderRes = await safeGraphQL(api, {
-    query: RIDER_START_PICKUP_ORDER_QUERY,
-    variables: { orderId },
-    headers: bearer(riderAccessToken),
-  });
+  try {
+    const startPickupOrderRes = await safeGraphQL(api, {
+      query: RIDER_START_PICKUP_ORDER_QUERY,
+      variables: { orderId },
+      headers: bearer(riderAccessToken),
+    });
 
-  const manilaHour = Number(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Manila',
-      hour: '2-digit',
-      hour12: false,
-    }).format(new Date())
-  );
-  const isBlockedWindow = manilaHour >= 0 && manilaHour < 6;
-  const outOfScheduleMsg = 'Order cannot be started since time is outside the schedule for delivery';
-  const isOutOfScheduleBlocked =
-    isBlockedWindow && !startPickupOrderRes.ok && String(startPickupOrderRes.error || '').includes(outOfScheduleMsg);
+    const manilaHour = Number(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Manila',
+        hour: '2-digit',
+        hour12: false,
+      }).format(new Date())
+    );
+    const isBlockedWindow = manilaHour >= 0 && manilaHour < 6;
+    const outOfScheduleMsg = 'Order cannot be started since time is outside the schedule for delivery';
+    const isOutOfScheduleBlocked =
+      isBlockedWindow && !startPickupOrderRes.ok && String(startPickupOrderRes.error || '').includes(outOfScheduleMsg);
 
-  return {
-    startPickupOrderRes,
-    isBlockedWindow,
-    outOfScheduleMsg,
-    isOutOfScheduleBlocked,
-  };
+    return {
+      startPickupOrderRes,
+      isBlockedWindow,
+      outOfScheduleMsg,
+      isOutOfScheduleBlocked,
+    };
+  } catch (error) {
+    failAction('getDeliverXStartPickupStatus', error);
+  }
 }
 
 export async function riderStartPickupAndArriveAtPharmacy(api, {
@@ -56,19 +71,23 @@ export async function riderStartPickupAndArriveAtPharmacy(api, {
   branchId,
   requireBranchQR = true,
 }) {
-  const resolvedRiderAccessToken = riderAccessToken || (await loginRider(api)).riderAccessToken;
-  await startPickupOrderAsRider(api, { riderAccessToken: resolvedRiderAccessToken, orderId });
-  const { branchQR } = await arrivedAtPharmacyAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-    orderId,
-    branchId,
-    requireBranchQR,
-  });
+  try {
+    const resolvedRiderAccessToken = riderAccessToken || (await loginRider(api)).riderAccessToken;
+    await startPickupOrderAsRider(api, { riderAccessToken: resolvedRiderAccessToken, orderId });
+    const { branchQR } = await arrivedAtPharmacyAsRider(api, {
+      riderAccessToken: resolvedRiderAccessToken,
+      orderId,
+      branchId,
+      requireBranchQR,
+    });
 
-  return {
-    riderAccessToken: resolvedRiderAccessToken,
-    branchQR,
-  };
+    return {
+      riderAccessToken: resolvedRiderAccessToken,
+      branchQR,
+    };
+  } catch (error) {
+    failAction('riderStartPickupAndArriveAtPharmacy', error);
+  }
 }
 
 export async function riderSendQuoteFlow(api, {
@@ -78,33 +97,37 @@ export async function riderSendQuoteFlow(api, {
   prices,
   qrImagePath,
 }) {
-  await updatePricesAsRider(api, {
-    riderAccessToken,
-    orderId,
-    branchId,
-    prices,
-  });
-  const { riderPaymentQRCodeUploadUrl, riderPaymentQRCodeBlobName } = await getPaymentQRCodeUploadUrlAsRider(api, {
-    riderAccessToken,
-  });
-  await uploadImageToSignedUrl(api, {
-    uploadUrl: riderPaymentQRCodeUploadUrl,
-    imagePath: qrImagePath,
-  });
-  const { riderPaymentQRCodeId } = await savePaymentQRCodeAsRider(api, {
-    riderAccessToken,
-    photo: riderPaymentQRCodeBlobName,
-  });
-  await sendQuoteAsRider(api, {
-    riderAccessToken,
-    orderId,
-    branchId,
-    paymentQRCodeId: riderPaymentQRCodeId,
-  });
+  try {
+    await updatePricesAsRider(api, {
+      riderAccessToken,
+      orderId,
+      branchId,
+      prices,
+    });
+    const { riderPaymentQRCodeUploadUrl, riderPaymentQRCodeBlobName } = await getPaymentQRCodeUploadUrlAsRider(api, {
+      riderAccessToken,
+    });
+    await uploadImageToSignedUrl(api, {
+      uploadUrl: riderPaymentQRCodeUploadUrl,
+      imagePath: qrImagePath,
+    });
+    const { riderPaymentQRCodeId } = await savePaymentQRCodeAsRider(api, {
+      riderAccessToken,
+      photo: riderPaymentQRCodeBlobName,
+    });
+    await sendQuoteAsRider(api, {
+      riderAccessToken,
+      orderId,
+      branchId,
+      paymentQRCodeId: riderPaymentQRCodeId,
+    });
 
-  return {
-    riderPaymentQRCodeId,
-  };
+    return {
+      riderPaymentQRCodeId,
+    };
+  } catch (error) {
+    failAction('riderSendQuoteFlow', error);
+  }
 }
 
 export async function riderCompleteDeliveryFlow(api, {
@@ -117,23 +140,34 @@ export async function riderCompleteDeliveryFlow(api, {
   requireBranchQR = true,
   skipStartPickup = false,
 }) {
-  let resolvedRiderAccessToken = riderAccessToken;
-  let resolvedBranchQR = branchQR;
+  try {
+    let resolvedRiderAccessToken = riderAccessToken;
+    let resolvedBranchQR = branchQR;
 
-  if (!resolvedRiderAccessToken) {
-    resolvedRiderAccessToken = (await loginRider(api)).riderAccessToken;
-  }
+    if (!resolvedRiderAccessToken) {
+      resolvedRiderAccessToken = (await loginRider(api)).riderAccessToken;
+    }
 
-  if (!resolvedBranchQR) {
-    if (skipStartPickup) {
-      const arrivedRes = await arrivedAtPharmacyAsRider(api, {
-        riderAccessToken: resolvedRiderAccessToken,
-        orderId,
-        branchId,
-        requireBranchQR,
-      });
-      resolvedBranchQR = arrivedRes.branchQR;
-    } else {
+    if (!resolvedBranchQR) {
+      if (skipStartPickup) {
+        const arrivedRes = await arrivedAtPharmacyAsRider(api, {
+          riderAccessToken: resolvedRiderAccessToken,
+          orderId,
+          branchId,
+          requireBranchQR,
+        });
+        resolvedBranchQR = arrivedRes.branchQR;
+      } else {
+        const startRes = await riderStartPickupAndArriveAtPharmacy(api, {
+          riderAccessToken: resolvedRiderAccessToken,
+          orderId,
+          branchId,
+          requireBranchQR,
+        });
+        resolvedRiderAccessToken = startRes.riderAccessToken;
+        resolvedBranchQR = startRes.branchQR;
+      }
+    } else if (!skipStartPickup) {
       const startRes = await riderStartPickupAndArriveAtPharmacy(api, {
         riderAccessToken: resolvedRiderAccessToken,
         orderId,
@@ -141,62 +175,55 @@ export async function riderCompleteDeliveryFlow(api, {
         requireBranchQR,
       });
       resolvedRiderAccessToken = startRes.riderAccessToken;
-      resolvedBranchQR = startRes.branchQR;
     }
-  } else if (!skipStartPickup) {
-    const startRes = await riderStartPickupAndArriveAtPharmacy(api, {
+
+    const { pickupProofUploadUrl, pickupProofBlobName } = await getPickupProofUploadUrlAsRider(api, {
+      riderAccessToken: resolvedRiderAccessToken,
+    });
+    await uploadImageToSignedUrl(api, {
+      uploadUrl: pickupProofUploadUrl,
+      imagePath: pickupProofImagePath,
+    });
+    await setPickupProofAsRider(api, {
       riderAccessToken: resolvedRiderAccessToken,
       orderId,
       branchId,
+      proof: { photo: pickupProofBlobName },
+    });
+    await pickupOrderAsRider(api, {
+      riderAccessToken: resolvedRiderAccessToken,
+      orderId,
+      branchId,
+      branchQR: resolvedBranchQR,
       requireBranchQR,
     });
-    resolvedRiderAccessToken = startRes.riderAccessToken;
+    await arrivedAtDropOffAsRider(api, {
+      riderAccessToken: resolvedRiderAccessToken,
+      orderId,
+    });
+
+    const { deliveryProofUploadUrl, deliveryProofBlobName } = await getDeliveryProofUploadUrlAsRider(api, {
+      riderAccessToken: resolvedRiderAccessToken,
+    });
+    await uploadImageToSignedUrl(api, {
+      uploadUrl: deliveryProofUploadUrl,
+      imagePath: deliveryProofImagePath,
+    });
+    await setDeliveryProofAsRider(api, {
+      riderAccessToken: resolvedRiderAccessToken,
+      orderId,
+      proof: { photo: deliveryProofBlobName },
+    });
+    await completeOrderAsRider(api, {
+      riderAccessToken: resolvedRiderAccessToken,
+      orderId,
+    });
+
+    return {
+      riderAccessToken: resolvedRiderAccessToken,
+      branchQR: resolvedBranchQR,
+    };
+  } catch (error) {
+    failAction('riderCompleteDeliveryFlow', error);
   }
-
-  const { pickupProofUploadUrl, pickupProofBlobName } = await getPickupProofUploadUrlAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-  });
-  await uploadImageToSignedUrl(api, {
-    uploadUrl: pickupProofUploadUrl,
-    imagePath: pickupProofImagePath,
-  });
-  await setPickupProofAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-    orderId,
-    branchId,
-    proof: { photo: pickupProofBlobName },
-  });
-  await pickupOrderAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-    orderId,
-    branchId,
-    branchQR: resolvedBranchQR,
-    requireBranchQR,
-  });
-  await arrivedAtDropOffAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-    orderId,
-  });
-
-  const { deliveryProofUploadUrl, deliveryProofBlobName } = await getDeliveryProofUploadUrlAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-  });
-  await uploadImageToSignedUrl(api, {
-    uploadUrl: deliveryProofUploadUrl,
-    imagePath: deliveryProofImagePath,
-  });
-  await setDeliveryProofAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-    orderId,
-    proof: { photo: deliveryProofBlobName },
-  });
-  await completeOrderAsRider(api, {
-    riderAccessToken: resolvedRiderAccessToken,
-    orderId,
-  });
-
-  return {
-    riderAccessToken: resolvedRiderAccessToken,
-    branchQR: resolvedBranchQR,
-  };
 }
