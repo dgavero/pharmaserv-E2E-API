@@ -9,7 +9,7 @@ import {
   safeWaitForPageLoad,
 } from '../../helpers/testUtilsUI.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import { Timeouts } from '../../Timeouts.js';
+import { Timeouts, TimeoutsSec } from '../../Timeouts.js';
 
 export default class MerchantOrderDetailsPage {
   constructor(page) {
@@ -216,7 +216,7 @@ export default class MerchantOrderDetailsPage {
     if (!(await safeWaitForElementHidden(this.page, this.s.requestPaymentLoadingButton))) {
       markFailed('Request payment is still loading; quote submit did not finish');
     }
-    await delay(Timeouts.short / 1000, 'Waiting a bit before proceeding to next task');
+    await delay(TimeoutsSec.short, 'Waiting a bit before proceeding to next task');
   }
 
   async uploadQRCode(imagePath) {
