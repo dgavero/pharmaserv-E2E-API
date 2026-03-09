@@ -31,7 +31,7 @@
     "AssignBranchSearchInput": "//input[@data-slot='command-input' or @placeholder='Search']",
     "AssignBranchResultByKeywordTemplate": "(//*[@role='dialog']//*[@role='option'][contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'{keyword}')] | //*[@role='dialog']//*[@cmdk-item and contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'{keyword}')] | //*[@role='dialog']//li[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'{keyword}')] | //*[@role='dialog']//button[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'{keyword}')])[1]",
     "AssignBranchFirstResult": "(//*[@role='dialog']//*[@role='option'] | //*[@role='dialog']//*[@cmdk-item])[1]",
-    "AssignBranchConfirmButton": "//button[normalize-space()='Assign' or normalize-space()='Assign Branch' or normalize-space()='Apply']",
+    "AssignBranchConfirmButton": "(//div[@role='dialog' and (.//h2[normalize-space()='Assign Branch'] or .//*[normalize-space()='Assign Branch'])]//button[normalize-space()='Assign' or normalize-space()='Assign Branch' or normalize-space()='Apply'])[1]",
     "UploadQRButton": "//button[normalize-space()='Upload QR']",
     "QRCodeFileInput": "//input[@id='qr-code' and @type='file']",
     "UploadQRSubmitButton": "//*[@data-testid='go-to-orders-btn' and normalize-space()='Upload']",
