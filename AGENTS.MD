@@ -44,6 +44,7 @@ If any step cannot be completed confidently, stop and resolve that gap before ed
 - Do not modify shared config, shared harnesses, shared helpers, workflow orchestration, or CI/reporting files unless the request explicitly targets them.
 - Do not move merchant operational steps from UI back to API in hybrid tests.
 - Do not bypass the merchant page objects for merchant order search, open, pricing, quote, or status verification if the behavior already exists there.
+- Do not assume or invent selectors. If selector work is required, inspect the current DOM first and choose the most stable signal actually exposed by the UI.
 - Do not introduce new env vars, credentials, fixed IDs, or branch assumptions unless the request requires them and the change is documented.
 - Do not add `page.waitForTimeout(...)`, `delay(...)`, or raw sleep-based waits when an existing safe wait helper or bounded probe can be used.
 - Do not widen the change into opportunistic cleanup or refactoring.
@@ -130,6 +131,7 @@ Use `docs/change-workflow.md`. Do not edit before completing that workflow.
 - Put cross-role API orchestration in `e2e/tests/merchantPortal/actions/`.
 - Use selector JSON via `loadSelectors()` and `getSelector()`.
 - Use `safeClick`, `safeInput`, `safeWaitForPageLoad`, `safeWaitForElementVisible`, and `markFailed(...)`.
+- When adding or changing selectors, inspect the rendered UI first and verify the selector against the current DOM before finalizing it.
 - Keep merchant order creation bound to the active merchant branch used by the test account.
 - Keep final merchant verification in page-object methods that check both order details and the correct Orders tab.
 - Preserve current merchant flow ordering: patient setup -> merchant UI actions -> downstream API actors -> merchant terminal verification.

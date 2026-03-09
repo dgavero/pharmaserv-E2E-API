@@ -10,6 +10,8 @@ Use this checklist before and after implementing risky changes.
 - Is the selector already defined elsewhere?
 - Is the selector text-sensitive or XPath-heavy?
 - Can the existing page object absorb the change without spreading selector logic into specs?
+- Did I inspect the rendered DOM instead of assuming the selector?
+- Did I choose the most stable signal currently available in the UI?
 
 ### Waits and Retries
 
@@ -102,6 +104,7 @@ Use this checklist before and after implementing risky changes.
 
 - Did I avoid duplicating selector logic?
 - If a selector changed, did I check all page object call sites conceptually?
+- If I changed or added a selector, did I confirm it against the rendered DOM or the narrowest runnable UI flow?
 
 ### Waits
 

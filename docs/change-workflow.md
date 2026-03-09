@@ -73,6 +73,7 @@ For merchant work:
 - relevant page object
 - relevant action module
 - relevant selector entries
+- if selectors are involved, inspect the current DOM before deciding what to use
 
 Do not assume the whole repo is uniform. Match the local dominant pattern unless there is a strong reason not to.
 
@@ -87,6 +88,7 @@ Before editing, explicitly check:
 - is the flow schedule-sensitive?
 - does it affect selector stability?
 - does it affect CI or reporting?
+- does it require confirming selectors against the rendered UI?
 
 If yes, treat the change as high-risk and keep the plan minimal.
 
@@ -126,6 +128,7 @@ Avoid:
 - keep non-merchant API orchestration in action modules
 - use safe UI helpers and timeout constants
 - preserve merchant UI-only rules for merchant operations
+- if selectors are added or changed, inspect the rendered DOM and choose the most stable currently exposed signal instead of assuming locator shape
 
 ### Shared Area Changes
 
@@ -172,6 +175,7 @@ High-risk hybrid changes:
 
 - review the full actor sequence in order
 - check branch selection, quote/payment flow, rider assignment, and final merchant verification explicitly
+- if selector-related, confirm the chosen selector against the actual DOM before closing the task
 
 ## Step 10: Close Out Clearly
 

@@ -139,6 +139,13 @@ Rule:
 - Access them through `loadSelectors()` and `getSelector()`.
 - Use dynamic selector templates where needed instead of spec-local string duplication.
 - Prefer extending the shared selector map over hardcoding a selector in multiple page objects.
+- Do not guess selectors from assumptions or naming patterns. Inspect the actual DOM first.
+- If a task adds or changes selectors, run the narrowest relevant UI path when feasible and confirm the selector against the rendered page.
+- Preferred selector stability order:
+  - existing stable test id or data attribute
+  - stable role/name combination
+  - stable structural selector
+  - text-sensitive XPath only when no stronger signal exists in the current DOM
 
 Current selector reality:
 

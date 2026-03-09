@@ -36,6 +36,7 @@ Requirements:
 - Use `safeGraphQL`, `bearer`, `getGQLError`, role login helpers, and descriptive `*Res` variable names where applicable.
 - Do not introduce new env vars, fixed IDs, or branch assumptions unless required and documented.
 - Do not add raw hard waits if an existing safe wait or bounded retry can be used.
+- Do not assume selectors. If UI selectors are added or changed, inspect the rendered DOM and use the most stable selector currently exposed by the UI.
 
 Behavior To Cover:
 - Positive case: [describe]
@@ -53,6 +54,7 @@ Implementation Constraints:
 Validation:
 - Run the narrowest relevant validation after changes.
 - If full execution is not practical, explain what was not validated.
+- If selectors were added or changed, inspect the rendered UI during that narrow run and confirm the selector against the actual DOM.
 
 Mandatory Governance Before Editing:
 1. Summarize the request in repository terms.
@@ -104,6 +106,7 @@ Requirements:
 - Use `safeGraphQL`, `bearer`, `getGQLError`, role login helpers, and descriptive `*Res` variable names where applicable.
 - Do not introduce new env vars, fixed IDs, or branch assumptions unless required and documented.
 - Do not add raw hard waits if an existing safe wait or bounded retry can be used.
+- Do not assume selectors. If UI selectors are added or changed, inspect the rendered DOM and use the most stable selector currently exposed by the UI.
 
 Behavior To Preserve:
 - [existing behavior that must not break]
@@ -115,6 +118,7 @@ Constraints:
 - Layer: [API feature / API workflow / hybrid merchant / UI]
 - Role/domain: [patient / admin / rider / pharmacist / merchant / other]
 - Validation scope: [exact command or narrow scope if known]
+- Selector validation: [if selectors change, inspect the rendered DOM during the narrowest relevant run]
 
 Mandatory Governance Before Editing:
 1. Summarize the request in repository terms.
@@ -150,3 +154,4 @@ These rules are already embedded in the templates above and should remain there:
 - `Use safeGraphQL, bearer, getGQLError, role login helpers, and descriptive *Res variable names where applicable.`
 - `Do not introduce new env vars, fixed IDs, or branch assumptions unless required and documented.`
 - `Do not add raw hard waits if an existing safe wait or bounded retry can be used.`
+- `Do not assume selectors. If UI selectors are added or changed, inspect the rendered DOM and use the most stable selector currently exposed by the UI.`

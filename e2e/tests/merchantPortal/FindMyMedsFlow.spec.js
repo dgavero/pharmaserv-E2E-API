@@ -9,10 +9,7 @@ import {
   prepareOrderAsPharmacist,
   setOrderForPickupAsPharmacist,
 } from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
-import {
-  buildBasePriceItems,
-  HybridDeliveryTypes,
-} from './generic.orderData.js';
+import { buildBasePriceItems, HybridDeliveryTypes } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
