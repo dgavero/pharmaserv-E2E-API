@@ -94,6 +94,11 @@ If yes, treat the change as high-risk and keep the plan minimal.
 
 If the change touches any approval-required area from `AGENTS.md`, do not proceed silently. Call out the blast radius first.
 
+Approval rule for normal test work:
+
+- If the user directly asks to create, fix, or investigate a specific test, treat that as approval for the minimal changes required in that test path.
+- Do not extend that approval to unrelated shared infrastructure, broad helper behavior changes, CI/reporting changes, or refactors outside the requested test path.
+
 ## Step 6: Make a Minimal-Change Plan
 
 Plan only the smallest set of edits needed.

@@ -80,6 +80,11 @@ Treat these files and areas as approval-required:
 
 If the request touches one of these areas, stop and treat the change as high-risk. Explain the impact before editing.
 
+Exception:
+
+- A direct user request to create, fix, or investigate a specific test counts as approval for the minimal changes required in that test path, even when that path includes merchant page objects, selector JSON, or hybrid action modules.
+- This exception does not approve unrelated shared infrastructure changes such as runner config, shared harness behavior, reporting, CI, secrets loading, or broad helper refactors.
+
 ## Required Reading Order Before Edits
 
 Always read in this order:
