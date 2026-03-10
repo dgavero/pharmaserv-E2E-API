@@ -40,7 +40,7 @@
     "UpdateItemButton": "//button[normalize-space()='Update Item']",
     "RequestPaymentButton": "//*[@data-testid='request-payment-btn']",
     "RequestPaymentLoadingButton": "//button[contains(normalize-space(),'Loading') and contains(normalize-space(),'Request Payment')]",
-    "AskRiderToQuoteCheckbox": "//*[@role='checkbox' and (contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'ask rider to quote') or @aria-label='Ask rider to quote')]",
+    "AskRiderToQuoteCheckbox": "((//*[@role='checkbox'][following-sibling::*[normalize-space()='Ask rider to quote']] | //*[*[@role='checkbox'] and .//*[normalize-space()='Ask rider to quote']]//*[@role='checkbox']))[1]",
     "RequestForRiderButton": "//button[normalize-space()='Request for Rider']",
     "AddItemsButton": "//*[@data-name='add-items-button' or @data-testid='add-items-btn' or self::button[normalize-space()='Add Items'] or self::button[normalize-space()='Add Item']]",
     "AddItemModal": "//div[@role='dialog' and @data-state='open'][.//*[normalize-space()='Add Item' or normalize-space()='Add Items']]",

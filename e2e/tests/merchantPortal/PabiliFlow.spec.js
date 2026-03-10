@@ -6,8 +6,6 @@ import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.j
 import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
 import { pharmacistLoginAndGetTokens } from '../../../api/helpers/testUtilsAPI.js';
 import {
-  acceptOrderAsPharmacist,
-  confirmOrderAsPharmacist,
   sendQuoteAsPharmacist,
 } from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
 import {
@@ -79,17 +77,6 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       await ordersPage.openNewOrderByBookingRef(bookingRef);
       await orderDetailsPage.acceptOrderForRiderQuote();
       await orderDetailsPage.requestForRiderToQuote(true);
-
-      // API (merchant/pharmacist): ensure accepted state and enable rider quote mode.
-      await acceptOrderAsPharmacist(api, {
-        pharmacistAccessToken: merchantAccessToken,
-        orderId,
-      });
-      await confirmOrderAsPharmacist(api, {
-        pharmacistAccessToken: merchantAccessToken,
-        orderId,
-        riderQuoteEnabled: true,
-      });
 
       // API (admin): assign rider.
       const { adminAccessToken } = await loginAdminForHybrid(api);
@@ -236,16 +223,9 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
 
       // API (rider): complete fulfillment.
-      const { riderAccessToken, branchQR } = await riderStartPickupAndArriveAtPharmacy(api, {
-        orderId,
-        branchId: merchantBranchId,
-        requireBranchQR: false,
-      });
       await riderCompleteDeliveryFlow(api, {
-        riderAccessToken,
         orderId,
         branchId: merchantBranchId,
-        branchQR,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
         requireBranchQR: false,
