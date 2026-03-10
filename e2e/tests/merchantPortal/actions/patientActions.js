@@ -33,27 +33,42 @@ export const PatientPayModes = Object.freeze({
   DEFAULT: 'DEFAULT',
 });
 
-export async function createHybridOrder(api, { order }) {
-  try {
-    const { patientAccessToken } = await loginPatient(api);
-    const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
-      patientAccessToken,
-      order,
-    });
+export async function createHybridOrder(
+  api,
+  { order, maxAttempts = 3, retryDelayMs = Timeouts.short } = {}
+) {
+  let lastError = null;
+  const totalAttempts = Number.isFinite(Number(maxAttempts)) ? Math.max(1, Number(maxAttempts)) : 1;
+  const retryDelay = Number.isFinite(Number(retryDelayMs)) ? Math.max(0, Number(retryDelayMs)) : 0;
 
-    const bookingRef = submitOrderNode?.trackingCode;
-    if (!bookingRef) {
-      markFailed('Missing trackingCode from submit order response');
+  for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
+    try {
+      const { patientAccessToken } = await loginPatient(api);
+      const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
+        patientAccessToken,
+        order,
+      });
+
+      const bookingRef = submitOrderNode?.trackingCode;
+      if (!bookingRef) {
+        markFailed('Missing trackingCode from submit order response');
+      }
+
+      return {
+        patientAccessToken,
+        orderId,
+        bookingRef,
+      };
+    } catch (error) {
+      lastError = error;
+      if (attempt >= totalAttempts) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
     }
-
-    return {
-      patientAccessToken,
-      orderId,
-      bookingRef,
-    };
-  } catch (error) {
-    failAction('createHybridOrder', error);
   }
+
+  failAction('createHybridOrder', lastError);
 }
 
 export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {

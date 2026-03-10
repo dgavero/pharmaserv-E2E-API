@@ -62,8 +62,8 @@ export function buildDeliverXBaseOrderInput() {
     prescriptionItems: buildDeliverXBasePrescriptionItems(),
     addressName: 'Home API',
     address: 'Test API Address',
-    lat: 9.6496,
-    lng: 123.8552,
+    lat: 9.85,
+    lng: 124.14,
   };
 }
 
@@ -84,8 +84,8 @@ export function buildDeliverXAttachmentNoPrescriptionOrderInput() {
       },
     ],
     deliveryInstructions: 'Deliver with care',
-    lat: 9.6496,
-    lng: 123.8552,
+    lat: 9.85,
+    lng: 124.14,
   };
 }
 
@@ -169,8 +169,8 @@ export function buildDeliverXRequoteData({ prescriptionId, discountCardId, attac
         },
       ],
       deliveryInstructions: 'API automated test only',
-      lat: 9.6496,
-      lng: 123.8552,
+      lat: 9.85,
+      lng: 124.14,
     },
     firstAddedPrescriptionItem,
     availablePrescriptionItemUpdate,

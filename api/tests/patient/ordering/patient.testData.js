@@ -56,8 +56,8 @@ export function buildPatientFindMyMedsOrderInput() {
     prescriptionItems: buildSearchPrescriptionItems(),
     addressName: 'TEST HOME API',
     address: 'TEST HOUSING API',
-    lat: 14.582019317323562,
-    lng: 121.01251092551259,
+    lat: 9.85,
+    lng: 124.14,
   };
 }
 
@@ -69,8 +69,8 @@ export function buildPatientDeliverXOrderInput() {
     prescriptionItems: buildDeliverXPrescriptionItems(),
     addressName: 'TEST Home API',
     address: 'TEST HOUSING API',
-    lat: 14.582019317323562,
-    lng: 121.01251092551259,
+    lat: 9.85,
+    lng: 124.14,
   };
 }
 
@@ -82,8 +82,8 @@ export function buildPatientPabiliOrderInput() {
     prescriptionItems: buildSearchPrescriptionItems(),
     addressName: 'Home',
     address: 'Unit 243 Baranca Bldg, Mandaluyong Housing',
-    lat: 14.582019317323562,
-    lng: 121.01251092551259,
+    lat: 9.85,
+    lng: 124.14,
   };
 }
 
@@ -109,7 +109,7 @@ export function buildPatientSpecificOrderInput() {
     ],
     addressName: 'TEST HOME API',
     address: 'TEST HOUSING API',
-    lat: 14.582019317323562,
-    lng: 121.01251092551259,
+    lat: 9.85,
+    lng: 124.14,
   };
 }

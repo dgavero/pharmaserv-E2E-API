@@ -74,8 +74,8 @@ export function buildHybridOrderInput({
   address = 'Test API Address',
   landmark = 'Near City Hall',
   deliveryInstructions = 'API automated test only',
-  lat = 10.36,
-  lng = 123.93,
+  lat = 9.85,
+  lng = 124.14,
   ...additionalOrderFields
 } = {}) {
   const normalizedDeliveryType = normalizeDeliveryType(deliveryType);

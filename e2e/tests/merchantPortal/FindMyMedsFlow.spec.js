@@ -9,10 +9,7 @@ import {
   prepareOrderAsPharmacist,
   setOrderForPickupAsPharmacist,
 } from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
-import {
-  buildBasePriceItems,
-  HybridDeliveryTypes,
-} from './generic.orderData.js';
+import { buildBasePriceItems, HybridDeliveryTypes } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
@@ -44,8 +41,12 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
       const portalUsername = process.env.MERCHANT_USERNAME_PSE;
       const portalPassword = process.env.MERCHANT_PASSWORD_PSE;
+      const assignedBranchId = Number(process.env.PHARMACIST_BRANCHID_REG01);
       if (!portalUsername || !portalPassword) {
         markFailed('Missing MERCHANT_USERNAME_PSE or MERCHANT_PASSWORD_PSE for FindMyMeds hybrid test');
+      }
+      if (!assignedBranchId) {
+        markFailed('Missing PHARMACIST_BRANCHID_REG01 for FindMyMeds hybrid test');
       }
 
       const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
@@ -73,7 +74,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       await ordersPage.open();
       await ordersPage.openNewOrderByBookingRef(bookingRef);
       await orderDetailsPage.acceptOrder();
-      await orderDetailsPage.assignBranchToFirstMatchingPharmacy('DEV');
+      await orderDetailsPage.assignBranchToFirstMatchingPharmacy('Pharmacy API');
       await orderDetailsPage.uploadQRCode(merchantPaymentQrImagePath);
       await orderDetailsPage.updatePriceItems(buildBasePriceItems());
       await orderDetailsPage.sendQuote();
@@ -104,7 +105,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       // API (rider): complete fulfillment.
       await riderCompleteDeliveryFlow(api, {
         orderId,
-        branchId: merchantBranchId,
+        branchId: assignedBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
         requireBranchQR: false,

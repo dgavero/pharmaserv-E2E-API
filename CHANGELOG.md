@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+# [3.0.7]
+
+### Added
+
+- Added repo-specific AI governance and change-control docs:
+  - `docs/architecture.md`
+  - `docs/change-workflow.md`
+  - `docs/coding-standards.md`
+  - `docs/prompt-templates.md`
+  - `docs/risk-checklist.md`
+  - `docs/test-layer-map.md`
+
+### Changed
+
+- Reworked `AGENTS.MD` into the primary AI agent instruction file for this repository:
+  - added approval-required areas
+  - added mandatory pre-change workflow and self-review rules
+  - added hybrid merchant safeguards and selector-handling rules
+- Updated shared order-creation coordinates across API and hybrid test data to:
+  - `lat: 9.85`
+  - `lng: 124.14`
+- Added bounded retry to hybrid patient order creation in `e2e/tests/merchantPortal/actions/patientActions.js`:
+  - up to 3 total attempts
+  - 5-second retry delay (`Timeouts.short`)
+- Tightened merchant selector handling in `e2e/selectors/merchant.selectors.json`:
+  - scoped `AssignBranchConfirmButton` to the open assign-branch dialog
+  - updated `AskRiderToQuoteCheckbox` to match the live checkbox + label DOM structure
+- Updated hybrid FindMyMeds flow in `e2e/tests/merchantPortal/FindMyMedsFlow.spec.js`:
+  - branch search now targets `Pharmacy API`
+  - rider flow now uses `PHARMACIST_BRANCHID_REG01`
+- Updated hybrid Pabili flows in `e2e/tests/merchantPortal/PabiliFlow.spec.js`:
+  - removed redundant pharmacist API accept/confirm calls from `E2E-8` after merchant UI acceptance
+  - removed redundant rider pre-start step from `E2E-9` so rider completion follows the shared completion helper path
+
 # [3.0.6]
 
 ### Changed
