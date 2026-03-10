@@ -9,8 +9,9 @@ import {
   NOAUTH_CODES,
   riderLoginAndGetTokens,
 } from '../../../helpers/testUtilsAPI.js';
+import { getReusableNegativeFixtures } from '../../testData/reusableTestIds.js';
 
-const orderId = 1; // ID not assigned to rider
+const { unassignedOrderId: orderId } = getReusableNegativeFixtures();
 
 test.describe('GraphQL: Get Order', () => {
   test(

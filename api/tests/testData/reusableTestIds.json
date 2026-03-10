@@ -1,0 +1,68 @@
+{
+  "DEV": {
+    "slotOne": {
+      "pharmacistType": "REGULAR",
+      "orderId": 2465,
+      "threadId": 798,
+      "patientMsgId": 1082,
+      "merchantMsgId": 1083,
+      "updatedAt": "2026-03-10T16:56:36.403Z"
+    },
+    "slotTwo": {
+      "pharmacistType": "PSE",
+      "orderId": 2462,
+      "threadId": 797,
+      "patientMsgId": 1080,
+      "merchantMsgId": 1081,
+      "updatedAt": "2026-03-10T16:55:02.692Z"
+    },
+    "negativeFixtures": {
+      "unassignedOrderId": 2467,
+      "inactiveOrderId": 2466
+    }
+  },
+  "QA": {
+    "slotOne": {
+      "pharmacistType": "REGULAR",
+      "orderId": 1153,
+      "threadId": 710,
+      "patientMsgId": 536,
+      "merchantMsgId": 537,
+      "updatedAt": "2026-03-10T08:19:44.206Z"
+    },
+    "slotTwo": {
+      "pharmacistType": "PSE",
+      "orderId": 1154,
+      "threadId": 711,
+      "patientMsgId": 538,
+      "merchantMsgId": 539,
+      "updatedAt": "2026-03-10T08:20:02.303Z"
+    },
+    "negativeFixtures": {
+      "unassignedOrderId": 1,
+      "inactiveOrderId": 701
+    }
+  },
+  "PROD": {
+    "slotOne": {
+      "pharmacistType": "REGULAR",
+      "orderId": null,
+      "threadId": null,
+      "patientMsgId": null,
+      "merchantMsgId": null,
+      "updatedAt": null
+    },
+    "slotTwo": {
+      "pharmacistType": "PSE",
+      "orderId": null,
+      "threadId": null,
+      "patientMsgId": null,
+      "merchantMsgId": null,
+      "updatedAt": null
+    },
+    "negativeFixtures": {
+      "unassignedOrderId": 1,
+      "inactiveOrderId": 931
+    }
+  }
+}

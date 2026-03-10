@@ -1,25 +1,35 @@
 // Used for Get Order
 export const GET_ORDER_QUERY = /* GraphQL */ `
-  query {
+  query ($orderId: ID!) {
     rider {
-      currentOrder {
-        id
-        deliveryType
+      order(orderId: $orderId) {
         patient {
-          firstName
-          lastName
-        }
-        rider {
+          id
           firstName
           lastName
         }
         legs {
-          id
-          branch {
-            id
-          }
           branchQR
+          riderQR
+          prescriptionItems {
+            medicine {
+              id
+              brand
+              genericName
+            }
+            unitPrice
+            quantity
+          }
           status
+        }
+        paymentProof {
+          photo
+        }
+        dropOffAddress {
+          addressName
+          address
+          lat
+          lng
         }
         status
       }

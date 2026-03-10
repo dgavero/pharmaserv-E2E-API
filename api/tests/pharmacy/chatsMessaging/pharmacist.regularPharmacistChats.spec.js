@@ -11,30 +11,10 @@ import {
 } from '../chatsMessaging/pharmacist.chatMessagingQueries.js';
 import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 
 function resolveTestData() {
-  const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
-
-  const testData = {
-    DEV: {
-      orderId: 88,
-      threadId: 80,
-    },
-    QA: {
-      orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01,
-      threadId: process.env.PHARMACIST_REUSABLE_THREADID_REGO1,
-    },
-    PROD: {
-      orderId: 216,
-      threadId: 85,
-    },
-  };
-
-  if (!testData[testEnv]) {
-    throw new Error(`Unsupported TEST_ENV: ${testEnv}`);
-  }
-
-  return testData[testEnv];
+  return getReusableTestIds({ slot: 'slotOne' });
 }
 
 test.describe('GraphQL: Regular Pharmacist Messaging', () => {
