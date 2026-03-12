@@ -11,8 +11,9 @@ import {
   NOAUTH_CODES,
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
+import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 
-const orderID = process.env.PHARMACIST_REUSABLE_ORDERID_REG01;
+const { orderId } = getReusableTestIds({ slot: 'slotOne' });
 const nameUser = process.env.PATIENT_USER_USERNAME;
 const wordPass = process.env.PATIENT_USER_PASSWORD;
 const userId = process.env.PATIENT_USER_USERNAME_ID;
@@ -32,7 +33,7 @@ test.describe('GraphQL: Patient Get Order', () => {
 
       const getOrderRes = await safeGraphQL(api, {
         query: GET_ORDER_QUERY,
-        variables: { orderId: orderID },
+        variables: { orderId },
         headers: bearer(accessToken),
       });
 
@@ -52,7 +53,7 @@ test.describe('GraphQL: Patient Get Order', () => {
     async ({ api, noAuth }) => {
       const getOrderResNoAuth = await safeGraphQL(api, {
         query: GET_ORDER_QUERY,
-        variables: { orderId: orderID },
+        variables: { orderId },
         headers: noAuth,
       });
 
@@ -77,7 +78,7 @@ test.describe('GraphQL: Patient Get Order', () => {
     async ({ api, invalidAuth }) => {
       const getOrderResInvalidAuth = await safeGraphQL(api, {
         query: GET_ORDER_QUERY,
-        variables: { orderId: orderID },
+        variables: { orderId },
         headers: invalidAuth,
       });
 

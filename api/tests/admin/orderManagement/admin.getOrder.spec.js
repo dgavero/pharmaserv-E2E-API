@@ -10,6 +10,9 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/testUtilsAPI.js';
 import { GET_ORDER_QUERY } from './admin.orderManagementQueries.js';
+import { getReusableTestIds } from '../../testData/reusableTestIds.js';
+
+const { orderId } = getReusableTestIds({ slot: 'slotOne' });
 
 test.describe('GraphQL: Admin Get Order', () => {
   test(
@@ -26,7 +29,7 @@ test.describe('GraphQL: Admin Get Order', () => {
 
       const getOrderRes = await safeGraphQL(api, {
         query: GET_ORDER_QUERY,
-        variables: { orderId: 448 },
+        variables: { orderId },
         headers: bearer(accessToken),
       });
 
@@ -42,7 +45,7 @@ test.describe('GraphQL: Admin Get Order', () => {
     async ({ api, noAuth }) => {
       const getOrderNoAuthRes = await safeGraphQL(api, {
         query: GET_ORDER_QUERY,
-        variables: { orderId: 448 },
+        variables: { orderId },
         headers: noAuth,
       });
 
@@ -70,7 +73,7 @@ test.describe('GraphQL: Admin Get Order', () => {
     async ({ api, invalidAuth }) => {
       const getOrderInvalidAuthRes = await safeGraphQL(api, {
         query: GET_ORDER_QUERY,
-        variables: { orderId: 448 },
+        variables: { orderId },
         headers: invalidAuth,
       });
 

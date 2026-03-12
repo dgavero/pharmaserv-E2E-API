@@ -11,6 +11,9 @@ import {
   NOAUTH_HTTP_STATUSES,
   pharmacistLoginAndGetTokens,
 } from '../../../helpers/testUtilsAPI.js';
+import { getReusableNegativeFixtures } from '../../testData/reusableTestIds.js';
+
+const { inactiveOrderId } = getReusableNegativeFixtures();
 
 test.describe('GraphQL: Pharmacy Decline Order', () => {
   test(
@@ -24,16 +27,6 @@ test.describe('GraphQL: Pharmacy Decline Order', () => {
         password: process.env.PHARMACIST_PASSWORD_REG01,
       });
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
-
-      const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
-      const inactiveOrderIdByEnv = {
-        DEV: 1093,
-        QA: 701,
-        PROD: 931,
-      };
-
-      const inactiveOrderId = inactiveOrderIdByEnv[testEnv];
-      if (!inactiveOrderId) throw new Error(`Unsupported TEST_ENV=${testEnv}`);
 
       const declineOrderRes = await safeGraphQL(api, {
         query: DECLINE_ORDER_QUERY,

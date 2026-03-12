@@ -11,6 +11,9 @@ import {
   NOAUTH_HTTP_STATUSES,
   pharmacistLoginAndGetTokens,
 } from '../../../helpers/testUtilsAPI.js';
+import { getReusableTestIds } from '../../testData/reusableTestIds.js';
+
+const { orderId } = getReusableTestIds({ slot: 'slotOne' });
 
 test.describe('GraphQL: Pharmacy Get Order By ID', () => {
   test(
@@ -28,7 +31,7 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
       const getOrderByIdRes = await safeGraphQL(api, {
         query: GET_ORDER_BY_ID_QUERY,
         variables: {
-          orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01,
+          orderId,
         },
         headers: bearer(accessToken),
       });
