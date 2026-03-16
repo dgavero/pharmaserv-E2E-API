@@ -111,7 +111,7 @@ export async function riderSendQuoteFlow(api, {
       uploadUrl: riderPaymentQRCodeUploadUrl,
       imagePath: qrImagePath,
     });
-    const { riderPaymentQRCodeId } = await savePaymentQRCodeAsRider(api, {
+    const { riderPaymentQRCodeId, riderPaymentQRCodeBranchId } = await savePaymentQRCodeAsRider(api, {
       riderAccessToken,
       photo: riderPaymentQRCodeBlobName,
     });
@@ -124,6 +124,7 @@ export async function riderSendQuoteFlow(api, {
 
     return {
       riderPaymentQRCodeId,
+      riderPaymentQRCodeBranchId,
     };
   } catch (error) {
     failAction('riderSendQuoteFlow', error);

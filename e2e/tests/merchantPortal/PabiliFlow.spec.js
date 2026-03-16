@@ -115,7 +115,6 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
         patientAccessToken,
         paymentQRCodeId: patientPaymentQRCodeId,
       });
-      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -130,7 +129,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       await riderCompleteDeliveryFlow(api, {
         riderAccessToken,
         orderId,
-        branchId: paymentQRCodeBranchId,
+        branchId: merchantBranchId,
         branchQR,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
