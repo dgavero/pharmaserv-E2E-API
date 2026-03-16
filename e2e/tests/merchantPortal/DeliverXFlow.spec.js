@@ -24,6 +24,7 @@ import {
   acceptQuoteAsPatientWhenReady,
   createHybridOrder,
   createHybridOrderForBranch,
+  ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
   requestReQuoteAsPatientAction,
   rateRiderAsPatientAction,
@@ -89,7 +90,18 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay.
-      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
+      const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
+        patientAccessToken,
+        orderId,
+        timeout: Timeouts.long,
+      });
+      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
+      expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
+        patientAccessToken,
+        paymentQRCodeId: patientPaymentQRCodeId,
+      });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -130,7 +142,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await riderCompleteDeliveryFlow(api, {
         riderAccessToken,
         orderId,
-        branchId: merchantBranchId,
+        branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
         skipStartPickup: true,
@@ -186,7 +198,18 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay (pickup mode).
-      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
+      const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
+        patientAccessToken,
+        orderId,
+        timeout: Timeouts.long,
+      });
+      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
+      expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
+        patientAccessToken,
+        paymentQRCodeId: patientPaymentQRCodeId,
+      });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -269,7 +292,18 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay (scheduled mode).
-      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
+      const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
+        patientAccessToken,
+        orderId,
+        timeout: Timeouts.long,
+      });
+      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
+      expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
+        patientAccessToken,
+        paymentQRCodeId: patientPaymentQRCodeId,
+      });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -295,7 +329,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (rider): complete fulfillment.
       await riderCompleteDeliveryFlow(api, {
         orderId,
-        branchId: merchantBranchId,
+        branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
       });
@@ -357,7 +391,18 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay.
-      await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
+      const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
+        patientAccessToken,
+        orderId,
+        timeout: Timeouts.long,
+      });
+      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
+      expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
+        patientAccessToken,
+        paymentQRCodeId: patientPaymentQRCodeId,
+      });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -383,7 +428,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (rider): complete fulfillment.
       await riderCompleteDeliveryFlow(api, {
         orderId,
-        branchId: merchantBranchId,
+        branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
       });
@@ -460,6 +505,13 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
         orderId,
         timeout: Timeouts.long,
       });
+      const reQuotedPaymentQRCodeId = reQuotedAcceptNode?.paymentQRCodeId;
+      expect(reQuotedPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
+        patientAccessToken,
+        paymentQRCodeId: reQuotedPaymentQRCodeId,
+      });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       const reQuotedPrescriptionItems = reQuotedAcceptNode?.legs?.[0]?.prescriptionItems || [];
       if (reQuotedPrescriptionItems.length < 2) {
         markFailed('Missing prescription items from updated quote for quantity reduction');
@@ -507,7 +559,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (rider): complete fulfillment.
       await riderCompleteDeliveryFlow(api, {
         orderId,
-        branchId: merchantBranchId,
+        branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
       });

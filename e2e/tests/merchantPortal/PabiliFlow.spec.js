@@ -111,10 +111,11 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId });
       const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId || quotedPaymentQRCodeId;
       expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
-      await ensurePatientPaymentQRCodeAccessible(api, {
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
         patientAccessToken,
         paymentQRCodeId: patientPaymentQRCodeId,
       });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -129,7 +130,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       await riderCompleteDeliveryFlow(api, {
         riderAccessToken,
         orderId,
-        branchId: merchantBranchId,
+        branchId: paymentQRCodeBranchId,
         branchQR,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
@@ -208,10 +209,11 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId });
       const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
       expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
-      await ensurePatientPaymentQRCodeAccessible(api, {
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
         patientAccessToken,
         paymentQRCodeId: patientPaymentQRCodeId,
       });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -225,7 +227,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       // API (rider): complete fulfillment.
       await riderCompleteDeliveryFlow(api, {
         orderId,
-        branchId: merchantBranchId,
+        branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
         requireBranchQR: false,
