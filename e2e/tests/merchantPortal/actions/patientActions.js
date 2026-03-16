@@ -73,9 +73,14 @@ export async function createHybridOrder(
 
 export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {
   try {
+    const fallbackBranchId =
+      branchId ||
+      process.env.PHARMACIST_BRANCHID_PSE01 ||
+      process.env.PHARMACIST_BRANCHID_REG01 ||
+      1;
     const orderInput = buildHybridOrderInput({
       deliveryType,
-      branchId,
+      branchId: omitBranchId ? fallbackBranchId : branchId,
     });
     // FindMyMeds branch assignment is done in merchant UI after accept.
     if (omitBranchId) {
@@ -117,7 +122,7 @@ export async function acceptQuoteAsPatientWhenReady(api, { patientAccessToken, o
 
 export async function ensurePatientPaymentQRCodeAccessible(api, { patientAccessToken, paymentQRCodeId }) {
   try {
-    const { paymentQRCodePhoto } = await getPaymentQRCodeAsPatient(api, {
+    const { paymentQRCodeNode, paymentQRCodePhoto } = await getPaymentQRCodeAsPatient(api, {
       patientAccessToken,
       paymentQRCodeId,
     });
@@ -125,7 +130,10 @@ export async function ensurePatientPaymentQRCodeAccessible(api, { patientAccessT
       patientAccessToken,
       blobName: paymentQRCodePhoto,
     });
-    return { paymentQRCodePhoto };
+    return {
+      paymentQRCodePhoto,
+      paymentQRCodeBranchId: Number(paymentQRCodeNode?.branchId),
+    };
   } catch (error) {
     failAction('ensurePatientPaymentQRCodeAccessible', error);
   }
