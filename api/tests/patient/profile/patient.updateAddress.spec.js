@@ -1,6 +1,6 @@
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { UPDATE_ADDRESS_QUERY } from './patient.profileQueries.js';
+import { GET_ADDRESS_QUERY, UPDATE_ADDRESS_QUERY } from './patient.profileQueries.js';
 import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
 
 function updateAddressInput() {
@@ -26,6 +26,21 @@ function updateAddressInput() {
   };
 }
 
+async function getFirstAddressId(api, accessToken) {
+  const getAddressRes = await safeGraphQL(api, {
+    query: GET_ADDRESS_QUERY,
+    variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
+    headers: bearer(accessToken),
+  });
+  expect(getAddressRes.ok, getAddressRes.error || 'Get Address request failed').toBe(true);
+
+  const addressesNode = getAddressRes.body?.data?.patient?.addresses;
+  expect(Array.isArray(addressesNode), 'Missing addresses array').toBe(true);
+  expect(addressesNode.length, 'No addresses found for patient').toBeGreaterThan(0);
+
+  return addressesNode[0].id;
+}
+
 test.describe('GraphQL: Patient Update Address', () => {
   test(
     'PHARMA-178 | Should be able to update Address as a Patient',
@@ -41,7 +56,7 @@ test.describe('GraphQL: Patient Update Address', () => {
 
       // Update Address
       const updateAddress = updateAddressInput();
-      const patientAddressId = process.env.PATIENT_USER_USERNAME_RELATED_ID; // address id related to logged in user
+      const patientAddressId = await getFirstAddressId(api, accessToken);
 
       const updateAddressRes = await safeGraphQL(api, {
         query: UPDATE_ADDRESS_QUERY,
@@ -52,7 +67,15 @@ test.describe('GraphQL: Patient Update Address', () => {
         headers: bearer(accessToken),
       });
 
-      expect(updateAddressRes.ok).toBe(false);
+      expect(updateAddressRes.ok, updateAddressRes.error || 'Update Address request failed').toBe(true);
+
+      const node = updateAddressRes.body?.data?.patient?.address?.update;
+      expect(node, 'Missing patient.address.update').toBeTruthy();
+      expect.soft(node.id).toBe(String(patientAddressId));
+      expect.soft(node.addressName).toBe(updateAddress.addressName);
+      expect.soft(node.address).toBe(updateAddress.address);
+      expect.soft(node.lat).toBe(updateAddress.lat);
+      expect.soft(node.lng).toBe(updateAddress.lng);
     }
   );
 });
