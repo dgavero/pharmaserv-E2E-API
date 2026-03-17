@@ -14,6 +14,7 @@ import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
   createHybridOrderForBranch,
+  ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
   rateRiderAsPatientAction,
 } from './actions/patientActions.js';
@@ -41,24 +42,18 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
       const portalUsername = process.env.MERCHANT_USERNAME_PSE;
       const portalPassword = process.env.MERCHANT_PASSWORD_PSE;
-      const assignedBranchId = Number(process.env.PHARMACIST_BRANCHID_REG01);
       if (!portalUsername || !portalPassword) {
         markFailed('Missing MERCHANT_USERNAME_PSE or MERCHANT_PASSWORD_PSE for FindMyMeds hybrid test');
-      }
-      if (!assignedBranchId) {
-        markFailed('Missing PHARMACIST_BRANCHID_REG01 for FindMyMeds hybrid test');
       }
 
       const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
         username: portalUsername,
         password: portalPassword,
       });
-      const merchantBranchId = await getMerchantIdPSE(api, merchantAccessToken);
 
       // API (patient): create order.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
         deliveryType: HybridDeliveryTypes.FIND_MY_MEDS,
-        branchId: merchantBranchId,
         omitBranchId: true,
       });
 
@@ -81,7 +76,13 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
 
       // API (patient): accept quote and pay.
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId });
-      expect(acceptQuoteNode?.paymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
+      expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
+        patientAccessToken,
+        paymentQRCodeId: patientPaymentQRCodeId,
+      });
+      expect(paymentQRCodeBranchId, 'Missing branchId from patient payment QR code').toBeTruthy();
       await payOrderAsPatientWithProof(api, {
         patientAccessToken,
         orderId,
@@ -105,7 +106,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       // API (rider): complete fulfillment.
       await riderCompleteDeliveryFlow(api, {
         orderId,
-        branchId: assignedBranchId,
+        branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
         requireBranchQR: false,

@@ -98,7 +98,7 @@ export async function savePaymentQRCodeAsRider(api, { riderAccessToken, photo })
   expect(savePaymentQRCodeRes.ok, savePaymentQRCodeRes.error || 'Rider save payment QR code failed').toBe(true);
   const node = savePaymentQRCodeRes.body?.data?.rider?.order?.savePaymentQRCode;
   expect(node?.id, 'Missing rider saved payment QR code id').toBeTruthy();
-  return { riderPaymentQRCodeId: node.id };
+  return { riderPaymentQRCodeId: node.id, riderPaymentQRCodeBranchId: Number(node?.branchId) };
 }
 
 export async function sendPaymentQRCodeAsRider(api, { riderAccessToken, orderId, branchId, paymentQRCodeId }) {

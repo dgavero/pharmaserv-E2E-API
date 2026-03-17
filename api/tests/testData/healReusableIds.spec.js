@@ -231,6 +231,8 @@ async function healIdsOnSlot(api, slot) {
 }
 
 test.describe('Manual reusable ID healer', () => {
+  test.skip(!process.env.HEAL_SLOT, 'Manual healer only. Set HEAL_SLOT to run this spec.');
+
   test(
     'HEALER | Rebuild reusable IDs for one slot',
     {
