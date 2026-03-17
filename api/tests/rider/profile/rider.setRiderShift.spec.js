@@ -3,12 +3,8 @@ import {
   RIDER_SET_SHIFT_START_QUERY,
   RIDER_SET_SHIFT_END_QUERY,
 } from '../profile/rider.profileQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  riderLoginAndGetTokens,
-  getGQLError,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { riderLoginAndGetTokens } from '../../../helpers/auth.js';
 import { createRiderScheduleAsAdmin } from '../../../helpers/adminHelpers.js';
 
 test.describe('GraphQL: Rider able to set shift start/end', () => {

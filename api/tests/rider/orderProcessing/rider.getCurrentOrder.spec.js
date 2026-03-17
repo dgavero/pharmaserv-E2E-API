@@ -1,14 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_CURRENT_ORDER_QUERY } from './rider.orderQuestions.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  riderLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, riderLoginAndGetTokens } from '../../../helpers/auth.js';
 
 // No Order Rider credentials by environment
 const noOrderRiderByEnv = {

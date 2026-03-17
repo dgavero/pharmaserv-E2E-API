@@ -1,5 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { adminLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { adminLoginAndGetTokens } from '../../../helpers/auth.js';
 
 // Test-level builder (ok to add fallbacks here if you want local dev defaults)
 function buildAdminCreds() {

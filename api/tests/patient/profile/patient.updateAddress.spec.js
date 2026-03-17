@@ -1,7 +1,8 @@
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_ADDRESS_QUERY, UPDATE_ADDRESS_QUERY } from './patient.profileQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens } from '../../../helpers/auth.js';
 
 function updateAddressInput() {
   const addressName = `addressName${randomAlphanumeric(4)}`;

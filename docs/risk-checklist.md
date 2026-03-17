@@ -23,9 +23,13 @@ Use this checklist before and after implementing risky changes.
 ### Shared Helpers
 
 - Does this change modify:
-  - `api/helpers/testUtilsAPI.js`
+  - `api/helpers/graphqlUtils.js`
+  - `api/helpers/auth.js`
+  - `api/helpers/apiReporting.js`
   - `api/helpers/graphqlClient.js`
-  - `e2e/helpers/testUtilsUI.js`
+  - `e2e/helpers/uiActions.js`
+  - `e2e/helpers/testFailure.js`
+  - `e2e/helpers/reporting/`
   - `e2e/helpers/selectors.js`
   - `api/tests/e2e/shared/steps/`
   - `api/tests/e2e/shared/queries/`
@@ -138,8 +142,12 @@ Use this checklist before and after implementing risky changes.
 - `playwright.config.js`
 - `api/globalConfig.api.js`
 - `e2e/globalConfig.ui.js`
-- `api/helpers/testUtilsAPI.js`
-- `e2e/helpers/testUtilsUI.js`
+- `api/helpers/graphqlUtils.js`
+- `api/helpers/auth.js`
+- `api/helpers/apiReporting.js`
+- `e2e/helpers/uiActions.js`
+- `e2e/helpers/testFailure.js`
+- `e2e/helpers/reporting/`
 - `e2e/selectors/merchant.selectors.json`
 - `e2e/pages/merchantPortal/`
 - `e2e/tests/merchantPortal/actions/`

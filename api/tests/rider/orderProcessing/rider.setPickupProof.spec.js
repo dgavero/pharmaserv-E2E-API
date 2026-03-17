@@ -1,14 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { SET_PICKUP_PROOF_QUERY } from './rider.orderQuestions.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  riderLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, riderLoginAndGetTokens } from '../../../helpers/auth.js';
 
 const orderId = 1; // ID not assigned to rider
 const branchId = 1; // Branch ID for the order

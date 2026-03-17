@@ -1,4 +1,5 @@
-import { safeGraphQL, bearer, extractApiFailureSnippet } from '../../../../api/helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
+import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
 import { RIDER_START_PICKUP_ORDER_QUERY } from '../../../../api/tests/e2e/shared/queries/rider.queries.js';
 import {
   loginRider,
@@ -17,7 +18,7 @@ import {
   sendQuoteAsRider,
 } from '../../../../api/tests/e2e/shared/steps/rider.steps.js';
 import { uploadImageToSignedUrl } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
-import { markFailed } from '../../../helpers/testUtilsUI.js';
+import { markFailed } from '../../../helpers/testFailure.js';
 
 function failAction(actionLabel, error) {
   const rawMessage = String(error?.message || error || 'unknown error');

@@ -1,6 +1,6 @@
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { riderLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { riderLoginAndGetTokens } from '../../../helpers/auth.js';
 
 function builderName() {
   const firstName = `builderName${randomAlphanumeric(4)}`;

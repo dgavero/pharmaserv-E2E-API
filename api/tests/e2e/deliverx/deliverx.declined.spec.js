@@ -1,5 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { safeGraphQL, bearer, loginAndGetTokens, pharmacistLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
 import { buildDeliverXBaseOrderInput } from './deliverx.testData.js';
 import { PATIENT_SUBMIT_ORDER_QUERY } from '../shared/queries/patient.queries.js';
 import { PHARMACY_DECLINE_ORDER_QUERY } from '../shared/queries/pharmacist.queries.js';

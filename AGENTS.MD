@@ -58,9 +58,13 @@ Treat these files and areas as approval-required:
 - `globalSetup.js`
 - `api/globalConfig.api.js`
 - `e2e/globalConfig.ui.js`
-- `api/helpers/testUtilsAPI.js`
+- `api/helpers/graphqlUtils.js`
+- `api/helpers/auth.js`
+- `api/helpers/apiReporting.js`
 - `api/helpers/graphqlClient.js`
-- `e2e/helpers/testUtilsUI.js`
+- `e2e/helpers/uiActions.js`
+- `e2e/helpers/testFailure.js`
+- `e2e/helpers/reporting/`
 - `e2e/helpers/selectors.js`
 - `e2e/selectors/merchant.selectors.json`
 - `e2e/pages/merchantPortal/`

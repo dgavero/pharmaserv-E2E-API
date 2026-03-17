@@ -1,5 +1,6 @@
 import { expect } from '../../../../globalConfig.api.js';
-import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { pharmacistLoginAndGetTokens } from '../../../../helpers/auth.js';
 import {
   PHARMACY_ACCEPT_ORDER_QUERY,
   PHARMACY_CONFIRM_ORDER_QUERY,

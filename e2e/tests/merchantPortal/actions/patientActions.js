@@ -1,7 +1,8 @@
 import { expect } from '../../../globalConfig.ui.js';
 import { Timeouts } from '../../../Timeouts.js';
-import { markFailed } from '../../../helpers/testUtilsUI.js';
-import { safeGraphQL, bearer, extractApiFailureSnippet } from '../../../../api/helpers/testUtilsAPI.js';
+import { markFailed } from '../../../helpers/testFailure.js';
+import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
+import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
 import {
   PATIENT_ACCEPT_QUOTE_QUERY,
   PATIENT_REQUEST_REQUOTE_QUERY,

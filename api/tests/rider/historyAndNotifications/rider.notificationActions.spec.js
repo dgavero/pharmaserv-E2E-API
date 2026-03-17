@@ -6,16 +6,8 @@ import {
   SEEN_ALL_NOTIFICATIONS_QUERY,
   REMOVE_NOTIFICATION_QUERY,
 } from './rider.notificationQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  riderLoginAndGetTokens,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, riderLoginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 
 async function getFirstNotificationId(api, accessToken) {
   const getNotificationsRes = await safeGraphQL(api, {

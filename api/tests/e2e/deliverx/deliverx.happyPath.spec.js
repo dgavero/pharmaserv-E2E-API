@@ -1,13 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  pharmacistLoginAndGetTokens,
-  adminLoginAndGetTokens,
-  riderLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, pharmacistLoginAndGetTokens, adminLoginAndGetTokens, riderLoginAndGetTokens } from '../../../helpers/auth.js';
 import {
   buildDeliverXBaseOrderInput,
   buildDeliverXAttachmentNoPrescriptionOrderInput,

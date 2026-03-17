@@ -1,6 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { REMOVE_PRESCRIPTION_QUERY, SCAN_PRESCRIPTION_QUERY } from './patient.prescriptionQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Remove Prescription', () => {
   test(

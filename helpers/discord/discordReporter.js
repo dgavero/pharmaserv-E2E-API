@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { appendSummary, shutdownBot, editRunningHeader } from './discordBot.js';
-import { flushApiReports, extractApiFailureSnippet, enqueueApiFailure } from '../../api/helpers/testUtilsAPI.js';
+import { flushApiReports, extractApiFailureSnippet, enqueueApiFailure } from '../../api/helpers/apiReporting.js';
 
 function sanitizePublishLogs(text) {
   if (!text) return '';

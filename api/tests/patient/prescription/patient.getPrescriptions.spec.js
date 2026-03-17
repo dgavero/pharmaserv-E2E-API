@@ -3,7 +3,8 @@ import {
   GET_PRESCRIPTION_QUERY,
   SCAN_PRESCRIGET_PRESCRIPTION_QUERYPTION_QUERY,
 } from './patient.prescriptionQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Get Prescription', () => {
   test(

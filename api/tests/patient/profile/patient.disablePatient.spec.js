@@ -1,5 +1,5 @@
 // import { test, expect } from '../../../globalConfig.api.js';
-// import { loginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/testUtilsAPI';
+// import { loginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 // import {
 //   safeGraphQL,
 //   bearer,
@@ -7,7 +7,7 @@
 //   NOAUTH_MESSAGE_PATTERN,
 //   NOAUTH_CLASSIFICATIONS,
 //   NOAUTH_CODES,
-// } from '../../../helpers/testUtilsAPI.js';
+// } from '../../../helpers/graphqlUtils.js';
 
 // const DISABLE_PATIENT_QUERY = /* GraphQL */ `
 //   mutation ($patientId: ID!) {

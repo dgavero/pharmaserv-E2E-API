@@ -1,14 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  pharmacistLoginAndGetTokens,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, pharmacistLoginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import {
   PHARMACIST_OPEN_MY_BRANCH_QUERY,
   PHARMACIST_CLOSE_MY_BRANCH_QUERY,

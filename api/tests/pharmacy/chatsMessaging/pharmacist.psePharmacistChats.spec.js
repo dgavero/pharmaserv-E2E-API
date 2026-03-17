@@ -9,7 +9,8 @@ import {
   PHARMACIST_SEND_CHAT_MESSAGES_BY_THREAD_ID_QUERY,
   PHARMACIST_SET_THREAD_SEEN_QUERY,
 } from '../chatsMessaging/pharmacist.chatMessagingQueries.js';
-import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 

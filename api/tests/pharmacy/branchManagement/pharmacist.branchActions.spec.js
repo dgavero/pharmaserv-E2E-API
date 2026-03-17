@@ -4,7 +4,8 @@ import {
   PHARMACIST_GET_PAGED_BRANCH_QUERY,
   PHARMACIST_GET_BRANCH_BY_ID_QUERY,
 } from '../branchManagement/pharmacist.branchManagementQueries.js';
-import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 
 test.describe('GraphQL: Branch Management Actions', () => {

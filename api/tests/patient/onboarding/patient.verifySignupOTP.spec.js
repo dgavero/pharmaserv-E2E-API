@@ -10,7 +10,7 @@
 //   NOAUTH_CLASSIFICATIONS,
 //   NOAUTH_CODES,
 //   NOAUTH_HTTP_STATUSES,
-// } from '../../helpers/testUtilsAPI.js';
+// } from '../../helpers/graphqlUtils.js';
 
 // function builderName() {
 //   const firstName = `builderName${randomAlphanumeric(4)}`;

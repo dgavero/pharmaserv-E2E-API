@@ -4,16 +4,8 @@ import {
   SET_DEFAULT_ADDRESS_QUERY,
   GET_DEFAULT_ADDRESS_QUERY,
 } from './patient.profileQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  loginAndGetTokens,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
 
 async function getFirstAddressId(api, accessToken) {
   const getAddressRes = await safeGraphQL(api, {

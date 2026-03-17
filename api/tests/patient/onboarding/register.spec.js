@@ -6,7 +6,7 @@
 //   NOAUTH_MESSAGE_PATTERN,
 //   NOAUTH_CLASSIFICATIONS,
 //   NOAUTH_CODES,
-// } from '../../../helpers/testUtilsAPI.js';
+// } from '../../../helpers/graphqlUtils.js';
 // import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 
 // const REGISTER_PATIENT_MUTATION = `

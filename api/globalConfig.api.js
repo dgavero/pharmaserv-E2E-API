@@ -9,7 +9,8 @@
  */
 
 import { test as base, request as pwRequest } from '@playwright/test';
-import { flushApiReports, INVALID_JWT } from './helpers/testUtilsAPI.js';
+import { flushApiReports } from './helpers/apiReporting.js';
+import { INVALID_JWT } from './helpers/auth.js';
 
 // Avoid the macOS IPv6 localhost (::1) gotcha by normalizing to 127.0.0.1.
 const TEST_ENV = String(process.env.TEST_ENV || 'DEV').toUpperCase();

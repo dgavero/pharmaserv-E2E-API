@@ -1,15 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_ADS_LOCATIONS_QUERY } from './patient.onboardingQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  loginAndGetTokens,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Patient Get Ads Locations', () => {
   test(

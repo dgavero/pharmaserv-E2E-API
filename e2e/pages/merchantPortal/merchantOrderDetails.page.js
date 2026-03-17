@@ -1,13 +1,5 @@
-import {
-  delay,
-  markFailed,
-  safeClick,
-  safeInput,
-  safeUploadFile,
-  safeWaitForElementHidden,
-  safeWaitForElementVisible,
-  safeWaitForPageLoad,
-} from '../../helpers/testUtilsUI.js';
+import { delay, safeClick, safeInput, safeUploadFile, safeWaitForElementHidden, safeWaitForElementVisible, safeWaitForPageLoad } from '../../helpers/uiActions.js';
+import { markFailed } from '../../helpers/testFailure.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import { Timeouts, TimeoutsSec } from '../../Timeouts.js';
 

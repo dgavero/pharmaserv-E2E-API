@@ -7,16 +7,8 @@ import {
   PHARMACIST_SEEN_NOTIFICATION_QUERY,
   PHARMACIST_REMOVE_NOTIFICATION_QUERY,
 } from '../historyAndNotifications/pharmacist.notificationQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  pharmacistLoginAndGetTokens,
-  getGQLError,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { pharmacistLoginAndGetTokens, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
 
 async function getFirstNotificationId(api, accessToken) {
   const getNotificationRes = await safeGraphQL(api, {

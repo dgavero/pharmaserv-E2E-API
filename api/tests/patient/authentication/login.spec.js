@@ -1,5 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { safeGraphQL, getGQLError } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, getGQLError } from '../../../helpers/graphqlUtils.js';
 
 const LOGIN_MUTATION = `
   mutation ($username: String!, $password: String!) {

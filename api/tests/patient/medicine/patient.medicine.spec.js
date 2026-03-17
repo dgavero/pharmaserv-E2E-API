@@ -1,14 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { ADD_FAVORITE_MEDICINE_QUERY, GET_FAVORITE_MEDICINE_QUERY } from './patient.medicineQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Medicine Favorites', () => {
   test(

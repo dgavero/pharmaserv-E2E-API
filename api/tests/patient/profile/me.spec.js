@@ -1,13 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  loginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS } from '../../../helpers/auth.js';
 
 const ME_QUERY = `
   query {

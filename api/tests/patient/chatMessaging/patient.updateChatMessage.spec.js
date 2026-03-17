@@ -1,14 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  loginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { UPDATE_CHAT_MESSAGE_MUTATION } from './patient.chatMessagingQueries.js';
 import { CHAT_MESSAGE_ID } from './patient.chatMessagingConstants.js';

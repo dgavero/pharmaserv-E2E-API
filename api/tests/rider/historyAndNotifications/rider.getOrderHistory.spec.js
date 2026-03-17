@@ -1,15 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_ORDER_HISTORY_QUERY } from './rider.notificationQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  riderLoginAndGetTokens,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, riderLoginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Rider Get Order History', () => {
   test(

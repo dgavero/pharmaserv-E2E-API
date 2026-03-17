@@ -1,13 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  adminLoginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { adminLoginAndGetTokens, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 const CREATE_PHARMACY_MUTATION = `

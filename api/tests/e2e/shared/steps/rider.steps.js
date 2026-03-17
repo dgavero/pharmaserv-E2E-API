@@ -1,5 +1,6 @@
 import { expect } from '../../../../globalConfig.api.js';
-import { safeGraphQL, bearer, riderLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { riderLoginAndGetTokens } from '../../../../helpers/auth.js';
 import {
   RIDER_START_PICKUP_ORDER_QUERY,
   RIDER_ARRIVED_AT_PHARMACY_QUERY,

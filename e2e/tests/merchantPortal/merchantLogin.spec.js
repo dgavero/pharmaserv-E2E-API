@@ -1,17 +1,8 @@
-import { markFailed } from '../../helpers/testUtilsUI.js';
+import { markFailed } from '../../helpers/testFailure.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import { test } from '../../../e2e/globalConfig.ui.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import {
-  safeClick,
-  safeFill,
-  safeInput,
-  safeNavigateToUrl,
-  safeOpenNewContextPage,
-  safeWaitForPageLoad,
-  safeWaitForElementVisible,
-  getLastError,
-} from '../../helpers/testUtilsUI.js';
+import { safeClick, safeFill, safeInput, safeNavigateToUrl, safeOpenNewContextPage, safeWaitForPageLoad, safeWaitForElementVisible, getLastError } from '../../helpers/uiActions.js';
 
 test.describe('Merchant Portal | Login', () => {
   test(

@@ -1,15 +1,8 @@
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { loginAndGetTokens } from '../../../helpers/testUtilsAPI';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { loginAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 
 const GET_DC_CARD = /* GraphQL */ `
   query ($patientId: ID!) {

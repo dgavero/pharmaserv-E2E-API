@@ -1,16 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { FIND_MEDICINES_QUERY } from '../orderManagement/pharmacist.orderManagementQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  adminLoginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-  pharmacistLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES, pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Pharmacy Find Medicines by search', () => {
   test(

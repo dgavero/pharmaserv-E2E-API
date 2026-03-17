@@ -1,16 +1,8 @@
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_ORDER_QUERY } from './patient.orderingQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 
 const { orderId } = getReusableTestIds({ slot: 'slotOne' });

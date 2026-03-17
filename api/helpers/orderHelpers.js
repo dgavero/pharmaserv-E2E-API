@@ -1,4 +1,5 @@
-import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from './testUtilsAPI.js';
+import { safeGraphQL, bearer } from './graphqlUtils.js';
+import { pharmacistLoginAndGetTokens } from './auth.js';
 import { expect } from '../globalConfig.api.js';
 import { DECLINE_ORDER_QUERY } from '../tests/pharmacy/orderManagement/pharmacist.orderManagementQueries.js';
 

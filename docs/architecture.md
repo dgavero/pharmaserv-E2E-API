@@ -39,7 +39,9 @@ API layout:
 
 - `api/globalConfig.api.js` shared API fixture and auth fixtures
 - `api/helpers/graphqlClient.js` GraphQL POST helper
-- `api/helpers/testUtilsAPI.js` normalized API helpers
+- `api/helpers/graphqlUtils.js` normalized GraphQL request helpers
+- `api/helpers/auth.js` shared auth and token helpers
+- `api/helpers/apiReporting.js` shared API failure reporting helpers
 - `api/tests/<role>/<feature>/...` role-based feature tests
 - `api/tests/e2e/...` API-only workflow tests
 - `api/tests/e2e/shared/queries/` shared workflow GraphQL docs
@@ -48,7 +50,9 @@ API layout:
 UI/hybrid layout:
 
 - `e2e/globalConfig.ui.js` UI fixture plus per-test API context
-- `e2e/helpers/testUtilsUI.js` safe UI helper layer
+- `e2e/helpers/uiActions.js` safe UI action and wait helpers
+- `e2e/helpers/testFailure.js` UI failure state and screenshot helpers
+- `e2e/helpers/reporting/discordReporterClient.js` Discord queueing and flush client
 - `e2e/helpers/selectors.js` selector loader/resolver
 - `e2e/selectors/merchant.selectors.json` merchant selector source
 - `e2e/pages/merchantPortal/` merchant page objects
@@ -108,7 +112,7 @@ This wrapper standardizes:
 - `errorMessage`
 - `errorPath`
 
-Auth and header helpers also live in `api/helpers/testUtilsAPI.js`:
+Auth and header helpers also live in `api/helpers/auth.js` and `api/helpers/graphqlUtils.js`:
 
 - `bearer(token)`
 - `loginAndGetTokens(...)`
@@ -285,8 +289,12 @@ These are architecture-critical and should not be changed casually:
 - `playwright.config.js`
 - `api/globalConfig.api.js`
 - `e2e/globalConfig.ui.js`
-- `api/helpers/testUtilsAPI.js`
-- `e2e/helpers/testUtilsUI.js`
+- `api/helpers/graphqlUtils.js`
+- `api/helpers/auth.js`
+- `api/helpers/apiReporting.js`
+- `e2e/helpers/uiActions.js`
+- `e2e/helpers/testFailure.js`
+- `e2e/helpers/reporting/discordReporterClient.js`
 - `e2e/selectors/merchant.selectors.json`
 - `e2e/pages/merchantPortal/`
 - `e2e/tests/merchantPortal/actions/`

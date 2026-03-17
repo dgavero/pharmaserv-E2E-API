@@ -1,14 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  adminLoginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { GET_ORDER_QUERY } from './admin.orderManagementQueries.js';
 import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 

@@ -1,6 +1,6 @@
-import { markFailed } from '../../helpers/testUtilsUI.js';
+import { markFailed } from '../../helpers/testFailure.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import { safeClick, safeInput, safeWaitForElementVisible } from '../../helpers/testUtilsUI.js';
+import { safeClick, safeInput, safeWaitForElementVisible } from '../../helpers/uiActions.js';
 import { Timeouts } from '../../Timeouts.js';
 
 export default class MerchantPortalLoginPage {

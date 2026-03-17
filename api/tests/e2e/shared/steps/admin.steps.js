@@ -1,5 +1,6 @@
 import { expect } from '../../../../globalConfig.api.js';
-import { safeGraphQL, bearer, adminLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { adminLoginAndGetTokens } from '../../../../helpers/auth.js';
 import { ADMIN_CONFIRM_PAYMENT_QUERY, ADMIN_ASSIGN_RIDER_QUERY } from '../queries/admin.queries.js';
 
 export async function loginAdmin(api) {

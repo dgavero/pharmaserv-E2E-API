@@ -1,6 +1,6 @@
 import { test, expect } from '../../globalConfig.api.js';
 import path from 'node:path';
-import { bearer, safeGraphQL } from '../../helpers/testUtilsAPI.js';
+import { bearer, safeGraphQL } from '../../helpers/graphqlUtils.js';
 import { buildDeliverXBaseOrderInput, buildDeliverXBasePriceItems } from '../e2e/deliverx/deliverx.testData.js';
 import { buildFindMyMedsBaseOrderInput } from '../e2e/findMyMeds/findMyMeds.testData.js';
 import {

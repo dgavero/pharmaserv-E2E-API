@@ -1,6 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_ACTIVE_ORDER_QUERY, GET_ORDER_HISTORY_QUERY } from './patient.getHistoryNotificationQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Order Details Patient', () => {
   test(

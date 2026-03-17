@@ -1,6 +1,7 @@
 import { expect } from '../../../../globalConfig.api.js';
 import fs from 'node:fs';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens } from '../../../../helpers/auth.js';
 import {
   PATIENT_SUBMIT_ORDER_QUERY,
   PATIENT_GET_PRESCRIPTION_UPLOAD_URL_QUERY,

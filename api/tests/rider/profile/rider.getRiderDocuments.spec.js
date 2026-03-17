@@ -1,15 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { RIDER_GET_DOCUMENTS_QUERY } from './rider.profileQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  riderLoginAndGetTokens,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { riderLoginAndGetTokens, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
 
 test.describe('GraphQL: Get Rider Documents', () => {
   test(

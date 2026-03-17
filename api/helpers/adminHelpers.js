@@ -1,4 +1,5 @@
-import { safeGraphQL, bearer, adminLoginAndGetTokens, getGQLError } from './testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from './graphqlUtils.js';
+import { adminLoginAndGetTokens } from './auth.js';
 import { expect } from '../globalConfig.api.js';
 
 // reusable method for creating rider schedule

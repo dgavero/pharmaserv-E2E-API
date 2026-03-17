@@ -1,12 +1,13 @@
 import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
 import { Timeouts } from '../../Timeouts.js';
-import { markFailed, safeWaitForElementHidden } from '../../helpers/testUtilsUI.js';
+import { markFailed } from '../../helpers/testFailure.js';
+import { safeWaitForElementHidden } from '../../helpers/uiActions.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
 import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
-import { pharmacistLoginAndGetTokens } from '../../../api/helpers/testUtilsAPI.js';
+import { pharmacistLoginAndGetTokens } from '../../../api/helpers/auth.js';
 import {
   prepareOrderAsPharmacist,
   setOrderForPickupAsPharmacist,

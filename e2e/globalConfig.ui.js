@@ -1,12 +1,7 @@
 // globalConfig.ui.js
 import { test as base, expect, request } from '@playwright/test';
-import {
-  setCurrentTestTitle,
-  setCurrentPage,
-  clearCurrentPage,
-  handleFailureAfterEach,
-  flushReports,
-} from '../e2e/helpers/testUtilsUI.js';
+import { setCurrentTestTitle, setCurrentPage, clearCurrentPage, handleFailureAfterEach } from '../e2e/helpers/testFailure.js';
+import { flushReports } from '../e2e/helpers/reporting/discordReporterClient.js';
 
 export const test = base.extend({
   // Provides isolated API context per UI test for hybrid UI+API workflows.

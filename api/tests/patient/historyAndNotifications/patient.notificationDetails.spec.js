@@ -6,16 +6,8 @@ import {
   SEEN_NOTIFICATION_QUERY,
   REMOVE_NOTIFICATION_QUERY,
 } from './patient.getHistoryNotificationQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAndGetTokens, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
 
 async function getFirstNotificationId(api, accessToken) {
   const getNotificationsRes = await safeGraphQL(api, {
