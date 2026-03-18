@@ -1,15 +1,6 @@
 import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
-import { markFailed } from '../../helpers/testFailure.js';
-import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
-import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
-import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
-import { loginAsPharmacistAndGetTokens } from '../../../api/helpers/auth.js';
-import { getPharmacistCredentials } from '../../../api/helpers/roleCredentials.js';
-import { getMerchantPortalCredentials } from '../../helpers/merchantCredentials.js';
-import {
-  sendQuoteAsPharmacist,
-} from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
+import { createMerchantPortalContext } from './merchantPortalContext.js';
 import {
   buildBasePriceItems,
   HybridDeliveryTypes,
@@ -25,7 +16,6 @@ import {
 import {
   assignRiderToOrderAsAdminAction,
   confirmPaymentAsAdminAction,
-  getMerchantIdPSE,
   loginAdminForHybrid,
 } from './actions/adminActions.js';
 import {
@@ -49,30 +39,23 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const merchantPortalCredentials = getMerchantPortalCredentials('pse');
-      const pharmacistCredentials = getPharmacistCredentials('pse01');
-      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
-      const merchantBranchId = await getMerchantIdPSE(api, merchantAccessToken);
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
 
       // API (patient): create order.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
         deliveryType: HybridDeliveryTypes.PABILI,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
       });
 
       // UI (merchant): login and accept order.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrderForRiderQuote();
-      await orderDetailsPage.requestForRiderToQuote(true);
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrderForRiderQuote();
+      await merchant.orderDetailsPage.requestForRiderToQuote(true);
 
       // API (admin): assign rider.
       const { adminAccessToken } = await loginAdminForHybrid(api);
@@ -85,27 +68,23 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       // API (rider): start flow and send rider quote.
       const { riderAccessToken, branchQR } = await riderStartPickupAndArriveAtPharmacy(api, {
         orderId,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
         requireBranchQR: false,
       });
       await riderSendQuoteFlow(api, {
         riderAccessToken,
         orderId,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
         prices: buildBasePriceItems(),
         qrImagePath: riderPaymentQrImagePath,
       });
 
-      // API (merchant/pharmacist): send quote.
-      const { paymentQRCodeId: quotedPaymentQRCodeId } = await sendQuoteAsPharmacist(api, {
-        pharmacistAccessToken: merchantAccessToken,
-        orderId,
-      });
-      expect(quotedPaymentQRCodeId, 'Missing paymentQRCodeId from pharmacist sendQuote response').toBeTruthy();
+      // UI (merchant): send quote after rider quote is ready.
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay.
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId });
-      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId || quotedPaymentQRCodeId;
+      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
       expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
       const { paymentQRCodeBranchId } = await ensurePatientPaymentQRCodeAccessible(api, {
         patientAccessToken,
@@ -125,7 +104,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       await riderCompleteDeliveryFlow(api, {
         riderAccessToken,
         orderId,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
         branchQR,
         pickupProofImagePath: riderPickupProofImagePath,
         deliveryProofImagePath: riderDeliveryProofImagePath,
@@ -139,7 +118,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 
@@ -157,30 +136,23 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const merchantPortalCredentials = getMerchantPortalCredentials('pse');
-      const pharmacistCredentials = getPharmacistCredentials('pse01');
-      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
-      const merchantBranchId = await getMerchantIdPSE(api, merchantAccessToken);
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
 
       // API (patient): create order.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
         deliveryType: HybridDeliveryTypes.PABILI,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
       });
 
       // UI (merchant): login, accept order, update prices, upload QR, and send quote.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrderForRiderQuote();
-      await orderDetailsPage.requestForRiderToQuote(false);
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrderForRiderQuote();
+      await merchant.orderDetailsPage.requestForRiderToQuote(false);
 
       // API (admin): assign rider right after merchant requests rider in UI flow.
       const { adminAccessToken } = await loginAdminForHybrid(api);
@@ -190,9 +162,9 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
         riderId: process.env.RIDER_USERID,
       });
 
-      await orderDetailsPage.updatePriceItems(buildBasePriceItems());
-      await orderDetailsPage.uploadQRCode(merchantPaymentQrImagePath);
-      await orderDetailsPage.sendQuote();
+      await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await merchant.orderDetailsPage.uploadQRCode(merchantPaymentQrImagePath);
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay.
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId });
@@ -229,7 +201,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 });

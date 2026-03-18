@@ -196,7 +196,7 @@ Credential resolution:
   - `getAdminCredentials('default')`
   - `getRiderCredentials('default')`
   - `getPharmacistCredentials('reg01')`
-  - `getMerchantPortalCredentials('pse')`
+  - `getMerchantPortalAccount('e2e-pse01')`
 - do not read role username/password env vars directly inside shared workflow steps
 
 ## Assertion Rules

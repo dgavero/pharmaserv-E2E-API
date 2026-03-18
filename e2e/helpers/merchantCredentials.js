@@ -1,31 +1,49 @@
-function requireCredentialValue(accountKey, fieldName, rawValue) {
+function requireAccountValue(accountKey, fieldName, rawValue) {
   const value = String(rawValue ?? '').trim();
   if (!value) {
-    throw new Error(`Missing ${fieldName} for merchant portal credentials (${accountKey})`);
+    throw new Error(`Missing ${fieldName} for merchant portal account (${accountKey})`);
   }
   return value;
 }
 
-export function getMerchantPortalCredentials(accountKey = 'regular') {
-  const normalizedKey = String(accountKey || 'regular').trim().toLowerCase();
+function requireAccountNumber(accountKey, fieldName, rawValue) {
+  const value = Number(rawValue);
+  if (!value) {
+    throw new Error(`Missing ${fieldName} for merchant portal account (${accountKey})`);
+  }
+  return value;
+}
+
+export function getMerchantPortalAccount(accountKey = 'e2e-reg01') {
+  const normalizedKey = String(accountKey || 'e2e-reg01')
+    .trim()
+    .toLowerCase();
   const accountMap = {
-    regular: {
+    'e2e-reg01': {
       usernameKey: 'MERCHANT_USERNAME',
       passwordKey: 'MERCHANT_PASSWORD',
+      assignedBranchIdKey: 'MERCHANT_BRANCHID',
     },
-    pse: {
+    'e2e-pse01': {
       usernameKey: 'MERCHANT_USERNAME_PSE',
       passwordKey: 'MERCHANT_PASSWORD_PSE',
+      assignedBranchIdKey: 'PHARMACIST_BRANCHID_PSE01',
     },
   };
 
   const accountConfig = accountMap[normalizedKey];
   if (!accountConfig) {
-    throw new Error(`Unknown merchant portal credential key: ${accountKey}`);
+    throw new Error(`Unknown merchant portal account key: ${accountKey}`);
   }
 
   return {
-    username: requireCredentialValue(normalizedKey, accountConfig.usernameKey, process.env[accountConfig.usernameKey]),
-    password: requireCredentialValue(normalizedKey, accountConfig.passwordKey, process.env[accountConfig.passwordKey]),
+    accountKey: normalizedKey,
+    username: requireAccountValue(normalizedKey, accountConfig.usernameKey, process.env[accountConfig.usernameKey]),
+    password: requireAccountValue(normalizedKey, accountConfig.passwordKey, process.env[accountConfig.passwordKey]),
+    assignedBranchId: requireAccountNumber(
+      normalizedKey,
+      accountConfig.assignedBranchIdKey,
+      process.env[accountConfig.assignedBranchIdKey]
+    ),
   };
 }

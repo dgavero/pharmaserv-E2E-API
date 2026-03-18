@@ -129,12 +129,12 @@ Named credential resolution is centralized separately:
   - `getRiderCredentials('default')`
   - `getPharmacistCredentials('reg01' | 'reg02' | 'pse01' | 'admin')`
 - `e2e/helpers/merchantCredentials.js`
-  - `getMerchantPortalCredentials('regular' | 'pse')`
+  - `getMerchantPortalAccount('e2e-reg01' | 'e2e-pse01')`
 
 Boundary rule:
 
 - auth helpers execute role-specific login mutations and require `{ username, password }`
-- credential resolvers map named account keys to env-backed credentials
+- credential resolvers map named account keys to env-backed credentials and account metadata
 - workflow steps and specs choose the account key explicitly instead of reading role login env vars inline
 
 Example placement:

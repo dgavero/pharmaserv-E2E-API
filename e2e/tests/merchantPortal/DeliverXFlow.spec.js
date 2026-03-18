@@ -4,17 +4,7 @@ import { Timeouts } from '../../Timeouts.js';
 import { markFailed } from '../../helpers/testFailure.js';
 import { safeWaitForElementHidden } from '../../helpers/uiActions.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
-import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
-import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
-import { loginAsPharmacistAndGetTokens } from '../../../api/helpers/auth.js';
-import { getPharmacistCredentials } from '../../../api/helpers/roleCredentials.js';
-import { getMerchantPortalCredentials } from '../../helpers/merchantCredentials.js';
-import {
-  prepareOrderAsPharmacist,
-  setOrderForPickupAsPharmacist,
-  confirmPickupAsPharmacist,
-} from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
+import { createMerchantPortalContext } from './merchantPortalContext.js';
 import {
   buildBasePriceItems,
   buildBasePrescriptionItems,
@@ -35,7 +25,6 @@ import {
 import {
   assignRiderToOrderAsAdminAction,
   confirmPaymentAsAdminAction,
-  getMerchantIdRegular,
   loginAdminForHybrid,
 } from './actions/adminActions.js';
 import {
@@ -57,10 +46,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
-      const pharmacistCredentials = getPharmacistCredentials('reg01');
-      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
-      const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create order with higher submitted quantities (5, 7).
       const submittedPrescriptionItems = buildBasePrescriptionItems().map((item, index) => ({
@@ -70,26 +56,22 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
         order: buildHybridOrderInput({
           deliveryType: HybridDeliveryTypes.DELIVER_X,
-          branchId: merchantBranchId,
+          branchId: merchant.account.assignedBranchId,
           prescriptionItems: submittedPrescriptionItems,
         }),
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrder();
-      await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
-      await orderDetailsPage.updatePriceItems(buildBasePriceItems());
-      await orderDetailsPage.sendQuote();
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+      await merchant.orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay.
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
@@ -115,9 +97,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { adminAccessToken } = await loginAdminForHybrid(api);
       await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
 
-      // API (merchant/pharmacist): prepare then set for pickup.
-      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
-      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+      // UI (merchant): prepare then set for pickup.
+      await merchant.orderDetailsPage.prepareOrderForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
       const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
@@ -157,7 +139,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 
@@ -171,32 +153,25 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
     },
     async ({ page, api }) => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
-      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
-      const pharmacistCredentials = getPharmacistCredentials('reg01');
-      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
-      const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create order.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
         deliveryType: HybridDeliveryTypes.DELIVER_X,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrder();
-      await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
-      await orderDetailsPage.updatePriceItems(buildBasePriceItems());
-      await orderDetailsPage.sendQuote();
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+      await merchant.orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay (pickup mode).
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
@@ -222,23 +197,13 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { adminAccessToken } = await loginAdminForHybrid(api);
       await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
 
-      // API (merchant/pharmacist): prepare, set for pickup, and confirm pickup.
-      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
-      const { patientQR } = await setOrderForPickupAsPharmacist(api, {
-        pharmacistAccessToken: merchantAccessToken,
-        orderId,
-      });
-      if (!patientQR) {
-        markFailed('Missing patientQR from set-for-pickup response');
-      }
-      await confirmPickupAsPharmacist(api, {
-        pharmacistAccessToken: merchantAccessToken,
-        orderId,
-        qrCode: patientQR,
-      });
+      // UI (merchant): prepare, set for pickup, and confirm patient pickup.
+      await merchant.orderDetailsPage.prepareOrderForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPatientPickup();
+      await merchant.orderDetailsPage.confirmPatientPickupCompleted();
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 
@@ -264,32 +229,25 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
-      const pharmacistCredentials = getPharmacistCredentials('reg01');
-      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
-      const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create order.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
         deliveryType: HybridDeliveryTypes.DELIVER_X,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrder();
-      await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
-      await orderDetailsPage.updatePriceItems(buildBasePriceItems());
-      await orderDetailsPage.sendQuote();
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+      await merchant.orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay (scheduled mode).
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
@@ -315,9 +273,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { adminAccessToken } = await loginAdminForHybrid(api);
       await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
 
-      // API (merchant/pharmacist): prepare then set for pickup.
-      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
-      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+      // UI (merchant): prepare then set for pickup.
+      await merchant.orderDetailsPage.prepareOrderForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
       const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
@@ -341,7 +299,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 
@@ -357,36 +315,29 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
-      const pharmacistCredentials = getPharmacistCredentials('reg01');
-      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
-      const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create attachment-only order with no prescription items.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
         order: buildDeliverXAttachmentNoPrescriptionHybridOrderInput({
-          branchId: merchantBranchId,
+          branchId: merchant.account.assignedBranchId,
         }),
       });
 
       // UI (merchant): login and accept order.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrder();
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
 
       // UI (merchant): add medicines with qty/price, upload QR, then send quote.
-      await orderDetailsPage.addItemToOrder('Biogesic', 200, 2);
-      await orderDetailsPage.addItemToOrder('Maalox', 400, 5);
-      await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
-      await orderDetailsPage.sendQuote();
+      await merchant.orderDetailsPage.addItemToOrder('Biogesic', 200, 2);
+      await merchant.orderDetailsPage.addItemToOrder('Maalox', 400, 5);
+      await merchant.orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay.
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, {
@@ -412,9 +363,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { adminAccessToken } = await loginAdminForHybrid(api);
       await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
 
-      // API (merchant/pharmacist): prepare then set for pickup.
-      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
-      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+      // UI (merchant): prepare then set for pickup.
+      await merchant.orderDetailsPage.prepareOrderForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
       const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
@@ -438,7 +389,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 
@@ -455,37 +406,30 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
-      const pharmacistCredentials = getPharmacistCredentials('reg01');
-      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
-      const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create order.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
         deliveryType: HybridDeliveryTypes.DELIVER_X,
-        branchId: merchantBranchId,
+        branchId: merchant.account.assignedBranchId,
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrder();
-      await orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
-      await orderDetailsPage.updatePriceItems(buildBasePriceItems());
-      await orderDetailsPage.sendQuote();
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+      await merchant.orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept initial quote, then request requote.
       await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
       await requestReQuoteAsPatientAction(api, { patientAccessToken, orderId });
-      await orderDetailsPage.closeRequoteRequestModal();
+      await merchant.orderDetailsPage.closeRequoteRequestModal();
 
       // UI (merchant): re-send quote after patient requote/quantity change.
       const sel = loadSelectors('merchant');
@@ -493,7 +437,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       if (!(await safeWaitForElementHidden(page, requestPaymentLoadingButton))) {
         markFailed('Request payment is still loading before re-send quote');
       }
-      await orderDetailsPage.sendQuote();
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept updated quote, reduce quantities (3, 4), then pay.
       const { acceptQuoteNode: reQuotedAcceptNode } = await acceptQuoteAsPatientWhenReady(api, {
@@ -535,15 +479,15 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // UI (merchant): verify quantity-change modal appears and close it.
-      await orderDetailsPage.verifyQuantityChangedModalAppeared();
+      await merchant.orderDetailsPage.verifyQuantityChangedModalAppeared();
 
       // API (admin): confirm payment.
       const { adminAccessToken } = await loginAdminForHybrid(api);
       await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
 
-      // API (merchant/pharmacist): prepare then set for pickup.
-      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
-      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+      // UI (merchant): prepare then set for pickup.
+      await merchant.orderDetailsPage.prepareOrderForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
       const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
@@ -567,7 +511,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 });
