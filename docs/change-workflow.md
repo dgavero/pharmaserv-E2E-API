@@ -70,6 +70,7 @@ For API work:
 For merchant work:
 
 - target spec
+- merchant account/context setup
 - relevant page object
 - relevant action module
 - relevant selector entries
@@ -148,6 +149,7 @@ For hybrid merchant changes:
 - verify whether the behavior belongs in a page object, action module, selector JSON, or spec
 - preserve merchant UI-only actions
 - preserve active-branch binding and final status verification behavior
+- preserve explicit merchant account resolution through the merchant account/context helper instead of reintroducing spec-local env lookups
 
 ## Step 8: Self-Review the Diff
 

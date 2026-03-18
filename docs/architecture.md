@@ -136,12 +136,19 @@ Boundary rule:
 - auth helpers execute role-specific login mutations and require `{ username, password }`
 - credential resolvers map named account keys to env-backed credentials and account metadata
 - workflow steps and specs choose the account key explicitly instead of reading role login env vars inline
+- shared API workflow steps should remain override-friendly, so callers can still pass explicit credentials or explicit workflow data when needed
 
 Example placement:
 
 - patient feature query docs: `api/tests/patient/ordering/patient.orderingQueries.js`
 - admin feature spec: `api/tests/admin/riderManagement/rider.getDocumentToken.spec.js`
 - API workflow shared step module: `api/tests/e2e/shared/steps/patient.steps.js`
+
+Workflow guidance:
+
+- prefer shared workflow steps in `api/tests/e2e/shared/steps/` over repeated inline role login plus `safeGraphQL(...)` when an equivalent shared step already exists
+- keep long GraphQL operations in query files, even inside workflow tests
+- use raw transport calls only for signed upload URLs or other non-GraphQL endpoints that are actually exposed by the product
 
 ## UI and Hybrid Merchant Layer
 
@@ -173,9 +180,36 @@ Hybrid action modules:
 - `e2e/tests/merchantPortal/actions/adminActions.js`
 - `e2e/tests/merchantPortal/actions/riderActions.js`
 
+Hybrid action naming is actor-first and explicit:
+
+- `loginAsAdminForHybrid(...)`
+- `confirmPaymentAsAdminForHybrid(...)`
+- `assignRiderToOrderAsAdminForHybrid(...)`
+- `rateRiderAsPatientForHybrid(...)`
+- `completeDeliveryAsRiderForHybrid(...)`
+
 Shared hybrid input builders:
 
 - `e2e/tests/merchantPortal/generic.orderData.js`
+
+Shared hybrid context setup:
+
+- `e2e/tests/merchantPortal/merchantPortalContext.js`
+  - resolves the active merchant account profile
+  - returns `account`, `loginPage`, `ordersPage`, and `orderDetailsPage`
+
+Merchant account profiles are explicit and branch-bound:
+
+- `getMerchantPortalAccount('e2e-reg01' | 'e2e-pse01')`
+  - returns resolved `username`
+  - returns resolved `password`
+  - returns stable `assignedBranchId`
+
+Hybrid merchant specs should use the same merchant account object for:
+
+- UI login
+- patient order branch binding
+- merchant-account-specific flow data
 
 ## Selectors
 

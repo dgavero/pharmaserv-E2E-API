@@ -1,10 +1,7 @@
-import { loginAsPatientAndGetTokens, loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
-import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getPatientCredentials, getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { buildDeliverXBaseOrderInput } from './deliverx.testData.js';
-import { PATIENT_SUBMIT_ORDER_QUERY } from '../shared/queries/patient.queries.js';
-import { PHARMACY_DECLINE_ORDER_QUERY } from '../shared/queries/pharmacist.queries.js';
+import { loginPatient, submitOrderAsPatient } from '../shared/steps/patient.steps.js';
+import { declineOrderAsPharmacist, loginPharmacist } from '../shared/steps/pharmacist.steps.js';
 
 test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
   test(
@@ -13,44 +10,23 @@ test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
       tag: ['@api', '@workflow', '@deliverx', '@patient', '@pharmacist', '@positive', '@pharma-333'],
     },
     async ({ api }) => {
-      // Login as patient.
-      const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
-      expect(patientLoginRes.ok, patientLoginRes.error || 'Patient login failed').toBe(true);
-
-      // Submit DeliverX order as patient.
-      const submitOrderRes = await safeGraphQL(api, {
-        query: PATIENT_SUBMIT_ORDER_QUERY,
-        variables: { order: buildDeliverXBaseOrderInput() },
-        headers: bearer(patientAccessToken),
+      // Login as patient and submit DeliverX order.
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
+      const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
+        patientAccessToken,
+        order: buildDeliverXBaseOrderInput(),
       });
-      expect(submitOrderRes.ok, submitOrderRes.error || 'Patient submit order failed').toBe(true);
 
-      const bookedOrder = submitOrderRes.body?.data?.patient?.order?.book;
-      expect(bookedOrder, 'Missing patient.order.book').toBeTruthy();
+      const bookedOrder = submitOrderNode;
       expect.soft(bookedOrder.status).toBe('NEW_ORDER');
 
-      // Store order id for pharmacist action.
-      const orderId = bookedOrder?.id;
-      expect(orderId, 'Missing booked order id').toBeTruthy();
-
-      // Login as pharmacist.
-      const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
-      expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'Pharmacist login failed').toBe(true);
-
-      // Decline the same order as pharmacist.
-      const declineOrderRes = await safeGraphQL(api, {
-        query: PHARMACY_DECLINE_ORDER_QUERY,
-        variables: {
-          orderId,
-          reason: 'Declined via workflow test PHARMA-333',
-        },
-        headers: bearer(pharmacistAccessToken),
+      // Login as pharmacist and decline the same order.
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
+      await declineOrderAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        reason: 'Declined via workflow test PHARMA-333',
       });
-      expect(declineOrderRes.ok, declineOrderRes.error || 'Pharmacist decline order failed').toBe(true);
-
-      const declinedOrder = declineOrderRes.body?.data?.pharmacy?.order?.decline;
-      expect(declinedOrder, 'Missing pharmacy.order.decline').toBeTruthy();
-      expect(declinedOrder?.id).toBe(orderId);
     }
   );
 });

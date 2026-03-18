@@ -180,7 +180,7 @@ npx playwright show-trace $(find test-results -name trace.zip | head -n 1)
 
 For API test creation/update conventions, follow:
 
-- [AGENTS.MD](./AGENTS.MD)
+- [AGENTS.md](./AGENTS.md)
 
 That file is the source-of-truth for:
 
@@ -188,3 +188,11 @@ That file is the source-of-truth for:
 - GraphQL query file separation
 - happy path and negative auth patterns
 - naming rules (`Res` suffix, no generic `res`)
+
+For framework extension work, also use:
+
+- `docs/architecture.md`
+- `docs/test-layer-map.md`
+- `docs/coding-standards.md`
+- `docs/change-workflow.md`
+- `docs/risk-checklist.md`

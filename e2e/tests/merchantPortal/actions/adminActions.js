@@ -13,7 +13,7 @@ function failAction(actionLabel, error) {
   markFailed(`${actionLabel} failed:\n${snippet || rawMessage}`);
 }
 
-export async function loginAdminForHybrid(api, { accountKey = 'default' } = {}) {
+export async function loginAsAdminForHybrid(api, { accountKey = 'default' } = {}) {
   try {
     const { adminAccessToken } = await loginAdmin(api, {
       accountKey,
@@ -21,19 +21,22 @@ export async function loginAdminForHybrid(api, { accountKey = 'default' } = {}) 
     });
     return { adminAccessToken };
   } catch (error) {
-    failAction('loginAdminForHybrid', error);
+    failAction('loginAsAdminForHybrid', error);
   }
 }
 
-export async function confirmPaymentAsAdminAction(api, { adminAccessToken, orderId }) {
+export async function confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId }) {
   try {
     await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
   } catch (error) {
-    failAction('confirmPaymentAsAdminAction', error);
+    failAction('confirmPaymentAsAdminForHybrid', error);
   }
 }
 
-export async function assignRiderToOrderAsAdminAction(api, { adminAccessToken, orderId, riderId = process.env.RIDER_USERID }) {
+export async function assignRiderToOrderAsAdminForHybrid(
+  api,
+  { adminAccessToken, orderId, riderId = process.env.RIDER_USERID }
+) {
   try {
     const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
       adminAccessToken,
@@ -42,6 +45,6 @@ export async function assignRiderToOrderAsAdminAction(api, { adminAccessToken, o
     });
     return { assignedRiderId };
   } catch (error) {
-    failAction('assignRiderToOrderAsAdminAction', error);
+    failAction('assignRiderToOrderAsAdminForHybrid', error);
   }
 }

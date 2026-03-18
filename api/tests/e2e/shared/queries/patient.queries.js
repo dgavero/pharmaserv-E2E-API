@@ -26,6 +26,25 @@ export const PATIENT_GET_PRESCRIPTION_UPLOAD_URL_QUERY = /* GraphQL */ `
   }
 `;
 
+export const PATIENT_SAVE_PRESCRIPTION_ORDER_QUERY = /* GraphQL */ `
+  mutation ($prescription: ScanRequest!) {
+    patient {
+      prescription {
+        scan(prescription: $prescription) {
+          id
+          prescriptionItems {
+            medicine {
+              id
+              brand
+              genericName
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const PATIENT_GET_DISCOUNT_UPLOAD_URL_QUERY = /* GraphQL */ `
   query ($ext: String!) {
     patient {

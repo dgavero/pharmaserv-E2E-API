@@ -134,7 +134,7 @@ Details: [secrets/README.md](./secrets/README.md)
 
 - Usage and run patterns: [USAGE.md](./USAGE.md)
 - Testing vision and engineering principles: [PROJECTVISIONS.md](./PROJECTVISIONS.md)
-- API test authoring source-of-truth: [AGENTS.MD](./AGENTS.MD)
+- API test authoring source-of-truth: [AGENTS.md](./AGENTS.md)
 - Version history: [CHANGELOG.md](./CHANGELOG.md)
 
 ## Project Structure
@@ -154,11 +154,22 @@ pharmaserv-E2E-API/
 ├── scripts/publish-report.js
 ├── playwright.config.js
 ├── globalSetup.js
-└── AGENTS.MD
+└── AGENTS.md
 ```
 
 ## Notes
 
-- API test creation/update rules are maintained in `AGENTS.MD`.
+- API test creation/update rules are maintained in `AGENTS.md`.
 - Keep GraphQL operations in sibling query files for reuse.
 - Prefer descriptive response variable naming with `Res` suffix only.
+
+## Current Framework Direction
+
+- API auth uses explicit role logins plus named credential resolvers.
+- API workflow specs should prefer shared workflow steps under `api/tests/e2e/shared/steps/` over repeated inline role login + `safeGraphQL(...)`.
+- Merchant hybrid specs use:
+  - `merchantPortalContext.js`
+  - `getMerchantPortalAccount(...)`
+  - merchant page objects for merchant operations
+  - hybrid action modules for patient/admin/rider API orchestration
+- Merchant hybrid branch binding is explicit through the active merchant account profile.

@@ -6,6 +6,7 @@ import { getPatientCredentials } from '../../../../helpers/roleCredentials.js';
 import {
   PATIENT_SUBMIT_ORDER_QUERY,
   PATIENT_GET_PRESCRIPTION_UPLOAD_URL_QUERY,
+  PATIENT_SAVE_PRESCRIPTION_ORDER_QUERY,
   PATIENT_GET_DISCOUNT_UPLOAD_URL_QUERY,
   PATIENT_SAVE_DISCOUNT_CARD_QUERY,
   PATIENT_GET_ATTACHMENT_UPLOAD_URL_QUERY,
@@ -72,13 +73,18 @@ export async function uploadImageToSignedUrl(api, { uploadUrl, imagePath }) {
 }
 
 export async function savePrescriptionAsPatient(api, { patientAccessToken, patientId, photo }) {
-  const savePrescriptionRes = await api.post('/api/v1/pharmaserv/prescriptions', {
+  const savePrescriptionRes = await safeGraphQL(api, {
+    query: PATIENT_SAVE_PRESCRIPTION_ORDER_QUERY,
+    variables: {
+      prescription: {
+        patientId: Number(patientId),
+        photoToScan: photo,
+      },
+    },
     headers: bearer(patientAccessToken),
-    data: { patientId: Number(patientId), photo },
   });
-  expect(savePrescriptionRes.ok(), `Save prescription failed with status ${savePrescriptionRes.status()}`).toBe(true);
-  const savePrescriptionBody = await savePrescriptionRes.json();
-  const prescriptionId = savePrescriptionBody?.id;
+  expect(savePrescriptionRes.ok, savePrescriptionRes.error || 'Save prescription failed').toBe(true);
+  const prescriptionId = savePrescriptionRes.body?.data?.patient?.prescription?.scan?.id;
   expect(prescriptionId, 'Missing prescription id from save prescription response').toBeTruthy();
   return { prescriptionId };
 }

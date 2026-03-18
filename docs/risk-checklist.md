@@ -63,6 +63,7 @@ Use this checklist before and after implementing risky changes.
 ### Merchant Branch Logic
 
 - Does the flow create orders with the correct merchant branch ID?
+- Is the branch ID coming from the active merchant account/context instead of a hidden env fallback?
 - Is regular vs PSE merchant behavior preserved?
 - Am I changing approved merchant branch assignment behavior?
 - Am I accidentally switching from branch lookup to a hardcoded branch ID?

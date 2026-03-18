@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+# [3.0.8]
+
+### Changed
+
+- Split older shared helper barrels into focused modules across API and UI layers.
+- Standardized auth and account resolution:
+  - explicit role login helpers in `api/helpers/auth.js`
+  - named account resolvers in `api/helpers/roleCredentials.js`
+  - named merchant account profiles in `e2e/helpers/merchantCredentials.js`
+- Refactored shared API workflow login wrappers to stop reading role username/password env vars directly.
+- Standardized hybrid merchant account usage through:
+  - `e2e/tests/merchantPortal/merchantPortalContext.js`
+  - `getMerchantPortalAccount(...)`
+- Refactored merchant Orders and Order Details page objects into smaller modular methods plus small batch methods.
+- Stabilized merchant booking-reference search behavior:
+  - locator-bound search input handling
+  - retained search text on failure
+  - bounded result settling before accepting `No results found`
+- Removed merchant/pharmacist API actions from hybrid merchant specs and replaced them with merchant UI actions where applicable.
+- Standardized hybrid action-module naming to actor-first `...ForHybrid` wrappers.
+- Updated DeliverX API workflow specs to prefer shared workflow steps over repeated inline auth plus `safeGraphQL(...)`.
+- Replaced the stray REST-style patient prescription save in shared workflow steps with GraphQL query-based handling.
+- Updated repository docs to reflect the new auth, hybrid-account, workflow-step, and naming conventions.
+
 # [3.0.7]
 
 ### Added
@@ -10,13 +34,12 @@ All notable changes to this project will be documented in this file.
   - `docs/architecture.md`
   - `docs/change-workflow.md`
   - `docs/coding-standards.md`
-  - `docs/prompt-templates.md`
   - `docs/risk-checklist.md`
   - `docs/test-layer-map.md`
 
 ### Changed
 
-- Reworked `AGENTS.MD` into the primary AI agent instruction file for this repository:
+- Reworked `AGENTS.md` into the primary AI agent instruction file for this repository:
   - added approval-required areas
   - added mandatory pre-change workflow and self-review rules
   - added hybrid merchant safeguards and selector-handling rules

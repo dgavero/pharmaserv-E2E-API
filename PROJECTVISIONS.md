@@ -33,10 +33,12 @@ Build a reliable, maintainable, and fast automation stack for Pharmaserv that co
 
 ## Test Authoring Direction
 
-- API tests follow `AGENTS.MD` as source-of-truth.
+- API tests follow `AGENTS.md` as source-of-truth.
 - GraphQL operations should live in sibling query files for reuse.
 - Positive and negative auth checks should remain in one suite (`test.describe`) as separate `test()` cases when practical.
 - Use descriptive result variable names with `Res` suffix.
+- API workflow specs should prefer shared workflow steps over repeated inline role login plus `safeGraphQL(...)` when an equivalent step already exists.
+- Hybrid merchant tests should keep merchant operations in UI page objects and patient/admin/rider orchestration in hybrid action modules.
 
 ## Reporting Direction
 
@@ -57,5 +59,5 @@ Build a reliable, maintainable, and fast automation stack for Pharmaserv that co
 
 - `README.md`: entry point and concise overview.
 - `USAGE.md`: command-level operations and runtime behavior.
-- `AGENTS.MD`: API test creation/update standards.
+- `AGENTS.md`: API test creation/update standards.
 - `PROJECTVISIONS.md`: principles and roadmap only.

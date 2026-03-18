@@ -25,7 +25,11 @@ Use this file for code-shape rules. Use `docs/change-workflow.md` for process.
 
 - Name builders after what they create: `buildHybridOrderInput`
 - Name page object methods after business behavior: `openNewOrderByBookingRef`
-- Name action wrappers after actor + behavior: `confirmPaymentAsAdminAction`
+- Name action wrappers after actor + behavior: `confirmPaymentAsAdminForHybrid`
+- In hybrid action modules, keep actor-first naming consistent:
+  - `loginAsAdminForHybrid`
+  - `rateRiderAsPatientForHybrid`
+  - `completeDeliveryAsRiderForHybrid`
 
 ## File Placement
 
@@ -40,6 +44,8 @@ Use this file for code-shape rules. Use `docs/change-workflow.md` for process.
 
 - Shared API workflow queries go under `api/tests/e2e/shared/queries/`
 - Shared workflow step modules go under `api/tests/e2e/shared/steps/`
+- Prefer an existing shared workflow step over repeating inline role login plus `safeGraphQL(...)` in workflow specs
+- Keep shared workflow steps override-friendly so callers can still pass explicit credentials or explicit payload data when needed
 
 ### UI / Hybrid Merchant
 
@@ -109,6 +115,7 @@ Rule:
 - do not add new long inline GraphQL strings to specs
 - if an older spec already inlines a short query and the requested change is tiny, preserve the local style rather than broadening the diff
 - if a sibling query file already exists, add the new operation there
+- if a shared workflow query file already exists for that actor/workflow path, prefer adding the operation there instead of embedding it in a step or spec
 
 ## Page Objects and Actions
 
@@ -165,6 +172,7 @@ API:
 - `getGQLError`
 - role login helpers
 - shared workflow helpers under `api/tests/e2e/shared/steps/` when working in API workflows
+- signed upload helpers may still use raw transport, but business operations like patient prescription save should go through shared GraphQL queries and steps
 
 UI:
 
@@ -252,8 +260,20 @@ For files under `e2e/tests/merchantPortal/` and `e2e/pages/merchantPortal/`:
 - Merchant operational actions are UI-only.
 - Patient, admin, and rider transitions may remain API-driven through action modules or shared API workflow steps.
 - Bind created orders to the active merchant branch used by the current merchant account.
+- Use `merchantPortalContext.js` plus `getMerchantPortalAccount(...)` instead of reading merchant env vars directly in specs.
 - Use exact booking reference search. No first-card fallback.
 - Completed and cancelled checks belong in page-object verification methods, not in spec-local locator assertions.
+
+## Newcomer Extension Guide
+
+When adding a new test or extending an existing flow:
+
+1. Check whether the target belongs in `api/tests/<role>/<feature>/`, `api/tests/e2e/`, or `e2e/tests/merchantPortal/`.
+2. Reuse an existing query file before adding a new long GraphQL string.
+3. Reuse an existing shared workflow step before writing inline role login plus `safeGraphQL(...)`.
+4. For hybrid merchant tests, keep merchant operations in page objects and patient/admin/rider transitions in action modules.
+5. For hybrid account data, use `getMerchantPortalAccount(...)` through `merchantPortalContext.js` instead of reading env vars directly.
+6. If a helper needs defaults, keep them overrideable instead of hardcoding one fixed account or one fixed payload shape.
 
 ## Current Dominant Patterns vs Older Styles
 

@@ -8,14 +8,14 @@ import {
   createHybridOrderForBranch,
   ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
-  rateRiderAsPatientAction,
+  rateRiderAsPatientForHybrid,
 } from './actions/patientActions.js';
 import {
-  assignRiderToOrderAsAdminAction,
-  confirmPaymentAsAdminAction,
-  loginAdminForHybrid,
+  assignRiderToOrderAsAdminForHybrid,
+  confirmPaymentAsAdminForHybrid,
+  loginAsAdminForHybrid,
 } from './actions/adminActions.js';
-import { riderCompleteDeliveryFlow } from './actions/riderActions.js';
+import { completeDeliveryAsRiderForHybrid } from './actions/riderActions.js';
 
 test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
   test(
@@ -69,9 +69,9 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       });
 
       // API (admin): confirm payment and assign rider.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
@@ -82,7 +82,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (rider): complete fulfillment.
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         orderId,
         branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
@@ -91,7 +91,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
       });

@@ -9,7 +9,7 @@ import {
   buildBasePriceItems,
   buildBasePrescriptionItems,
   buildDeliverXAttachmentNoPrescriptionHybridOrderInput,
-  buildHybridOrderInput,
+  buildDeliverXHybridOrderInput,
   HybridDeliveryTypes,
 } from './generic.orderData.js';
 import {
@@ -19,18 +19,18 @@ import {
   createHybridOrderForBranch,
   ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
-  requestReQuoteAsPatientAction,
-  rateRiderAsPatientAction,
+  requestReQuoteAsPatientForHybrid,
+  rateRiderAsPatientForHybrid,
 } from './actions/patientActions.js';
 import {
-  assignRiderToOrderAsAdminAction,
-  confirmPaymentAsAdminAction,
-  loginAdminForHybrid,
+  assignRiderToOrderAsAdminForHybrid,
+  confirmPaymentAsAdminForHybrid,
+  loginAsAdminForHybrid,
 } from './actions/adminActions.js';
 import {
   getDeliverXStartPickupStatus,
-  loginRiderForHybrid,
-  riderCompleteDeliveryFlow,
+  loginAsRiderForHybrid,
+  completeDeliveryAsRiderForHybrid,
 } from './actions/riderActions.js';
 
 test.describe('Merchant Portal | DeliverX Full Flow', () => {
@@ -54,8 +54,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
         quantity: index === 0 ? 5 : 7,
       }));
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
-        order: buildHybridOrderInput({
-          deliveryType: HybridDeliveryTypes.DELIVER_X,
+        order: buildDeliverXHybridOrderInput({
           branchId: merchant.account.assignedBranchId,
           prescriptionItems: submittedPrescriptionItems,
         }),
@@ -94,22 +93,22 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (admin): confirm payment.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
 
       // UI (merchant): prepare then set for pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
       await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
       });
 
       // API (rider): complete fulfillment.
-      const { riderAccessToken } = await loginRiderForHybrid(api);
+      const { riderAccessToken } = await loginAsRiderForHybrid(api);
       const { startPickupOrderRes, isOutOfScheduleBlocked } = await getDeliverXStartPickupStatus(api, {
         riderAccessToken,
         orderId,
@@ -123,7 +122,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       }
       expect(startPickupOrderRes.ok, startPickupOrderRes.error || 'Rider start pickup order failed').toBe(true);
       expect(startPickupOrderRes.body?.data?.rider?.order?.start?.id).toBe(orderId);
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         riderAccessToken,
         orderId,
         branchId: paymentQRCodeBranchId,
@@ -133,7 +132,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
       });
@@ -194,8 +193,8 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (admin): confirm payment.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
 
       // UI (merchant): prepare, set for pickup, and confirm patient pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
@@ -270,22 +269,22 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (admin): confirm payment.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
 
       // UI (merchant): prepare then set for pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
       await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
       });
 
       // API (rider): complete fulfillment.
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         orderId,
         branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
@@ -293,7 +292,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
       });
@@ -360,22 +359,22 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (admin): confirm payment.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
 
       // UI (merchant): prepare then set for pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
       await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
       });
 
       // API (rider): complete fulfillment.
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         orderId,
         branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
@@ -383,7 +382,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
       });
@@ -428,7 +427,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
 
       // API (patient): accept initial quote, then request requote.
       await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout: Timeouts.long });
-      await requestReQuoteAsPatientAction(api, { patientAccessToken, orderId });
+      await requestReQuoteAsPatientForHybrid(api, { patientAccessToken, orderId });
       await merchant.orderDetailsPage.closeRequoteRequestModal();
 
       // UI (merchant): re-send quote after patient requote/quantity change.
@@ -482,22 +481,22 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await merchant.orderDetailsPage.verifyQuantityChangedModalAppeared();
 
       // API (admin): confirm payment.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
 
       // UI (merchant): prepare then set for pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
       await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (admin): assign rider.
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
       });
 
       // API (rider): complete fulfillment.
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         orderId,
         branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
@@ -505,7 +504,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
       });

@@ -78,19 +78,14 @@ export async function createHybridOrder(
 
 export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {
   try {
-    const fallbackBranchId =
-      branchId ||
-      process.env.PHARMACIST_BRANCHID_PSE01 ||
-      process.env.PHARMACIST_BRANCHID_REG01 ||
-      1;
+    if (!omitBranchId && !Number(branchId)) {
+      markFailed(`Missing branchId for hybrid ${deliveryType} order creation`);
+    }
     const orderInput = buildHybridOrderInput({
       deliveryType,
-      branchId: omitBranchId ? fallbackBranchId : branchId,
+      branchId: Number(branchId),
+      allowMissingBranchId: omitBranchId,
     });
-    // FindMyMeds branch assignment is done in merchant UI after accept.
-    if (omitBranchId) {
-      delete orderInput.branchId;
-    }
     return createHybridOrder(api, { order: orderInput });
   } catch (error) {
     failAction('createHybridOrderForBranch', error);
@@ -233,18 +228,18 @@ export async function payOrderAsPatientWithProof(
   console.log('Finished payOrderAsPatientWithProof');
 }
 
-export async function rateRiderAsPatientAction(api, { patientAccessToken, riderId }) {
+export async function rateRiderAsPatientForHybrid(api, { patientAccessToken, riderId }) {
   try {
     await rateRiderAsPatient(api, {
       patientAccessToken,
       riderId,
     });
   } catch (error) {
-    failAction('rateRiderAsPatientAction', error);
+    failAction('rateRiderAsPatientForHybrid', error);
   }
 }
 
-export async function requestReQuoteAsPatientAction(
+export async function requestReQuoteAsPatientForHybrid(
   api,
   { patientAccessToken, orderId, timeout = Timeouts.extraLong }
 ) {
@@ -291,7 +286,7 @@ export async function requestReQuoteAsPatientAction(
       )
       .toBe('ok');
   } catch (error) {
-    failAction('requestReQuoteAsPatientAction', error);
+    failAction('requestReQuoteAsPatientForHybrid', error);
   }
 }
 

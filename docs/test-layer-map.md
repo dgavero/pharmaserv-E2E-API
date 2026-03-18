@@ -63,12 +63,14 @@ Put in this layer:
 - workflow specs
 - shared workflow step functions
 - shared workflow GraphQL docs
+- reusable actor actions that can be overridden by explicit credentials or explicit workflow payloads
 
 Do not put in this layer:
 
 - merchant UI operations
 - page-object behavior
 - selector logic
+- repeated inline role login plus `safeGraphQL(...)` when an equivalent shared workflow step already exists
 
 ## 3. Hybrid Merchant UI/API Tests
 
@@ -94,6 +96,7 @@ Put in this layer:
 - spec-level orchestration only
 - flow tags and summary comments
 - calls into page objects and role action modules
+- merchant account/context bootstrap through `merchantPortalContext.js`
 
 Do not put in this layer:
 
@@ -145,6 +148,13 @@ Current examples:
 - `patientActions.js`
 - `adminActions.js`
 - `riderActions.js`
+
+Current naming pattern:
+
+- actor-first `...ForHybrid` wrappers such as:
+  - `loginAsAdminForHybrid(...)`
+  - `confirmPaymentAsAdminForHybrid(...)`
+  - `completeDeliveryAsRiderForHybrid(...)`
 
 Do not put in action modules:
 

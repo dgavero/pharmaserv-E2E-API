@@ -68,6 +68,7 @@ export function buildBasePriceItems({ quantity = 1, firstUnitPrice = 10, secondU
 export function buildHybridOrderInput({
   deliveryType,
   branchId,
+  allowMissingBranchId = false,
   patientId = process.env.PATIENT_USER_USERNAME_ID,
   prescriptionItems = buildBasePrescriptionItems(),
   addressName = 'Home API',
@@ -80,7 +81,7 @@ export function buildHybridOrderInput({
 } = {}) {
   const normalizedDeliveryType = normalizeDeliveryType(deliveryType);
   const normalizedBranchId = Number(branchId);
-  if (!normalizedBranchId) {
+  if (!allowMissingBranchId && !normalizedBranchId) {
     throw new Error(`Missing/invalid branchId for hybrid ${normalizedDeliveryType} order input`);
   }
   if (!patientId) {
@@ -90,7 +91,7 @@ export function buildHybridOrderInput({
   return {
     deliveryType: normalizedDeliveryType,
     patientId,
-    branchId: normalizedBranchId,
+    ...(allowMissingBranchId ? {} : { branchId: normalizedBranchId }),
     prescriptionItems,
     addressName,
     address,

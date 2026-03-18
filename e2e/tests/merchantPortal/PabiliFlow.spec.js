@@ -11,17 +11,17 @@ import {
   createHybridOrderForBranch,
   ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
-  rateRiderAsPatientAction,
+  rateRiderAsPatientForHybrid,
 } from './actions/patientActions.js';
 import {
-  assignRiderToOrderAsAdminAction,
-  confirmPaymentAsAdminAction,
-  loginAdminForHybrid,
+  assignRiderToOrderAsAdminForHybrid,
+  confirmPaymentAsAdminForHybrid,
+  loginAsAdminForHybrid,
 } from './actions/adminActions.js';
 import {
-  riderCompleteDeliveryFlow,
-  riderSendQuoteFlow,
-  riderStartPickupAndArriveAtPharmacy,
+  completeDeliveryAsRiderForHybrid,
+  sendQuoteAsRiderForHybrid,
+  startPickupAndArriveAtPharmacyAsRiderForHybrid,
 } from './actions/riderActions.js';
 
 test.describe('Merchant Portal | Pabili Full Flow', () => {
@@ -58,20 +58,20 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       await merchant.orderDetailsPage.requestForRiderToQuote(true);
 
       // API (admin): assign rider.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
       });
 
       // API (rider): start flow and send rider quote.
-      const { riderAccessToken, branchQR } = await riderStartPickupAndArriveAtPharmacy(api, {
+      const { riderAccessToken, branchQR } = await startPickupAndArriveAtPharmacyAsRiderForHybrid(api, {
         orderId,
         branchId: merchant.account.assignedBranchId,
         requireBranchQR: false,
       });
-      await riderSendQuoteFlow(api, {
+      await sendQuoteAsRiderForHybrid(api, {
         riderAccessToken,
         orderId,
         branchId: merchant.account.assignedBranchId,
@@ -98,10 +98,10 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       });
 
       // API (admin): confirm payment.
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
 
       // API (rider): complete fulfillment.
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         riderAccessToken,
         orderId,
         branchId: merchant.account.assignedBranchId,
@@ -112,7 +112,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
       });
@@ -155,8 +155,8 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       await merchant.orderDetailsPage.requestForRiderToQuote(false);
 
       // API (admin): assign rider right after merchant requests rider in UI flow.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
         riderId: process.env.RIDER_USERID,
@@ -183,10 +183,10 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       });
 
       // API (admin): confirm payment.
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
 
       // API (rider): complete fulfillment.
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         orderId,
         branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
@@ -195,7 +195,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
         riderId: assignedRiderId || process.env.RIDER_USERID,
       });
