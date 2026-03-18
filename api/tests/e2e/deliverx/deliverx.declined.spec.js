@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsPatientAndGetTokens, loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens, pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials, getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { buildDeliverXBaseOrderInput } from './deliverx.testData.js';
 import { PATIENT_SUBMIT_ORDER_QUERY } from '../shared/queries/patient.queries.js';
 import { PHARMACY_DECLINE_ORDER_QUERY } from '../shared/queries/pharmacist.queries.js';
@@ -13,10 +14,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
     },
     async ({ api }) => {
       // Login as patient.
-      const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(patientLoginRes.ok, patientLoginRes.error || 'Patient login failed').toBe(true);
 
       // Submit DeliverX order as patient.
@@ -36,10 +34,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Order Declined', () => {
       expect(orderId, 'Missing booked order id').toBeTruthy();
 
       // Login as pharmacist.
-      const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'Pharmacist login failed').toBe(true);
 
       // Decline the same order as pharmacist.

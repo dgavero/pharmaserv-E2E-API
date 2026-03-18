@@ -1,8 +1,8 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
-import { test, expect } from '../../../globalConfig.api.js';
-import { GET_ADDRESS_QUERY } from './patient.profileQueries.js';
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { GET_ADDRESS_QUERY } from './patient.profileQueries.js';
 
 test.describe('GraphQL: Patient Get Address', () => {
   test(
@@ -11,10 +11,7 @@ test.describe('GraphQL: Patient Get Address', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-93'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const patientId = process.env.PATIENT_USER_USERNAME_ID;
@@ -48,10 +45,7 @@ test.describe('GraphQL: Patient Get Address', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-94'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const patientId = 9; // Another Patient ID not related to logged in patient

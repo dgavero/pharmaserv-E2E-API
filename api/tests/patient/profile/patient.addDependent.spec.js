@@ -1,8 +1,14 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { loginAndGetTokens } from '../../../helpers/auth.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import {
+  loginAsPatientAndGetTokens,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_HTTP_STATUSES,
+} from '../../../helpers/auth.js';
+import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 const ADD_DEPENDENT_QUERY = /* GraphQL */ `
   mutation ($patient: PatientRequest!) {
@@ -31,10 +37,7 @@ test.describe('GraphQL: Patient Add Dependent', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-64'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const dependentInput = newDependentInput();

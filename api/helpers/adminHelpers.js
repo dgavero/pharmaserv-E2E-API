@@ -1,5 +1,6 @@
 import { safeGraphQL, bearer, getGQLError } from './graphqlUtils.js';
-import { adminLoginAndGetTokens } from './auth.js';
+import { loginAsAdminAndGetTokens } from './auth.js';
+import { getAdminCredentials } from './roleCredentials.js';
 import { expect } from '../globalConfig.api.js';
 
 // reusable method for creating rider schedule
@@ -31,10 +32,7 @@ function getFormattedDate() {
  */
 export async function createRiderScheduleAsAdmin(api, riderId) {
   // 1) Admin login
-  const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-    username: process.env.ADMIN_USERNAME,
-    password: process.env.ADMIN_PASSWORD,
-  });
+  const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
 
   if (!loginRes.ok) {
     throw new Error('Failed admin login: cannot create schedules');

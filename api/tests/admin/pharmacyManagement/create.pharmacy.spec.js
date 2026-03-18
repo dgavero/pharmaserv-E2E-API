@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 const CREATE_PHARMACY_MUTATION = `
@@ -33,10 +34,7 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
     },
     async ({ api }) => {
       // 1) Admin login
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       // 2) Randomized input (reused builder)

@@ -1,5 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { safeGraphQL, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 
 const LOGIN_MUTATION = `
   mutation ($username: String!, $password: String!) {
@@ -16,10 +17,7 @@ const LOGIN_MUTATION = `
 
 // Valid creds (env-backed with local fallbacks)
 function buildValidCreds() {
-  return {
-    username: process.env.PATIENT_USER_USERNAME || 'daveg123.patient',
-    password: process.env.PATIENT_USER_PASSWORD || 'Test1234!',
-  };
+  return getPatientCredentials('default');
 }
 
 // Fixed invalid creds from your sample

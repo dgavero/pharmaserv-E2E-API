@@ -3,6 +3,7 @@ import { Timeouts } from '../../../Timeouts.js';
 import { markFailed } from '../../../helpers/testFailure.js';
 import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
 import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
+import { getPatientCredentials } from '../../../../api/helpers/roleCredentials.js';
 import {
   PATIENT_ACCEPT_QUOTE_QUERY,
   PATIENT_REQUEST_REQUOTE_QUERY,
@@ -36,7 +37,7 @@ export const PatientPayModes = Object.freeze({
 
 export async function createHybridOrder(
   api,
-  { order, maxAttempts = 3, retryDelayMs = Timeouts.short } = {}
+  { order, maxAttempts = 3, retryDelayMs = Timeouts.short, patientAccountKey = 'default' } = {}
 ) {
   let lastError = null;
   const totalAttempts = Number.isFinite(Number(maxAttempts)) ? Math.max(1, Number(maxAttempts)) : 1;
@@ -44,7 +45,10 @@ export async function createHybridOrder(
 
   for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
     try {
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, {
+        accountKey: patientAccountKey,
+        credentials: getPatientCredentials(patientAccountKey),
+      });
       const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
         patientAccessToken,
         order,

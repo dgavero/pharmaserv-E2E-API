@@ -1,8 +1,9 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
-import { test, expect } from '../../../globalConfig.api.js';
-import { GET_ADDRESS_QUERY, UPDATE_ADDRESS_QUERY } from './patient.profileQueries.js';
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { GET_ADDRESS_QUERY, UPDATE_ADDRESS_QUERY } from './patient.profileQueries.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 
 function updateAddressInput() {
   const addressName = `addressName${randomAlphanumeric(4)}`;
@@ -49,10 +50,7 @@ test.describe('GraphQL: Patient Update Address', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-178'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       // Update Address

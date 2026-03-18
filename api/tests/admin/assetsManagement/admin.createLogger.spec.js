@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomLetters, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_LOGGER_MUTATION } from './admin.assetsManagementQueries.js';
 
@@ -21,10 +22,7 @@ test.describe('GraphQL: Admin Create Logger', () => {
       tag: ['@api', '@admin', '@positive', '@create', '@pharma-231'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const loggerInput = buildLoggerInput();

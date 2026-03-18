@@ -1,12 +1,10 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { adminLoginAndGetTokens } from '../../../helpers/auth.js';
+import { loginAsAdminAndGetTokens } from '../../../helpers/auth.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 
 // Test-level builder (ok to add fallbacks here if you want local dev defaults)
 function buildAdminCreds() {
-  return {
-    username: process.env.ADMIN_USERNAME,
-    password: process.env.ADMIN_PASSWORD,
-  };
+  return getAdminCredentials('default');
 }
 
 test.describe('GraphQL: Admin Login', () => {
@@ -17,7 +15,7 @@ test.describe('GraphQL: Admin Login', () => {
     },
     async ({ api }) => {
       const creds = buildAdminCreds();
-      const { accessToken, refreshToken, raw } = await adminLoginAndGetTokens(api, creds);
+      const { accessToken, refreshToken, raw } = await loginAsAdminAndGetTokens(api, creds);
 
       expect(raw.ok, raw.error || `Admin login failed (HTTP ${raw.httpStatus})`).toBe(true);
       expect(typeof accessToken).toBe('string');

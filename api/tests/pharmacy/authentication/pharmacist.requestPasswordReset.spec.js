@@ -1,7 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { RESET_PASSWORD_QUERY } from './pharmacist.authenticationQueries.js';
-import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS } from '../../../helpers/auth.js';
+import { safeGraphQL } from '../../../helpers/graphqlUtils.js';
 
 test.describe('GraphQL: Password Reset', () => {
   test(

@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 
 const GET_PAGED_PHARMACIES_QUERY = `
   query ($filter: FilterRequest!) {
@@ -36,10 +37,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     },
     async ({ api }) => {
       // 1) Admin login
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       // 2) Query paged pharmacies (hardcoded filter)
@@ -115,10 +113,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       const EXPECTED_PHARMACY = pharmacyByEnv[env] ?? pharmacyByEnv.DEV;
 
       // 1) Admin login
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const pharmacyRes = await safeGraphQL(api, {
@@ -149,10 +144,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
     },
     async ({ api }) => {
       // Admin login
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const MISSING_ID = 9_999_999;

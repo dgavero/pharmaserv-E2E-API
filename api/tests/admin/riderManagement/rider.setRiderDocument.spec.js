@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 
 const SET_RIDER_DOCUMENT_QUERY = /* GraphQL */ `
   mutation ($riderId: ID!, $document: DocumentRequest!) {
@@ -30,10 +31,7 @@ test.describe('GraphQL: Set Rider Document', () => {
       tag: ['@api', '@admin', '@positive', '@pharma-55'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const setRiderDocumentRes = await safeGraphQL(api, {
@@ -128,10 +126,7 @@ test.describe('GraphQL: Set Rider Document', () => {
       tag: ['@api', '@admin', '@negative', '@pharma-58'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const setRiderDocumentMissingPhotoRes = await safeGraphQL(api, {

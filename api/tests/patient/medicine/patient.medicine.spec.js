@@ -1,7 +1,8 @@
-import { test, expect } from '../../../globalConfig.api.js';
-import { ADD_FAVORITE_MEDICINE_QUERY, GET_FAVORITE_MEDICINE_QUERY } from './patient.medicineQueries.js';
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { ADD_FAVORITE_MEDICINE_QUERY, GET_FAVORITE_MEDICINE_QUERY } from './patient.medicineQueries.js';
 
 test.describe('GraphQL: Medicine Favorites', () => {
   test(
@@ -10,10 +11,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-191'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const medicineId = 1;
@@ -42,10 +40,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
       tag: ['@api', '@patience', '@negative', '@pharma-192'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const medicineId = 1;
@@ -73,10 +68,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-193'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getFavoriteMedicineRes = await safeGraphQL(api, {

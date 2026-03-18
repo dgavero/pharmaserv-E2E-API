@@ -1,4 +1,9 @@
+import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 import {
   PHARMACIST_GET_CHAT_REGULAR_BRANCH_THREAD_QUERY,
   PHARMACIST_GET_CHAT_PSE_BRANCH_THREAD_QUERY,
@@ -8,11 +13,7 @@ import {
   PHARMACIST_SEND_CHAT_MESSAGES_BY_ORDER_ID_QUERY,
   PHARMACIST_SEND_CHAT_MESSAGES_BY_THREAD_ID_QUERY,
   PHARMACIST_SET_THREAD_SEEN_QUERY,
-} from '../chatsMessaging/pharmacist.chatMessagingQueries.js';
-import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
-import { pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
-import { getReusableTestIds } from '../../testData/reusableTestIds.js';
+} from './pharmacist.chatMessagingQueries.js';
 
 function resolveTestData() {
   return getReusableTestIds({ slot: 'slotTwo' });
@@ -25,10 +26,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-204'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const getChatPSEBranchThreadRes = await safeGraphQL(api, {
@@ -46,10 +44,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@negative', '@pharma-205'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const getChatRegBranchThreadRes = await safeGraphQL(api, {
@@ -67,10 +62,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-206'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const testData = resolveTestData();
@@ -94,10 +86,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-207'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const testData = resolveTestData();
@@ -119,10 +108,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-208'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const testData = resolveTestData();
@@ -144,10 +130,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-209'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const testData = resolveTestData();
@@ -173,10 +156,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-210'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const testData = resolveTestData();
@@ -202,10 +182,7 @@ test.describe('GraphQL: PSE Pharmacist Messaging', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-211'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const testData = resolveTestData();

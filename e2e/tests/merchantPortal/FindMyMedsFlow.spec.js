@@ -4,7 +4,9 @@ import { markFailed } from '../../helpers/testFailure.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
 import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
-import { pharmacistLoginAndGetTokens } from '../../../api/helpers/auth.js';
+import { loginAsPharmacistAndGetTokens } from '../../../api/helpers/auth.js';
+import { getPharmacistCredentials } from '../../../api/helpers/roleCredentials.js';
+import { getMerchantPortalCredentials } from '../../helpers/merchantCredentials.js';
 import {
   prepareOrderAsPharmacist,
   setOrderForPickupAsPharmacist,
@@ -40,16 +42,10 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const portalUsername = process.env.MERCHANT_USERNAME_PSE;
-      const portalPassword = process.env.MERCHANT_PASSWORD_PSE;
-      if (!portalUsername || !portalPassword) {
-        markFailed('Missing MERCHANT_USERNAME_PSE or MERCHANT_PASSWORD_PSE for FindMyMeds hybrid test');
-      }
+      const merchantPortalCredentials = getMerchantPortalCredentials('pse');
+      const pharmacistCredentials = getPharmacistCredentials('pse01');
 
-      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
-        username: portalUsername,
-        password: portalPassword,
-      });
+      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
 
       // API (patient): create order.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
@@ -63,7 +59,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       const orderDetailsPage = new MerchantOrderDetailsPage(page);
 
       await login.open();
-      await login.login(portalUsername, portalPassword);
+      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await login.assertSuccessLogin();
 
       await ordersPage.open();

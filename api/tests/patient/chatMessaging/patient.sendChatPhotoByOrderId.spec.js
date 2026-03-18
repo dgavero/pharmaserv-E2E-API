@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { SEND_CHAT_PHOTO_BY_ORDER_ID_MUTATION } from './patient.chatMessagingQueries.js';
 import { CHAT_ORDER_ID, CHAT_SENDER_PATIENT, CHAT_PHOTO_NAME } from './patient.chatMessagingConstants.js';
 
@@ -18,10 +19,7 @@ test.describe('GraphQL: Patient Send Chat Photo By Order Id', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-279'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const chatInput = buildChatPhotoInput();

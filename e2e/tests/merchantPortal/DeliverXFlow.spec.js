@@ -7,7 +7,9 @@ import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
 import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
-import { pharmacistLoginAndGetTokens } from '../../../api/helpers/auth.js';
+import { loginAsPharmacistAndGetTokens } from '../../../api/helpers/auth.js';
+import { getPharmacistCredentials } from '../../../api/helpers/roleCredentials.js';
+import { getMerchantPortalCredentials } from '../../helpers/merchantCredentials.js';
 import {
   prepareOrderAsPharmacist,
   setOrderForPickupAsPharmacist,
@@ -55,10 +57,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.MERCHANT_USERNAME,
-        password: process.env.MERCHANT_PASSWORD,
-      });
+      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
+      const pharmacistCredentials = getPharmacistCredentials('reg01');
+      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
       const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
 
       // API (patient): create order with higher submitted quantities (5, 7).
@@ -80,7 +81,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const orderDetailsPage = new MerchantOrderDetailsPage(page);
 
       await login.open();
-      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await login.assertSuccessLogin();
 
       await ordersPage.open();
@@ -170,10 +171,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
     },
     async ({ page, api }) => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
-      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.MERCHANT_USERNAME,
-        password: process.env.MERCHANT_PASSWORD,
-      });
+      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
+      const pharmacistCredentials = getPharmacistCredentials('reg01');
+      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
       const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
 
       // API (patient): create order.
@@ -188,7 +188,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const orderDetailsPage = new MerchantOrderDetailsPage(page);
 
       await login.open();
-      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await login.assertSuccessLogin();
 
       await ordersPage.open();
@@ -264,10 +264,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.MERCHANT_USERNAME,
-        password: process.env.MERCHANT_PASSWORD,
-      });
+      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
+      const pharmacistCredentials = getPharmacistCredentials('reg01');
+      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
       const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
 
       // API (patient): create order.
@@ -282,7 +281,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const orderDetailsPage = new MerchantOrderDetailsPage(page);
 
       await login.open();
-      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await login.assertSuccessLogin();
 
       await ordersPage.open();
@@ -358,11 +357,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-
-      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.MERCHANT_USERNAME,
-        password: process.env.MERCHANT_PASSWORD,
-      });
+      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
+      const pharmacistCredentials = getPharmacistCredentials('reg01');
+      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
       const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
 
       // API (patient): create attachment-only order with no prescription items.
@@ -378,7 +375,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const orderDetailsPage = new MerchantOrderDetailsPage(page);
 
       await login.open();
-      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await login.assertSuccessLogin();
 
       await ordersPage.open();
@@ -458,11 +455,9 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-
-      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.MERCHANT_USERNAME,
-        password: process.env.MERCHANT_PASSWORD,
-      });
+      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
+      const pharmacistCredentials = getPharmacistCredentials('reg01');
+      const { accessToken: merchantAccessToken } = await loginAsPharmacistAndGetTokens(api, pharmacistCredentials);
       const merchantBranchId = await getMerchantIdRegular(api, merchantAccessToken);
 
       // API (patient): create order.
@@ -477,7 +472,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const orderDetailsPage = new MerchantOrderDetailsPage(page);
 
       await login.open();
-      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await login.assertSuccessLogin();
 
       await ordersPage.open();

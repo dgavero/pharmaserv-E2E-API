@@ -1,8 +1,9 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { UPDATE_DISCOUNT_CARD_QUERY } from './patient.profileQueries.js';
-import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 function updateDiscountCardInput() {
   const patientId = process.env.PATIENT_USER_USERNAME_ID; // Existing patient ID for testing
@@ -20,10 +21,7 @@ test.describe('GraphQL: Update Discount Card Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-179'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const updateCardData = updateDiscountCardInput();

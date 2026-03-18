@@ -13,7 +13,7 @@ import {
   uploadImageToSignedUrl,
 } from '../shared/steps/patient.steps.js';
 import {
-  loginPsePharmacist,
+  loginPharmacist,
   acceptOrderAsPharmacist,
   confirmOrderAsPharmacist,
   updatePricesAsPharmacist,
@@ -54,7 +54,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const pabiliBranchId = Number(pabiliOrder.branchId);
 
       // Patient: Login.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -62,14 +62,14 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       });
 
       // PSE Pharmacist: Login.
-      const { pharmacistAccessToken } = await loginPsePharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'pse01' });
       // PSE Pharmacist: Accept Order.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
       // PSE Pharmacist: Confirm Order (second accept step for riderQuoteEnabled=false).
       await confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled: false });
 
       // Admin: Login.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
@@ -142,7 +142,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
       // Rider: Login.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Rider: Start Pickup Order.
       await startPickupOrderAsRider(api, { riderAccessToken, orderId });
       // Rider: Arrived at Pharmacy.
@@ -217,7 +217,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const pabiliBranchId = Number(pabiliOrder.branchId);
 
       // Patient: Login.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -225,14 +225,14 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       });
 
       // PSE Pharmacist: Login.
-      const { pharmacistAccessToken } = await loginPsePharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'pse01' });
       // PSE Pharmacist: Accept Order.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
       // PSE Pharmacist: Confirm Order (second accept step for riderQuoteEnabled=false).
       await confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled: false });
 
       // Admin: Login.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
@@ -241,7 +241,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       });
 
       // Rider: Login.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Rider: Start Pickup Order.
       await startPickupOrderAsRider(api, { riderAccessToken, orderId });
       // Rider: Arrived at Pharmacy.
@@ -382,7 +382,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const pabiliBranchId = Number(pabiliOrder.branchId);
 
       // Patient: Login.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -390,14 +390,14 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       });
 
       // PSE Pharmacist: Login.
-      const { pharmacistAccessToken } = await loginPsePharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'pse01' });
       // PSE Pharmacist: Accept Order.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
       // PSE Pharmacist: Confirm Order (second accept step with rider quote disabled).
       await confirmOrderAsPharmacist(api, { pharmacistAccessToken, orderId, riderQuoteEnabled: false });
 
       // Admin: Login.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
@@ -479,7 +479,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
       // Rider: Login.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Rider: Start Pickup Order.
       await startPickupOrderAsRider(api, { riderAccessToken, orderId });
       // Rider: Arrived at Pharmacy.

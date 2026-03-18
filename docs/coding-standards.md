@@ -63,7 +63,8 @@ Use this file for code-shape rules. Use `docs/change-workflow.md` for process.
 Example shape:
 
 ```js
-const { accessToken, raw: loginRes } = await loginAndGetTokens(api, creds);
+const creds = getPatientCredentials('default');
+const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, creds);
 expect(loginRes.ok, loginRes.error || 'Login failed').toBe(true);
 
 const getOrderRes = await safeGraphQL(api, {
@@ -183,6 +184,20 @@ Randomized test data:
 - `randomLetters`
 - `randomEmail`
 - `randomUsername`
+
+Credential resolution:
+
+- keep role-specific login queries in `api/helpers/auth.js`
+- resolve named env-backed accounts through:
+  - `api/helpers/roleCredentials.js`
+  - `e2e/helpers/merchantCredentials.js`
+- prefer explicit account keys such as:
+  - `getPatientCredentials('default')`
+  - `getAdminCredentials('default')`
+  - `getRiderCredentials('default')`
+  - `getPharmacistCredentials('reg01')`
+  - `getMerchantPortalCredentials('pse')`
+- do not read role username/password env vars directly inside shared workflow steps
 
 ## Assertion Rules
 

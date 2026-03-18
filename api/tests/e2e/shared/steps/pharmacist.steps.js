@@ -1,6 +1,7 @@
 import { expect } from '../../../../globalConfig.api.js';
 import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
-import { pharmacistLoginAndGetTokens } from '../../../../helpers/auth.js';
+import { loginAsPharmacistAndGetTokens } from '../../../../helpers/auth.js';
+import { getPharmacistCredentials } from '../../../../helpers/roleCredentials.js';
 import {
   PHARMACY_ACCEPT_ORDER_QUERY,
   PHARMACY_CONFIRM_ORDER_QUERY,
@@ -20,21 +21,13 @@ import {
   PHARMACY_DECLINE_ORDER_QUERY,
 } from '../queries/pharmacist.queries.js';
 
-export async function loginPharmacist(api) {
-  const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await pharmacistLoginAndGetTokens(api, {
-    username: process.env.PHARMACIST_USERNAME_REG01,
-    password: process.env.PHARMACIST_PASSWORD_REG01,
-  });
+export async function loginPharmacist(api, { accountKey = 'reg01', credentials } = {}) {
+  const resolvedCredentials = credentials || getPharmacistCredentials(accountKey);
+  const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await loginAsPharmacistAndGetTokens(
+    api,
+    resolvedCredentials
+  );
   expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'Pharmacist login failed').toBe(true);
-  return { pharmacistAccessToken };
-}
-
-export async function loginPsePharmacist(api) {
-  const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await pharmacistLoginAndGetTokens(api, {
-    username: process.env.PHARMACIST_USERNAME_PSE01,
-    password: process.env.PHARMACIST_PASSWORD_PSE01,
-  });
-  expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'PSE pharmacist login failed').toBe(true);
   return { pharmacistAccessToken };
 }
 

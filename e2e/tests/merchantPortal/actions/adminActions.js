@@ -1,6 +1,7 @@
 import { markFailed } from '../../../helpers/testFailure.js';
 import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
 import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
+import { getAdminCredentials } from '../../../../api/helpers/roleCredentials.js';
 import {
   loginAdmin,
   confirmPaymentAsAdmin,
@@ -56,9 +57,12 @@ export async function getMerchantIdPSE(api, merchantAccessToken) {
   }
 }
 
-export async function loginAdminForHybrid(api) {
+export async function loginAdminForHybrid(api, { accountKey = 'default' } = {}) {
   try {
-    const { adminAccessToken } = await loginAdmin(api);
+    const { adminAccessToken } = await loginAdmin(api, {
+      accountKey,
+      credentials: getAdminCredentials(accountKey),
+    });
     return { adminAccessToken };
   } catch (error) {
     failAction('loginAdminForHybrid', error);

@@ -96,8 +96,6 @@ export default class MerchantOrdersPage {
     // Runs bounded retries to search exact booking ref and validates retained input + card match.
     const searchTerm = String(bookingRef);
     const maxSearchAttempts = 2;
-    const perAttemptProbeBudgetMs = Timeouts.short;
-    const probeIntervalMs = 300;
     const orderCardBookingReferenceID = this.buildOrderCardBookingReferenceID(searchTerm);
     const tabLabelLower = String(tabLabel).toLowerCase();
     let isOrderCardVisible = false;
@@ -133,30 +131,9 @@ export default class MerchantOrdersPage {
         markFailed(`Search results did not stabilize for ${tabLabelLower} booking ref ${searchTerm}`);
       }
 
-      let isSearchValueRetained = false;
-      let isNoResultsVisible = false;
-      const probeDeadline = Date.now() + perAttemptProbeBudgetMs;
-      while (Date.now() < probeDeadline) {
-        const searchValueAfterEnter = await this.page
-          .locator(this.searchInput)
-          .first()
-          .inputValue()
-          .catch(() => '');
-        isSearchValueRetained = searchValueAfterEnter.trim() === searchTerm;
-        isNoResultsVisible = await this.page
-          .locator(this.noResultsFoundMessage)
-          .first()
-          .isVisible()
-          .catch(() => false);
-        isOrderCardVisible = await this.page
-          .locator(orderCardBookingReferenceID)
-          .first()
-          .isVisible()
-          .catch(() => false);
-
-        if (isSearchValueRetained && (isOrderCardVisible || isNoResultsVisible)) break;
-        await this.page.waitForTimeout(probeIntervalMs);
-      }
+      const searchState = await this.waitForOrderSearchResults(searchTerm, orderCardBookingReferenceID);
+      const { isSearchValueRetained, isNoResultsVisible } = searchState;
+      isOrderCardVisible = searchState.isOrderCardVisible;
 
       if (isSearchValueRetained && isOrderCardVisible) break;
 
@@ -173,6 +150,42 @@ export default class MerchantOrdersPage {
     }
 
     return orderCardBookingReferenceID;
+  }
+
+  async waitForOrderSearchResults(searchTerm, orderCardBookingReferenceID) {
+    // Poll until search input retains the term and results settle to either a match or no-results state.
+    const probeDeadline = Date.now() + Timeouts.short;
+    const probeIntervalMs = 300;
+    let isSearchValueRetained = false;
+    let isNoResultsVisible = false;
+    let isOrderCardVisible = false;
+
+    while (Date.now() < probeDeadline) {
+      const searchValueAfterEnter = await this.page
+        .locator(this.searchInput)
+        .first()
+        .inputValue()
+        .catch(() => '');
+      isSearchValueRetained = searchValueAfterEnter.trim() === searchTerm;
+      isNoResultsVisible = await this.page
+        .locator(this.noResultsFoundMessage)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      isOrderCardVisible = await this.page
+        .locator(orderCardBookingReferenceID)
+        .first()
+        .isVisible()
+        .catch(() => false);
+
+      if (isSearchValueRetained && (isOrderCardVisible || isNoResultsVisible)) {
+        break;
+      }
+
+      await this.page.waitForTimeout(probeIntervalMs);
+    }
+
+    return { isSearchValueRetained, isNoResultsVisible, isOrderCardVisible };
   }
 
   buildOrderDetailsStatusByBookingReferenceID(statusKey, bookingRef) {
@@ -193,46 +206,65 @@ export default class MerchantOrdersPage {
     const maxStatusTabAttempts = 3;
 
     const statusByBookingReferenceID = this.buildOrderDetailsStatusByBookingReferenceID(statusKey, bookingRef);
-    let isStatusInOrderDetails = false;
-    for (let attempt = 1; attempt <= maxStatusCheckAttempts; attempt += 1) {
-      isStatusInOrderDetails = await safeWaitForElementVisible(this.page, statusByBookingReferenceID);
-      if (isStatusInOrderDetails) break;
-
-      if (attempt < maxStatusCheckAttempts) {
-        await this.page.reload();
-        if (!(await safeWaitForPageLoad(this.page))) {
-          markFailed(`Order details page did not load after refresh while verifying ${statusConfig.tabLabel} status`);
-        }
-      }
-    }
+    const isStatusInOrderDetails = await this.waitForStatusOnOrderDetails(
+      statusByBookingReferenceID,
+      statusConfig.tabLabel,
+      maxStatusCheckAttempts
+    );
     if (!isStatusInOrderDetails) {
       markFailed(`Order ${bookingRef} status is not ${statusConfig.tabLabel} on order details page after retries`);
     }
 
     await this.open();
-    let isStatusInTab = false;
-    for (let attempt = 1; attempt <= maxStatusTabAttempts; attempt += 1) {
+    const isStatusInTab = await this.waitForOrderInStatusTab(statusConfig, bookingRef, maxStatusTabAttempts);
+    if (!isStatusInTab) {
+      markFailed(`Order ${bookingRef} is not ${statusConfig.tabLabel.toUpperCase()} on merchant portal after refresh`);
+    }
+  }
+
+  async waitForStatusOnOrderDetails(statusSelector, statusLabel, maxAttempts) {
+    // Refreshes the details page a bounded number of times until the expected status appears.
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const isStatusVisible = await safeWaitForElementVisible(this.page, statusSelector);
+      if (isStatusVisible) {
+        return true;
+      }
+
+      if (attempt < maxAttempts) {
+        await this.page.reload();
+        if (!(await safeWaitForPageLoad(this.page))) {
+          markFailed(`Order details page did not load after refresh while verifying ${statusLabel} status`);
+        }
+      }
+    }
+
+    return false;
+  }
+
+  async waitForOrderInStatusTab(statusConfig, bookingRef, maxAttempts) {
+    // Refreshes the Orders page a bounded number of times until the booking reference appears in the target tab.
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
-        isStatusInTab = await this.hasOrderByBookingRefInTab(
+        const isStatusInTab = await this.hasOrderByBookingRefInTab(
           statusConfig.tabSelector,
           bookingRef,
           statusConfig.tabLabel
         );
+        if (isStatusInTab) {
+          return true;
+        }
       } catch {
-        isStatusInTab = false;
       }
-      if (isStatusInTab) break;
 
-      if (attempt < maxStatusTabAttempts) {
+      if (attempt < maxAttempts) {
         await this.page.reload();
         if (!(await safeWaitForPageLoad(this.page))) {
           markFailed('Orders page did not load after refresh');
         }
       }
     }
-    if (!isStatusInTab) {
-      markFailed(`Order ${bookingRef} is not ${statusConfig.tabLabel.toUpperCase()} on merchant portal after refresh`);
-    }
+
+    return false;
   }
 
   async verifyOrderCompletedInDetailsAndCompletedTab(bookingRef) {

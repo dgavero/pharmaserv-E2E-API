@@ -115,11 +115,27 @@ This wrapper standardizes:
 Auth and header helpers also live in `api/helpers/auth.js` and `api/helpers/graphqlUtils.js`:
 
 - `bearer(token)`
-- `loginAndGetTokens(...)`
-- `adminLoginAndGetTokens(...)`
-- `riderLoginAndGetTokens(...)`
-- `pharmacistLoginAndGetTokens(...)`
+- `loginAsPatientAndGetTokens(...)`
+- `loginAsAdminAndGetTokens(...)`
+- `loginAsRiderAndGetTokens(...)`
+- `loginAsPharmacistAndGetTokens(...)`
 - `getGQLError(...)`
+
+Named credential resolution is centralized separately:
+
+- `api/helpers/roleCredentials.js`
+  - `getPatientCredentials('default')`
+  - `getAdminCredentials('default')`
+  - `getRiderCredentials('default')`
+  - `getPharmacistCredentials('reg01' | 'reg02' | 'pse01' | 'admin')`
+- `e2e/helpers/merchantCredentials.js`
+  - `getMerchantPortalCredentials('regular' | 'pse')`
+
+Boundary rule:
+
+- auth helpers execute role-specific login mutations and require `{ username, password }`
+- credential resolvers map named account keys to env-backed credentials
+- workflow steps and specs choose the account key explicitly instead of reading role login env vars inline
 
 Example placement:
 

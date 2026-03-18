@@ -1,7 +1,8 @@
 import { expect } from '../../../../globalConfig.api.js';
 import fs from 'node:fs';
 import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens } from '../../../../helpers/auth.js';
+import { loginAsPatientAndGetTokens } from '../../../../helpers/auth.js';
+import { getPatientCredentials } from '../../../../helpers/roleCredentials.js';
 import {
   PATIENT_SUBMIT_ORDER_QUERY,
   PATIENT_GET_PRESCRIPTION_UPLOAD_URL_QUERY,
@@ -17,11 +18,12 @@ import {
   PATIENT_RATE_RIDER_QUERY,
 } from '../queries/patient.queries.js';
 
-export async function loginPatient(api) {
-  const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAndGetTokens(api, {
-    username: process.env.PATIENT_USER_USERNAME,
-    password: process.env.PATIENT_USER_PASSWORD,
-  });
+export async function loginPatient(api, { accountKey = 'default', credentials } = {}) {
+  const resolvedCredentials = credentials || getPatientCredentials(accountKey);
+  const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAsPatientAndGetTokens(
+    api,
+    resolvedCredentials
+  );
   expect(patientLoginRes.ok, patientLoginRes.error || 'Patient login failed').toBe(true);
   return { patientAccessToken };
 }

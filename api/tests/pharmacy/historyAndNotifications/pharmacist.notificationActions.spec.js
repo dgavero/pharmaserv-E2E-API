@@ -1,4 +1,7 @@
+import { loginAsPharmacistAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import {
   PHARMACIST_GET_NOTIFICATIONS_COUNT_QUERY,
   PHARMACIST_GET_NOTIFICATIONS_QUERY,
@@ -6,9 +9,7 @@ import {
   PHARMACIST_SEEN_ALL_NOTIFICATIONS_QUERY,
   PHARMACIST_SEEN_NOTIFICATION_QUERY,
   PHARMACIST_REMOVE_NOTIFICATION_QUERY,
-} from '../historyAndNotifications/pharmacist.notificationQueries.js';
-import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { pharmacistLoginAndGetTokens, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
+} from './pharmacist.notificationQueries.js';
 
 async function getFirstNotificationId(api, accessToken) {
   const getNotificationRes = await safeGraphQL(api, {
@@ -30,10 +31,7 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-215'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
       const getNotificationsCountRes = await safeGraphQL(api, {
@@ -51,10 +49,7 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-216'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
       const getNotificationRes = await safeGraphQL(api, {
@@ -72,10 +67,7 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-217'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
       const getOrderHistoryRes = await safeGraphQL(api, {
@@ -93,10 +85,7 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-218'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
       const seenAllNotificationsRes = await safeGraphQL(api, {
@@ -114,10 +103,7 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-309'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
       const notificationId = await getFirstNotificationId(api, accessToken);
@@ -185,10 +171,7 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-312'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist admin login failed').toBe(true);
 
       const notificationId = await getFirstNotificationId(api, accessToken);

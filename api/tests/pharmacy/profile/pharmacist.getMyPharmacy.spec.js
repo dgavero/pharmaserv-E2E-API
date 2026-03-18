@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsPharmacistAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, pharmacistLoginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { PHARMACIST_GET_MY_PHARMACY_QUERY } from './pharmacy.profileQueries.js';
 
 test.describe('GraphQL: Get My Pharmacy', () => {
@@ -10,10 +11,7 @@ test.describe('GraphQL: Get My Pharmacy', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-150', '@smoke'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const myPharmacyRes = await safeGraphQL(api, {

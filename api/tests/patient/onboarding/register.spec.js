@@ -1,3 +1,4 @@
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 // import { test, expect } from '../../../globalConfig.api.js';
 // import { REQ_OTP_QUERY } from '../patient.queries.js';
 // import {

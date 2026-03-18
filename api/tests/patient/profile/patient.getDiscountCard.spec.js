@@ -1,6 +1,6 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { loginAndGetTokens } from '../../../helpers/auth.js';
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 
@@ -28,10 +28,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-76'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getDCRes = await safeGraphQL(api, {
@@ -51,10 +48,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-77'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const getDCRes = await safeGraphQL(api, {
         query: GET_DC_CARD,

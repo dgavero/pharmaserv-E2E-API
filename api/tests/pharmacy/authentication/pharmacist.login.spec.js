@@ -1,7 +1,6 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES, pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 
 test.describe('GraphQL: Pharmacist Login', () => {
   test(
@@ -10,10 +9,7 @@ test.describe('GraphQL: Pharmacist Login', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-141', '@smoke'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
     }
   );
@@ -24,10 +20,7 @@ test.describe('GraphQL: Pharmacist Login', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-142'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_PSE01,
-        password: process.env.PHARMACIST_PASSWORD_PSE01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('pse01'));
       expect(loginRes.ok, loginRes.error || 'PSE Pharmacist login failed').toBe(true);
     }
   );

@@ -1,7 +1,8 @@
+import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { GET_DISCOUNT_CARD_BY_ID_QUERY } from '../orderManagement/pharmacist.orderManagementQueries.js';
-import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES, pharmacistLoginAndGetTokens } from '../../../helpers/auth.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
+import { GET_DISCOUNT_CARD_BY_ID_QUERY } from './pharmacist.orderManagementQueries.js';
 
 test.describe('GraphQL: Pharmacy Get Discount Card', () => {
   test(
@@ -10,10 +11,7 @@ test.describe('GraphQL: Pharmacy Get Discount Card', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-177'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const getDiscountCardRes = await safeGraphQL(api, {

@@ -1,8 +1,15 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { loginAndGetTokens } from '../../../helpers/auth.js';
+import { getPatientCredentials, getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import {
+  loginAsPatientAndGetTokens,
+  loginAsAdminAndGetTokens,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_HTTP_STATUSES,
+} from '../../../helpers/auth.js';
+import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 const CREATE_DC_CARD = /* GraphQL */ `
   mutation ($discountCard: DiscountCardRequest!) {
@@ -36,10 +43,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-72'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const discountCardData = discountCardInput();
@@ -112,10 +116,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-75'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const discountCardData = discountCardInput();

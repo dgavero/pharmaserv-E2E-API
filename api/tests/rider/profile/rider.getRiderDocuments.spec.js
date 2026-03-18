@@ -1,7 +1,8 @@
-import { test, expect } from '../../../globalConfig.api.js';
-import { RIDER_GET_DOCUMENTS_QUERY } from './rider.profileQueries.js';
+import { loginAsRiderAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { riderLoginAndGetTokens, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS, NOAUTH_HTTP_STATUSES, NOAUTH_MESSAGE_PATTERN } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
+import { RIDER_GET_DOCUMENTS_QUERY } from './rider.profileQueries.js';
 
 test.describe('GraphQL: Get Rider Documents', () => {
   test(
@@ -10,10 +11,7 @@ test.describe('GraphQL: Get Rider Documents', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-318'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const getRiderDocumentsRes = await safeGraphQL(api, {

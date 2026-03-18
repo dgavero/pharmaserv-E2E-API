@@ -1,7 +1,7 @@
 import { delay, safeClick, safeInput, safeUploadFile, safeWaitForElementHidden, safeWaitForElementVisible, safeWaitForPageLoad } from '../../helpers/uiActions.js';
 import { markFailed } from '../../helpers/testFailure.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import { Timeouts, TimeoutsSec } from '../../Timeouts.js';
+import { Timeouts } from '../../Timeouts.js';
 
 export default class MerchantOrderDetailsPage {
   constructor(page) {
@@ -100,16 +100,7 @@ export default class MerchantOrderDetailsPage {
       markFailed('First edit button is not visible for pricing');
     }
 
-    // Retry count briefly to avoid false negatives while quotation panel is still rendering.
-    let editButtonCount = 0;
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
-      editButtonCount = await this.page.locator(this.s.editItemButtons).count();
-      if (editButtonCount > 0) {
-        break;
-      }
-      await delay(2, `Waiting 2 seconds for editable items to render (attempt ${attempt}/3)`);
-    }
-
+    const editButtonCount = await this.waitForEditableItemsReady();
     if (editButtonCount === 0) {
       markFailed('No editable items found for pricing after retries');
     }
@@ -190,11 +181,9 @@ export default class MerchantOrderDetailsPage {
       markFailed('Unable to confirm assign branch');
     }
 
-    // Assignment should unlock quote actions (Upload QR).
-    if (!(await safeWaitForElementVisible(this.page, this.s.uploadQRButton))) {
+    if (!(await this.waitForBranchAssignmentApplied())) {
       markFailed('Upload QR button did not appear after assigning branch');
     }
-    await delay(1, 'Waiting 1 second after assigning branch');
   }
 
   async sendQuote() {
@@ -205,10 +194,9 @@ export default class MerchantOrderDetailsPage {
     if (!(await safeClick(this.page, this.s.requestPaymentButton))) {
       markFailed('Unable to click request payment');
     }
-    if (!(await safeWaitForElementHidden(this.page, this.s.requestPaymentLoadingButton))) {
+    if (!(await this.waitForQuoteSubmissionToSettle())) {
       markFailed('Request payment is still loading; quote submit did not finish');
     }
-    await delay(TimeoutsSec.short, 'Waiting a bit before proceeding to next task');
   }
 
   async uploadQRCode(imagePath) {
@@ -324,5 +312,38 @@ export default class MerchantOrderDetailsPage {
     if (!(await safeClick(this.page, this.s.requoteRequestModalCloseButton))) {
       markFailed('Unable to close re-quote request modal');
     }
+  }
+
+  async waitForEditableItemsReady() {
+    // Retry count briefly to avoid false negatives while quotation panel is still rendering.
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const editButtonCount = await this.page.locator(this.s.editItemButtons).count();
+      if (editButtonCount > 0) {
+        return editButtonCount;
+      }
+
+      if (attempt < 3) {
+        await delay(2, `Waiting 2 seconds for editable items to render (attempt ${attempt}/3)`);
+      }
+    }
+
+    return 0;
+  }
+
+  async waitForBranchAssignmentApplied() {
+    // Assignment should unlock quote actions through the Upload QR button.
+    return safeWaitForElementVisible(this.page, this.s.uploadQRButton);
+  }
+
+  async waitForQuoteSubmissionToSettle() {
+    // Quote submission is complete once the loading-state request-payment control disappears.
+    const loadingCleared = await safeWaitForElementHidden(this.page, this.s.requestPaymentLoadingButton);
+    if (!loadingCleared) {
+      return false;
+    }
+
+    return safeWaitForElementVisible(this.page, this.s.requestPaymentButton, {
+      timeout: Timeouts.short,
+    });
   }
 }

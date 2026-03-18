@@ -11,7 +11,7 @@ import {
   uploadImageToSignedUrl,
 } from '../shared/steps/patient.steps.js';
 import {
-  loginPsePharmacist,
+  loginPharmacist,
   acceptOrderAsPharmacist,
   updatePricesAsPharmacist,
   assignBranchToOrderAsPharmacist,
@@ -59,7 +59,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       const deliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
 
       // Patient: Login.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -67,7 +67,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       });
 
       // PSE Pharmacist: Login.
-      const { pharmacistAccessToken } = await loginPsePharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'pse01' });
       // PSE Pharmacist: Accept Order.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
       // PSE Pharmacist: Update Prices.
@@ -134,7 +134,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       });
 
       // Admin: Login.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
       // Admin: Assign Rider To Order.
@@ -148,7 +148,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       await prepareOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
 
       // Rider: Login.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Rider: Start Pickup Order.
       await startPickupOrderAsRider(api, { riderAccessToken, orderId });
 

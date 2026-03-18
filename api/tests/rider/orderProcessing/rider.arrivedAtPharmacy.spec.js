@@ -1,7 +1,8 @@
-import { test, expect } from '../../../globalConfig.api.js';
-import { ARRIVE_AT_PHARMACY_QUERY } from './rider.orderQuestions.js';
+import { loginAsRiderAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, riderLoginAndGetTokens } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
+import { ARRIVE_AT_PHARMACY_QUERY } from './rider.orderQuestions.js';
 
 const orderId = 1; // ID not assigned to rider
 const branchId = 1; // Branch ID for the order
@@ -13,10 +14,7 @@ test.describe('GraphQL: Arrive at Pharmacy', () => {
       tag: ['@api', '@rider', '@negative', '@pharma-128'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const arriveAtPharmacyRes = await safeGraphQL(api, {

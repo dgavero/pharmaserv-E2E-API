@@ -1,9 +1,19 @@
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { declineOrderAsPharmacist } from '../../../helpers/orderHelpers.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { SUBMIT_FINDMYMEDS_ORDER_QUERY } from './patient.orderingQueries.js';
 import { buildPatientFindMyMedsOrderInput } from './patient.testData.js';
-import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { loginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { loginPharmacist, declineOrderAsPharmacist } from '../../e2e/shared/steps/pharmacist.steps.js';
+
+async function declineSubmittedOrder(api, orderId) {
+  const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'pse01' });
+  await declineOrderAsPharmacist(api, {
+    pharmacistAccessToken,
+    orderId,
+    reason: 'Order is declined via API automated test (FindMyMeds)',
+  });
+}
 
 test.describe('GraphQL: Submit FindMyMeds Order', () => {
   test(
@@ -12,10 +22,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-107'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const orderDetails = buildPatientFindMyMedsOrderInput();
@@ -36,7 +43,7 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
       expect(typeof node.patient.lastName).toBe('string');
 
       const orderId = node.id;
-      await declineOrderAsPharmacist(api, orderId);
+      await declineSubmittedOrder(api, orderId);
     }
   );
 

@@ -1,6 +1,7 @@
 import { markFailed } from '../../helpers/testFailure.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import { test } from '../../../e2e/globalConfig.ui.js';
+import { getMerchantPortalCredentials } from '../../helpers/merchantCredentials.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import { safeClick, safeFill, safeInput, safeNavigateToUrl, safeOpenNewContextPage, safeWaitForPageLoad, safeWaitForElementVisible, getLastError } from '../../helpers/uiActions.js';
 
@@ -12,9 +13,10 @@ test.describe('Merchant Portal | Login', () => {
     },
     async ({ page }) => {
       const login = new MerchantPortalLoginPage(page);
+      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
 
       await login.open();
-      await login.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await login.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await login.assertSuccessLogin();
     }
   );
@@ -74,9 +76,10 @@ test.describe('Merchant Portal | Login', () => {
     },
     async ({ page, browser }) => {
       const firstLogin = new MerchantPortalLoginPage(page);
+      const merchantPortalCredentials = getMerchantPortalCredentials('regular');
 
       await firstLogin.open();
-      await firstLogin.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await firstLogin.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await firstLogin.assertSuccessLogin();
 
       await page.waitForTimeout(1000);
@@ -88,7 +91,7 @@ test.describe('Merchant Portal | Login', () => {
       }
 
       const secondLogin = new MerchantPortalLoginPage(opened.page);
-      await secondLogin.login(process.env.MERCHANT_USERNAME, process.env.MERCHANT_PASSWORD);
+      await secondLogin.login(merchantPortalCredentials.username, merchantPortalCredentials.password);
       await secondLogin.assertSuccessLogin();
     }
   );

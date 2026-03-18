@@ -19,6 +19,7 @@ import {
 } from '../../../../api/tests/e2e/shared/steps/rider.steps.js';
 import { uploadImageToSignedUrl } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
 import { markFailed } from '../../../helpers/testFailure.js';
+import { getRiderCredentials } from '../../../../api/helpers/roleCredentials.js';
 
 function failAction(actionLabel, error) {
   const rawMessage = String(error?.message || error || 'unknown error');
@@ -26,9 +27,12 @@ function failAction(actionLabel, error) {
   markFailed(`${actionLabel} failed:\n${snippet || rawMessage}`);
 }
 
-export async function loginRiderForHybrid(api) {
+export async function loginRiderForHybrid(api, { accountKey = 'default' } = {}) {
   try {
-    const { riderAccessToken } = await loginRider(api);
+    const { riderAccessToken } = await loginRider(api, {
+      accountKey,
+      credentials: getRiderCredentials(accountKey),
+    });
     return { riderAccessToken };
   } catch (error) {
     failAction('loginRiderForHybrid', error);
@@ -73,7 +77,12 @@ export async function riderStartPickupAndArriveAtPharmacy(api, {
   requireBranchQR = true,
 }) {
   try {
-    const resolvedRiderAccessToken = riderAccessToken || (await loginRider(api)).riderAccessToken;
+    const resolvedRiderAccessToken =
+      riderAccessToken ||
+      (await loginRider(api, {
+        accountKey: 'default',
+        credentials: getRiderCredentials('default'),
+      })).riderAccessToken;
     await startPickupOrderAsRider(api, { riderAccessToken: resolvedRiderAccessToken, orderId });
     const { branchQR } = await arrivedAtPharmacyAsRider(api, {
       riderAccessToken: resolvedRiderAccessToken,
@@ -147,7 +156,12 @@ export async function riderCompleteDeliveryFlow(api, {
     let resolvedBranchQR = branchQR;
 
     if (!resolvedRiderAccessToken) {
-      resolvedRiderAccessToken = (await loginRider(api)).riderAccessToken;
+      resolvedRiderAccessToken = (
+        await loginRider(api, {
+          accountKey: 'default',
+          credentials: getRiderCredentials('default'),
+        })
+      ).riderAccessToken;
     }
 
     if (!resolvedBranchQR) {

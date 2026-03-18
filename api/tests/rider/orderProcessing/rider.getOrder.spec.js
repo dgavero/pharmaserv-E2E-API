@@ -1,8 +1,9 @@
-import { test, expect } from '../../../globalConfig.api.js';
-import { GET_ORDER_QUERY } from './rider.orderQuestions.js';
+import { loginAsRiderAndGetTokens, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, riderLoginAndGetTokens } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
 import { getReusableNegativeFixtures } from '../../testData/reusableTestIds.js';
+import { GET_ORDER_QUERY } from './rider.orderQuestions.js';
 
 const { unassignedOrderId: orderId } = getReusableNegativeFixtures();
 
@@ -13,10 +14,7 @@ test.describe('GraphQL: Get Order', () => {
       tag: ['@api', '@rider', '@negative', '@pharma-125'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const getOrderRes = await safeGraphQL(api, {

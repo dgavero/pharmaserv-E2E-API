@@ -1,4 +1,7 @@
+import { loginAsRiderAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
 import {
   GET_NOTIFICATIONS_QUERY,
   GET_NOTIFICATIONS_COUNT_QUERY,
@@ -6,8 +9,6 @@ import {
   SEEN_ALL_NOTIFICATIONS_QUERY,
   REMOVE_NOTIFICATION_QUERY,
 } from './rider.notificationQueries.js';
-import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, riderLoginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 
 async function getFirstNotificationId(api, accessToken) {
   const getNotificationsRes = await safeGraphQL(api, {
@@ -29,10 +30,7 @@ test.describe('GraphQL: Rider Notification Actions', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-135'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const getNotificationsRes = await safeGraphQL(api, {
@@ -105,10 +103,7 @@ test.describe('GraphQL: Rider Notification Actions', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-321'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const getNotificationsCountRes = await safeGraphQL(api, {
@@ -178,10 +173,7 @@ test.describe('GraphQL: Rider Notification Actions', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-324'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const notificationId = await getFirstNotificationId(api, accessToken);
@@ -251,10 +243,7 @@ test.describe('GraphQL: Rider Notification Actions', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-327'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const seenAllNotificationsRes = await safeGraphQL(api, {
@@ -320,10 +309,7 @@ test.describe('GraphQL: Rider Notification Actions', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-330'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const notificationId = await getFirstNotificationId(api, accessToken);

@@ -58,7 +58,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
 
       // Patient: Login.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
 
       // Patient: Get Prescription Upload URL.
       const { prescriptionUploadUrl, prescriptionBlobName } = await getPrescriptionUploadUrlAsPatient(api, {
@@ -110,7 +110,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       });
 
       // Pharmacist: Login.
-      const { pharmacistAccessToken } = await loginPharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
       // Pharmacist: Accept Order.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
 
@@ -182,7 +182,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       });
 
       // Admin: Login.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
@@ -199,7 +199,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       });
 
       // Rider: Login.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Rider: Start Pickup Order.
       await startPickupOrderAsRider(api, { riderAccessToken, orderId });
       // Rider: Arrived at Pharmacy.

@@ -1,11 +1,9 @@
-import { test, expect } from '../../../globalConfig.api.js';
-import {
-  RIDER_SET_SHIFT_START_QUERY,
-  RIDER_SET_SHIFT_END_QUERY,
-} from '../profile/rider.profileQueries.js';
+import { loginAsRiderAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { riderLoginAndGetTokens } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
 import { createRiderScheduleAsAdmin } from '../../../helpers/adminHelpers.js';
+import { RIDER_SET_SHIFT_START_QUERY, RIDER_SET_SHIFT_END_QUERY } from './rider.profileQueries.js';
 
 test.describe('GraphQL: Rider able to set shift start/end', () => {
   test(
@@ -14,10 +12,7 @@ test.describe('GraphQL: Rider able to set shift start/end', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-123'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       // Create rider schedule first
@@ -48,10 +43,7 @@ test.describe('GraphQL: Rider able to set shift start/end', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-124'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       // Create rider schedule first

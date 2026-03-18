@@ -94,7 +94,7 @@ export const NOAUTH_CODES = ['400', '401', '404', '403', '409', '500'];
 
 export const NOAUTH_HTTP_STATUSES = [401, 404, 403, 500];
 
-export async function loginAndGetTokens(api, { username, password }) {
+export async function loginAsPatientAndGetTokens(api, { username, password }) {
   const creds = requireNonEmptyCredentials('Patient', { username, password });
   const raw = await safeGraphQL(api, {
     query: LOGIN_MUTATION,
@@ -111,7 +111,7 @@ export async function loginAndGetTokens(api, { username, password }) {
   };
 }
 
-export async function adminLoginAndGetTokens(api, { username, password }) {
+export async function loginAsAdminAndGetTokens(api, { username, password }) {
   const creds = requireNonEmptyCredentials('Admin', { username, password });
   const raw = await safeGraphQL(api, {
     query: ADMIN_LOGIN_MUTATION,
@@ -128,7 +128,7 @@ export async function adminLoginAndGetTokens(api, { username, password }) {
   };
 }
 
-export async function riderLoginAndGetTokens(api, { username, password }) {
+export async function loginAsRiderAndGetTokens(api, { username, password }) {
   const creds = requireNonEmptyCredentials('Rider', { username, password });
   const raw = await safeGraphQL(api, {
     query: RIDER_LOGIN_QUERY,
@@ -145,7 +145,7 @@ export async function riderLoginAndGetTokens(api, { username, password }) {
   };
 }
 
-export async function pharmacistLoginAndGetTokens(api, { username, password }) {
+export async function loginAsPharmacistAndGetTokens(api, { username, password }) {
   const creds = requireNonEmptyCredentials('Pharmacist', { username, password });
   const raw = await safeGraphQL(api, {
     query: PHARMACIST_LOGIN_QUERY,

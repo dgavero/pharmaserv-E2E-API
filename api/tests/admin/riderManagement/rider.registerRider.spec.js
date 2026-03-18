@@ -1,7 +1,8 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 
 // Build Correct Rider Input Payload
 function buildRiderInput() {
@@ -55,15 +56,7 @@ test.describe('GraphQL: Rider Register', () => {
       tag: ['@api', '@admin', '@positive', '@pharma-31'],
     },
     async ({ api }) => {
-      const adminUser = process.env.ADMIN_USERNAME;
-      const adminPass = process.env.ADMIN_PASSWORD;
-      expect(adminUser, 'Missing ADMIN_USERNAME in env').toBeTruthy();
-      expect(adminPass, 'Missing ADMIN_PASSWORD in env').toBeTruthy();
-
-      const { accessToken } = await adminLoginAndGetTokens(api, {
-        username: adminUser,
-        password: adminPass,
-      });
+      const { accessToken } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
 
       // 2) Prepare unique rider input to avoid duplicates
       const riderInput = buildRiderInput();
@@ -105,10 +98,7 @@ test.describe('GraphQL: Rider Register', () => {
     },
     async ({ api }) => {
       // 1) Admin login
-      const { accessToken } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
 
       // 2) Known-duplicate payload
       const existingRider = {
@@ -192,10 +182,7 @@ test.describe('GraphQL: Rider Register', () => {
     },
     async ({ api }) => {
       // Admin login
-      const { accessToken } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
 
       const riderInput = buildRiderInput();
       // Delete password variable to simulate missing required field

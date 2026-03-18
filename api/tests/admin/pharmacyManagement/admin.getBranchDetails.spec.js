@@ -1,6 +1,7 @@
-import { test, expect } from '../../../globalConfig.api.js';
+import { loginAsAdminAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
-import { adminLoginAndGetTokens } from '../../../helpers/auth.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 
 const GET_PAGED_BRANCHES_QUERY = `
   query ($pharmacyId: ID!, $filter: FilterRequest!) {
@@ -50,10 +51,7 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
     },
     async ({ api }) => {
       // 1) Admin login
-      const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: adminLoginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
 
       // 2) Variables (as specified)
