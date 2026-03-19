@@ -1,12 +1,8 @@
 import { randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { REQUEST_SIGNUP_OTP_QUERY } from './patient.onboardingQueries.js';
-import {
-  safeGraphQL,
-  getGQLError,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 
 function buildPhoneNumberInput() {
   const phoneNumber = `+639${randomNum(9)}`;

@@ -1,5 +1,7 @@
 import { expect } from '../../../../globalConfig.api.js';
-import { safeGraphQL, bearer, riderLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { loginAsRiderAndGetTokens } from '../../../../helpers/auth.js';
+import { getRiderCredentials } from '../../../../helpers/roleCredentials.js';
 import {
   RIDER_START_PICKUP_ORDER_QUERY,
   RIDER_ARRIVED_AT_PHARMACY_QUERY,
@@ -18,11 +20,12 @@ import {
   RIDER_COMPLETE_ORDER_QUERY,
 } from '../queries/rider.queries.js';
 
-export async function loginRider(api) {
-  const { accessToken: riderAccessToken, raw: riderLoginRes } = await riderLoginAndGetTokens(api, {
-    username: process.env.RIDER_USERNAME,
-    password: process.env.RIDER_PASSWORD,
-  });
+export async function loginRider(api, { accountKey = 'default', credentials } = {}) {
+  const resolvedCredentials = credentials || getRiderCredentials(accountKey);
+  const { accessToken: riderAccessToken, raw: riderLoginRes } = await loginAsRiderAndGetTokens(
+    api,
+    resolvedCredentials
+  );
   expect(riderLoginRes.ok, riderLoginRes.error || 'Rider login failed').toBe(true);
   return { riderAccessToken };
 }
@@ -38,11 +41,21 @@ export async function startPickupOrderAsRider(api, { riderAccessToken, orderId }
 }
 
 export async function arrivedAtPharmacyAsRider(api, { riderAccessToken, orderId, branchId, requireBranchQR = true }) {
-  const arrivedAtPharmacyRes = await safeGraphQL(api, {
-    query: RIDER_ARRIVED_AT_PHARMACY_QUERY,
-    variables: { orderId, branchId },
-    headers: bearer(riderAccessToken),
-  });
+  let arrivedAtPharmacyRes;
+  await expect
+    .poll(
+      async () => {
+        arrivedAtPharmacyRes = await safeGraphQL(api, {
+          query: RIDER_ARRIVED_AT_PHARMACY_QUERY,
+          variables: { orderId, branchId },
+          headers: bearer(riderAccessToken),
+        });
+        return arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.id === orderId;
+      },
+      { timeout: 5000, intervals: [250, 500, 1000] }
+    )
+    .toBe(true);
+
   expect(arrivedAtPharmacyRes.ok, arrivedAtPharmacyRes.error || 'Rider arrived at pharmacy failed').toBe(true);
   expect(arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.id).toBe(orderId);
   const arrivedNode = arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy;

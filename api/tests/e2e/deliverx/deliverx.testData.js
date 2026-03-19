@@ -1,3 +1,5 @@
+import { getPatientAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
+
 function resolveDeliverXMedicineIds() {
   const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
   const medicineIdsByEnv = {
@@ -54,11 +56,13 @@ export function buildDeliverXBasePriceItems() {
   ];
 }
 
-export function buildDeliverXBaseOrderInput() {
+export function buildDeliverXBaseOrderInput({ patientId, branchId } = {}) {
+  const defaultPatientAccount = getPatientAccount('default');
+  const defaultPharmacistAccount = getPharmacistAccount('reg01');
   return {
     deliveryType: 'DELIVER_X',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: process.env.PHARMACIST_BRANCHID_REG01,
+    patientId: patientId || defaultPatientAccount.patientId,
+    branchId: branchId || defaultPharmacistAccount.branchId,
     prescriptionItems: buildDeliverXBasePrescriptionItems(),
     addressName: 'Home API',
     address: 'Test API Address',
@@ -67,11 +71,13 @@ export function buildDeliverXBaseOrderInput() {
   };
 }
 
-export function buildDeliverXAttachmentNoPrescriptionOrderInput() {
+export function buildDeliverXAttachmentNoPrescriptionOrderInput({ patientId, branchId } = {}) {
+  const defaultPatientAccount = getPatientAccount('default');
+  const defaultPharmacistAccount = getPharmacistAccount('reg01');
   return {
     deliveryType: 'DELIVER_X',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: process.env.PHARMACIST_BRANCHID_REG01,
+    patientId: patientId || defaultPatientAccount.patientId,
+    branchId: branchId || defaultPharmacistAccount.branchId,
     discountCardIds: [],
     prescriptionItems: [],
     addressName: 'Home API',
@@ -119,6 +125,8 @@ export function buildDeliverXAttachmentPrescriptionItemPayloads() {
 
 export function buildDeliverXRequoteData({ prescriptionId, discountCardId, attachmentBlobName }) {
   const { addedMedicineId, replacedMedicineId } = resolveDeliverXMedicineIds();
+  const defaultPatientAccount = getPatientAccount('default');
+  const defaultPharmacistAccount = getPharmacistAccount('reg01');
 
   const firstAddedPrescriptionItem = {
     medicineId: addedMedicineId,
@@ -154,8 +162,8 @@ export function buildDeliverXRequoteData({ prescriptionId, discountCardId, attac
   return {
     orderInput: {
       deliveryType: 'DELIVER_X',
-      patientId: process.env.PATIENT_USER_USERNAME_ID,
-      branchId: process.env.PHARMACIST_BRANCHID_REG01,
+      patientId: defaultPatientAccount.patientId,
+      branchId: defaultPharmacistAccount.branchId,
       prescriptionIds: [prescriptionId],
       discountCardIds: [discountCardId],
       prescriptionItems: buildDeliverXBasePrescriptionItems(),

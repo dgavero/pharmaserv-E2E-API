@@ -1,6 +1,6 @@
 import { test, expect } from '../../globalConfig.api.js';
 import path from 'node:path';
-import { bearer, safeGraphQL } from '../../helpers/testUtilsAPI.js';
+import { bearer, safeGraphQL } from '../../helpers/graphqlUtils.js';
 import { buildDeliverXBaseOrderInput, buildDeliverXBasePriceItems } from '../e2e/deliverx/deliverx.testData.js';
 import { buildFindMyMedsBaseOrderInput } from '../e2e/findMyMeds/findMyMeds.testData.js';
 import {
@@ -13,7 +13,6 @@ import {
 } from '../e2e/shared/steps/patient.steps.js';
 import {
   loginPharmacist,
-  loginPsePharmacist,
   acceptOrderAsPharmacist,
   updatePricesAsPharmacist,
   sendQuoteAsPharmacist,
@@ -40,9 +39,9 @@ const CHAT_PARTIES_TYPE = 'PATIENT_PHARMACY';
 async function healNegativeFixtures(api) {
   const paymentProofImagePath = path.resolve('upload/images/proof1.png');
 
-  const { patientAccessToken } = await loginPatient(api);
-  const { pharmacistAccessToken } = await loginPharmacist(api);
-  const { adminAccessToken } = await loginAdmin(api);
+  const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
+  const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
+  const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
 
   const { orderId: inactiveOrderId } = await submitOrderAsPatient(api, {
     patientAccessToken,
@@ -125,11 +124,14 @@ async function healIdsOnSlot(api, slot) {
       `Unsupported pharmacistType="${existingSlotData.pharmacistType}" for ${testEnv}.${slotName}`
     );
   }
+  if (!existingSlotData.pharmacistAccountKey) {
+    throw new Error(`Missing pharmacistAccountKey for ${testEnv}.${slotName}`);
+  }
 
-  const { patientAccessToken } = await loginPatient(api);
-  const pharmacistLogin =
-    existingSlotData.pharmacistType === 'PSE' ? loginPsePharmacist : loginPharmacist;
-  const { pharmacistAccessToken } = await pharmacistLogin(api);
+  const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
+  const { pharmacistAccessToken } = await loginPharmacist(api, {
+    accountKey: existingSlotData.pharmacistAccountKey,
+  });
   const orderInput =
     existingSlotData.pharmacistType === 'PSE' ? buildFindMyMedsBaseOrderInput() : buildDeliverXBaseOrderInput();
 

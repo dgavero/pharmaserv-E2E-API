@@ -1,17 +1,8 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { loginAsPatientAndGetTokens, loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  bearer,
-  adminLoginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-  loginAndGetTokens,
-  NOAUTH_MESSAGES,
-} from '../../../helpers/testUtilsAPI.js';
+import { randomNum } from '../../../../helpers/globalTestUtils.js';
+import { getPatientCredentials, getAdminCredentials } from '../../../helpers/roleCredentials.js';
 
 const UPDATE_DEPENDENT_QUERY = /* GraphQL */ `
   mutation ($dependentId: ID!, $patient: PatientRequest!) {
@@ -47,10 +38,7 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-67'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const updateDependentData = updateDependentInput();
@@ -128,10 +116,7 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-70'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const updateDependentData = updateDependentInput();

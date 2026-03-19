@@ -1,17 +1,19 @@
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { declineOrderAsPharmacist } from '../../../helpers/orderHelpers.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { SUBMIT_ORDER_QUERY } from './patient.orderingQueries.js';
 import { buildPatientSpecificOrderInput } from './patient.testData.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { loginPharmacist, declineOrderAsPharmacist } from '../../e2e/shared/steps/pharmacist.steps.js';
+
+async function declineSubmittedOrder(api, orderId) {
+  const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
+  await declineOrderAsPharmacist(api, {
+    pharmacistAccessToken,
+    orderId,
+    reason: 'Order is declined via API automated test (Specific Order)',
+  });
+}
 
 test.describe('GraphQL: Submit Specific Orders', () => {
   test(
@@ -20,10 +22,7 @@ test.describe('GraphQL: Submit Specific Orders', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-183'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const orderDetailsWithRequestedMedicine = buildPatientSpecificOrderInput();
@@ -43,7 +42,7 @@ test.describe('GraphQL: Submit Specific Orders', () => {
       const { id: orderId } = node;
       expect(orderId).toBeTruthy();
       console.log('Order id to decline: ' + orderId);
-      await declineOrderAsPharmacist(api, orderId);
+      await declineSubmittedOrder(api, orderId);
     }
   );
 
@@ -53,10 +52,7 @@ test.describe('GraphQL: Submit Specific Orders', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-184'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       //Override medicine id to match test
@@ -84,10 +80,7 @@ test.describe('GraphQL: Submit Specific Orders', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-185'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       //Override quantity to match test

@@ -1,30 +1,25 @@
 import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
-import { markFailed } from '../../helpers/testUtilsUI.js';
-import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
-import MerchantOrdersPage from '../../pages/merchantPortal/merchantOrders.page.js';
-import MerchantOrderDetailsPage from '../../pages/merchantPortal/merchantOrderDetails.page.js';
-import { pharmacistLoginAndGetTokens } from '../../../api/helpers/testUtilsAPI.js';
-import {
-  prepareOrderAsPharmacist,
-  setOrderForPickupAsPharmacist,
-} from '../../../api/tests/e2e/shared/steps/pharmacist.steps.js';
-import { buildBasePriceItems, HybridDeliveryTypes } from './generic.orderData.js';
+import { getPatientAccount, getRiderAccount } from '../../../api/helpers/roleCredentials.js';
+import { createMerchantPortalContext } from './merchantPortalContext.js';
+import { buildBasePriceItems, buildFindMyMedsHybridOrderInput } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
-  createHybridOrderForBranch,
+  createHybridOrder,
   ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
-  rateRiderAsPatientAction,
+  rateRiderAsPatientForHybrid,
 } from './actions/patientActions.js';
 import {
-  assignRiderToOrderAsAdminAction,
-  confirmPaymentAsAdminAction,
-  getMerchantIdPSE,
-  loginAdminForHybrid,
+  assignRiderToOrderAsAdminForHybrid,
+  confirmPaymentAsAdminForHybrid,
+  loginAsAdminForHybrid,
 } from './actions/adminActions.js';
-import { riderCompleteDeliveryFlow } from './actions/riderActions.js';
+import { completeDeliveryAsRiderForHybrid } from './actions/riderActions.js';
+
+const defaultPatientAccount = getPatientAccount('default');
+const defaultRiderAccount = getRiderAccount('default');
 
 test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
   test(
@@ -40,39 +35,28 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      const portalUsername = process.env.MERCHANT_USERNAME_PSE;
-      const portalPassword = process.env.MERCHANT_PASSWORD_PSE;
-      if (!portalUsername || !portalPassword) {
-        markFailed('Missing MERCHANT_USERNAME_PSE or MERCHANT_PASSWORD_PSE for FindMyMeds hybrid test');
-      }
-
-      const { accessToken: merchantAccessToken } = await pharmacistLoginAndGetTokens(api, {
-        username: portalUsername,
-        password: portalPassword,
-      });
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
 
       // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.FIND_MY_MEDS,
-        omitBranchId: true,
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildFindMyMedsHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          allowMissingBranchId: true,
+        }),
       });
 
       // UI (merchant): login, accept order, assign branch, upload QR, update prices, and send quote.
-      const login = new MerchantPortalLoginPage(page);
-      const ordersPage = new MerchantOrdersPage(page);
-      const orderDetailsPage = new MerchantOrderDetailsPage(page);
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
 
-      await login.open();
-      await login.login(portalUsername, portalPassword);
-      await login.assertSuccessLogin();
-
-      await ordersPage.open();
-      await ordersPage.openNewOrderByBookingRef(bookingRef);
-      await orderDetailsPage.acceptOrder();
-      await orderDetailsPage.assignBranchToFirstMatchingPharmacy('Pharmacy API');
-      await orderDetailsPage.uploadQRCode(merchantPaymentQrImagePath);
-      await orderDetailsPage.updatePriceItems(buildBasePriceItems());
-      await orderDetailsPage.sendQuote();
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+      await merchant.orderDetailsPage.assignBranchToFirstMatchingPharmacy('Pharmacy API');
+      await merchant.orderDetailsPage.uploadQRCode(merchantPaymentQrImagePath);
+      await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept quote and pay.
       const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId });
@@ -91,20 +75,20 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       });
 
       // API (admin): confirm payment and assign rider.
-      const { adminAccessToken } = await loginAdminForHybrid(api);
-      await confirmPaymentAsAdminAction(api, { adminAccessToken, orderId });
-      const { assignedRiderId } = await assignRiderToOrderAsAdminAction(api, {
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
+      const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
-      // API (merchant/pharmacist): prepare then set for pickup.
-      await prepareOrderAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
-      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken: merchantAccessToken, orderId });
+      // UI (merchant): prepare then set for pickup.
+      await merchant.orderDetailsPage.prepareOrderForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPickup();
 
       // API (rider): complete fulfillment.
-      await riderCompleteDeliveryFlow(api, {
+      await completeDeliveryAsRiderForHybrid(api, {
         orderId,
         branchId: paymentQRCodeBranchId,
         pickupProofImagePath: riderPickupProofImagePath,
@@ -113,13 +97,13 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       });
 
       // API (patient): rate rider.
-      await rateRiderAsPatientAction(api, {
+      await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
-      await ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
 });

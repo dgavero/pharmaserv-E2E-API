@@ -1,6 +1,10 @@
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { SCAN_PRESCRIPTION_QUERY } from './patient.prescriptionQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 test.describe('GraphQL: Scan Prescription', () => {
   test(
@@ -9,10 +13,7 @@ test.describe('GraphQL: Scan Prescription', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-180'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const photo = `addfff-1344-1356.png`;
@@ -20,7 +21,7 @@ test.describe('GraphQL: Scan Prescription', () => {
         query: SCAN_PRESCRIPTION_QUERY,
         variables: {
           prescription: {
-            patientId: process.env.PATIENT_USER_USERNAME_ID,
+            patientId: defaultPatientAccount.patientId,
             photoToScan: photo,
           },
         },

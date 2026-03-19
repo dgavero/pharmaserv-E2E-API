@@ -1,6 +1,8 @@
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { GET_ACTIVE_ORDER_QUERY, GET_ORDER_HISTORY_QUERY } from './patient.getHistoryNotificationQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
 
 test.describe('GraphQL: Order Details Patient', () => {
   test(
@@ -9,10 +11,7 @@ test.describe('GraphQL: Order Details Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-186'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getActiveOrderRes = await safeGraphQL(api, {
@@ -20,7 +19,7 @@ test.describe('GraphQL: Order Details Patient', () => {
         headers: bearer(accessToken),
       });
 
-      expect(getActiveOrderRes.ok).toBe(true);
+      expect(getActiveOrderRes.ok, getActiveOrderRes.error || 'Get active orders failed').toBe(true);
     }
   );
 
@@ -30,10 +29,7 @@ test.describe('GraphQL: Order Details Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-187'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getOrderHistoryRes = await safeGraphQL(api, {
@@ -41,7 +37,7 @@ test.describe('GraphQL: Order Details Patient', () => {
         headers: bearer(accessToken),
       });
 
-      expect(getOrderHistoryRes.ok).toBe(true);
+      expect(getOrderHistoryRes.ok, getOrderHistoryRes.error || 'Get order history failed').toBe(true);
     }
   );
 });

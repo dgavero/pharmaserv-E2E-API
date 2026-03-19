@@ -1,5 +1,5 @@
 // import { test, expect } from '../../../globalConfig.api.js';
-// import { loginAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/testUtilsAPI';
+// import { loginAsPatientAndGetTokens, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 // import {
 //   safeGraphQL,
 //   bearer,
@@ -7,7 +7,7 @@
 //   NOAUTH_MESSAGE_PATTERN,
 //   NOAUTH_CLASSIFICATIONS,
 //   NOAUTH_CODES,
-// } from '../../../helpers/testUtilsAPI.js';
+// } from '../../../helpers/graphqlUtils.js';
 
 // const DISABLE_PATIENT_QUERY = /* GraphQL */ `
 //   mutation ($patientId: ID!) {
@@ -29,7 +29,7 @@
 //       tag: ['@api', '@patient', '@positive', '@pharma-82'],
 //     },
 //     async ({ api }) => {
-//       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
+//       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, {
 //         username: process.env.PATIENT_USER_USERNAME,
 //         password: process.env.PATIENT_USER_PASSWORD,
 //       });
@@ -58,7 +58,7 @@
 //       tag: ['@api', '@patient', '@negative', '@pharma-83'],
 //     },
 //     async ({ api }) => {
-//       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
+//       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, {
 //         username: process.env.PATIENT_USER_USERNAME,
 //         password: process.env.PATIENT_USER_PASSWORD,
 //       });
@@ -88,7 +88,7 @@
 //       tag: ['@api', '@patient', '@negative', '@pharma-84'],
 //     },
 //     async ({ api, noAuth }) => {
-//       const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
+//       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, {
 //         username: process.env.PATIENT_USER_USERNAME,
 //         password: process.env.PATIENT_USER_PASSWORD,
 //       });

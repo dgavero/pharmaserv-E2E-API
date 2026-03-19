@@ -1,15 +1,8 @@
+import { loginAsPharmacistAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { FIND_NEAREST_BRANCHES_QUERY } from './pharmacist.orderManagementQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  pharmacistLoginAndGetTokens,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
 
 function finderInput() {
   return {
@@ -27,10 +20,7 @@ test.describe('GraphQL: Pharmacy Find Nearest Branches', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-306'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const findNearestBranchesRes = await safeGraphQL(api, {

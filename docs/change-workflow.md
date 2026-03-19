@@ -56,6 +56,7 @@ Questions to answer:
 - Does a shared helper or page object already handle this behavior?
 - Does this area already have a query file?
 - Is this an approval-required area?
+- If the spec needs actor-bound IDs or branch IDs, does an account/profile helper already expose them?
 
 ## Step 4: Check Local Patterns
 
@@ -70,6 +71,7 @@ For API work:
 For merchant work:
 
 - target spec
+- merchant account/context setup
 - relevant page object
 - relevant action module
 - relevant selector entries
@@ -148,6 +150,7 @@ For hybrid merchant changes:
 - verify whether the behavior belongs in a page object, action module, selector JSON, or spec
 - preserve merchant UI-only actions
 - preserve active-branch binding and final status verification behavior
+- preserve explicit merchant account resolution through the merchant account/context helper instead of reintroducing spec-local env lookups
 
 ## Step 8: Self-Review the Diff
 

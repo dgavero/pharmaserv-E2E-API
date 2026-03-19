@@ -1,4 +1,5 @@
-import { safeGraphQL, bearer, extractApiFailureSnippet } from '../../../../api/helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
+import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
 import { RIDER_START_PICKUP_ORDER_QUERY } from '../../../../api/tests/e2e/shared/queries/rider.queries.js';
 import {
   loginRider,
@@ -17,7 +18,8 @@ import {
   sendQuoteAsRider,
 } from '../../../../api/tests/e2e/shared/steps/rider.steps.js';
 import { uploadImageToSignedUrl } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
-import { markFailed } from '../../../helpers/testUtilsUI.js';
+import { markFailed } from '../../../helpers/testFailure.js';
+import { getRiderCredentials } from '../../../../api/helpers/roleCredentials.js';
 
 function failAction(actionLabel, error) {
   const rawMessage = String(error?.message || error || 'unknown error');
@@ -25,12 +27,15 @@ function failAction(actionLabel, error) {
   markFailed(`${actionLabel} failed:\n${snippet || rawMessage}`);
 }
 
-export async function loginRiderForHybrid(api) {
+export async function loginAsRiderForHybrid(api, { accountKey = 'default' } = {}) {
   try {
-    const { riderAccessToken } = await loginRider(api);
+    const { riderAccessToken } = await loginRider(api, {
+      accountKey,
+      credentials: getRiderCredentials(accountKey),
+    });
     return { riderAccessToken };
   } catch (error) {
-    failAction('loginRiderForHybrid', error);
+    failAction('loginAsRiderForHybrid', error);
   }
 }
 
@@ -65,14 +70,19 @@ export async function getDeliverXStartPickupStatus(api, { riderAccessToken, orde
   }
 }
 
-export async function riderStartPickupAndArriveAtPharmacy(api, {
+export async function startPickupAndArriveAtPharmacyAsRiderForHybrid(api, {
   riderAccessToken,
   orderId,
   branchId,
   requireBranchQR = true,
 }) {
   try {
-    const resolvedRiderAccessToken = riderAccessToken || (await loginRider(api)).riderAccessToken;
+    const resolvedRiderAccessToken =
+      riderAccessToken ||
+      (await loginRider(api, {
+        accountKey: 'default',
+        credentials: getRiderCredentials('default'),
+      })).riderAccessToken;
     await startPickupOrderAsRider(api, { riderAccessToken: resolvedRiderAccessToken, orderId });
     const { branchQR } = await arrivedAtPharmacyAsRider(api, {
       riderAccessToken: resolvedRiderAccessToken,
@@ -86,11 +96,11 @@ export async function riderStartPickupAndArriveAtPharmacy(api, {
       branchQR,
     };
   } catch (error) {
-    failAction('riderStartPickupAndArriveAtPharmacy', error);
+    failAction('startPickupAndArriveAtPharmacyAsRiderForHybrid', error);
   }
 }
 
-export async function riderSendQuoteFlow(api, {
+export async function sendQuoteAsRiderForHybrid(api, {
   riderAccessToken,
   orderId,
   branchId,
@@ -127,11 +137,11 @@ export async function riderSendQuoteFlow(api, {
       riderPaymentQRCodeBranchId,
     };
   } catch (error) {
-    failAction('riderSendQuoteFlow', error);
+    failAction('sendQuoteAsRiderForHybrid', error);
   }
 }
 
-export async function riderCompleteDeliveryFlow(api, {
+export async function completeDeliveryAsRiderForHybrid(api, {
   riderAccessToken,
   orderId,
   branchId,
@@ -146,7 +156,12 @@ export async function riderCompleteDeliveryFlow(api, {
     let resolvedBranchQR = branchQR;
 
     if (!resolvedRiderAccessToken) {
-      resolvedRiderAccessToken = (await loginRider(api)).riderAccessToken;
+      resolvedRiderAccessToken = (
+        await loginRider(api, {
+          accountKey: 'default',
+          credentials: getRiderCredentials('default'),
+        })
+      ).riderAccessToken;
     }
 
     if (!resolvedBranchQR) {
@@ -159,7 +174,7 @@ export async function riderCompleteDeliveryFlow(api, {
         });
         resolvedBranchQR = arrivedRes.branchQR;
       } else {
-        const startRes = await riderStartPickupAndArriveAtPharmacy(api, {
+        const startRes = await startPickupAndArriveAtPharmacyAsRiderForHybrid(api, {
           riderAccessToken: resolvedRiderAccessToken,
           orderId,
           branchId,
@@ -169,7 +184,7 @@ export async function riderCompleteDeliveryFlow(api, {
         resolvedBranchQR = startRes.branchQR;
       }
     } else if (!skipStartPickup) {
-      const startRes = await riderStartPickupAndArriveAtPharmacy(api, {
+      const startRes = await startPickupAndArriveAtPharmacyAsRiderForHybrid(api, {
         riderAccessToken: resolvedRiderAccessToken,
         orderId,
         branchId,
@@ -225,6 +240,6 @@ export async function riderCompleteDeliveryFlow(api, {
       branchQR: resolvedBranchQR,
     };
   } catch (error) {
-    failAction('riderCompleteDeliveryFlow', error);
+    failAction('completeDeliveryAsRiderForHybrid', error);
   }
 }

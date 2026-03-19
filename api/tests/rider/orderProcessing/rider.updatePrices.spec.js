@@ -1,14 +1,8 @@
+import { loginAsRiderAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
 import { UPDATE_PRICES_QUERY } from './rider.orderQuestions.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  riderLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
 
 const orderId = 1; // ID not assigned to rider
 const branchId = 1; // Branch ID for the order
@@ -32,10 +26,7 @@ test.describe('GraphQL: Update Prices', () => {
       tag: ['@api', '@rider', '@negative', '@pharma-129'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const updatePricesRes = await safeGraphQL(api, {

@@ -1,40 +1,14 @@
-import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  pharmacistLoginAndGetTokens,
-  adminLoginAndGetTokens,
-  riderLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import {
   buildDeliverXBaseOrderInput,
   buildDeliverXAttachmentNoPrescriptionOrderInput,
   buildDeliverXBasePriceItems,
   buildDeliverXAttachmentPrescriptionItemPayloads,
 } from './deliverx.testData.js';
-import {
-  PATIENT_SUBMIT_ORDER_QUERY,
-  PATIENT_ACCEPT_QUOTE_QUERY,
-  PATIENT_PAY_ORDER_QUERY,
-  PATIENT_RATE_RIDER_QUERY,
-} from '../shared/queries/patient.queries.js';
-import {
-  PHARMACY_ACCEPT_ORDER_QUERY,
-  PHARMACY_UPDATE_PRICES_QUERY,
-  PHARMACY_SEND_QUOTE_QUERY,
-  PHARMACY_PREPARE_ORDER_QUERY,
-  PHARMACY_SET_FOR_PICKUP_QUERY,
-} from '../shared/queries/pharmacist.queries.js';
-import { ADMIN_CONFIRM_PAYMENT_QUERY, ADMIN_ASSIGN_RIDER_QUERY } from '../shared/queries/admin.queries.js';
-import {
-  RIDER_START_PICKUP_ORDER_QUERY,
-  RIDER_ARRIVED_AT_PHARMACY_QUERY,
-  RIDER_PICKUP_ORDER_QUERY,
-  RIDER_ARRIVED_AT_DROPOFF_QUERY,
-  RIDER_COMPLETE_ORDER_QUERY,
-} from '../shared/queries/rider.queries.js';
+import { RIDER_START_PICKUP_ORDER_QUERY } from '../shared/queries/rider.queries.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -71,6 +45,9 @@ import {
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
 
+const defaultRiderAccount = getRiderAccount('default');
+const regularPharmacistAccount = getPharmacistAccount('reg01');
+
 test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
   test(
     'PHARMA-334 | DeliverX happy path from patient order to rider completion and patient rating',
@@ -91,70 +68,25 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
-      // Login as patient.
-      const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
+      // Login as patient and submit order.
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
+      const { orderId } = await submitOrderAsPatient(api, {
+        patientAccessToken,
+        order: buildDeliverXBaseOrderInput(),
       });
-      expect(patientLoginRes.ok, patientLoginRes.error || 'Patient login failed').toBe(true);
 
-      // Submit order as patient.
-      const submitOrderRes = await safeGraphQL(api, {
-        query: PATIENT_SUBMIT_ORDER_QUERY,
-        variables: { order: buildDeliverXBaseOrderInput() },
-        headers: bearer(patientAccessToken),
+      // Login as pharmacist, accept order, update prices, and send quote.
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
+      await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+      await updatePricesAsPharmacist(api, {
+        pharmacistAccessToken,
+        orderId,
+        prices: buildDeliverXBasePriceItems(),
       });
-      expect(submitOrderRes.ok, submitOrderRes.error || 'Patient submit order failed').toBe(true);
-      const submitOrderNode = submitOrderRes.body?.data?.patient?.order?.book;
-      expect(submitOrderNode, 'Missing patient.order.book').toBeTruthy();
-      const orderId = submitOrderNode?.id;
-      expect(orderId, 'Missing order id').toBeTruthy();
-
-      // Login as pharmacist.
-      const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
-      expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'Pharmacist login failed').toBe(true);
-
-      // Accept order as pharmacist.
-      const acceptOrderRes = await safeGraphQL(api, {
-        query: PHARMACY_ACCEPT_ORDER_QUERY,
-        variables: { orderId },
-        headers: bearer(pharmacistAccessToken),
-      });
-      expect(acceptOrderRes.ok, acceptOrderRes.error || 'Pharmacist accept order failed').toBe(true);
-      expect(acceptOrderRes.body?.data?.pharmacy?.order?.accept?.id).toBe(orderId);
-
-      // Update prices as pharmacist.
-      const updatePricesRes = await safeGraphQL(api, {
-        query: PHARMACY_UPDATE_PRICES_QUERY,
-        variables: {
-          orderId,
-          prices: buildDeliverXBasePriceItems(),
-        },
-        headers: bearer(pharmacistAccessToken),
-      });
-      expect(updatePricesRes.ok, updatePricesRes.error || 'Pharmacist update prices failed').toBe(true);
-      expect(Array.isArray(updatePricesRes.body?.data?.pharmacy?.order?.updatePrices)).toBe(true);
-
-      // Send quote as pharmacist.
-      const sendQuoteRes = await safeGraphQL(api, {
-        query: PHARMACY_SEND_QUOTE_QUERY,
-        variables: { orderId },
-        headers: bearer(pharmacistAccessToken),
-      });
-      expect(sendQuoteRes.ok, sendQuoteRes.error || 'Pharmacist send quote failed').toBe(true);
-      expect(sendQuoteRes.body?.data?.pharmacy?.order?.sendQuote?.id).toBe(orderId);
+      await sendQuoteAsPharmacist(api, { pharmacistAccessToken, orderId });
 
       // Accept quote as patient.
-      const acceptQuoteRes = await safeGraphQL(api, {
-        query: PATIENT_ACCEPT_QUOTE_QUERY,
-        variables: { orderId },
-        headers: bearer(patientAccessToken),
-      });
-      expect(acceptQuoteRes.ok, acceptQuoteRes.error || 'Patient accept quote failed').toBe(true);
-      expect(acceptQuoteRes.body?.data?.patient?.order?.acceptQuote?.id).toBe(orderId);
+      await acceptQuoteAsPatient(api, { patientAccessToken, orderId });
 
       // Get proof of payment upload URL as patient.
       const { proofOfPaymentUploadUrl, proofOfPaymentBlobName } = await getProofOfPaymentUploadUrlAsPatient(api, {
@@ -166,96 +98,34 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         imagePath: patientProofPaymentImagePath,
       });
       // Pay order as patient.
-      const payOrderRes = await safeGraphQL(api, {
-        query: PATIENT_PAY_ORDER_QUERY,
-        variables: {
-          orderId,
-          proof: {
-            fulfillmentMode: 'DELIVERY',
-            photo: proofOfPaymentBlobName,
-          },
+      await payOrderAsPatient(api, {
+        patientAccessToken,
+        orderId,
+        proof: {
+          fulfillmentMode: 'DELIVERY',
+          photo: proofOfPaymentBlobName,
         },
-        headers: bearer(patientAccessToken),
       });
-      expect(payOrderRes.ok, payOrderRes.error || 'Patient pay order failed').toBe(true);
-      expect(payOrderRes.body?.data?.patient?.order?.pay?.id).toBe(orderId);
 
-      // Login as admin (administrator).
-      const { accessToken: adminAccessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
+      // Login as admin, confirm payment, prepare order, set for pickup, and assign rider.
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
+      await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
+      await prepareOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
+      await setOrderForPickupAsPharmacist(api, { pharmacistAccessToken, orderId });
+      const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
+        adminAccessToken,
+        orderId,
+        riderId: defaultRiderAccount.riderId,
       });
-      expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
 
-      // Confirm payment as admin.
-      const confirmPaymentRes = await safeGraphQL(api, {
-        query: ADMIN_CONFIRM_PAYMENT_QUERY,
-        variables: { orderId },
-        headers: bearer(adminAccessToken),
+      // Login as rider, start pickup, and arrive at pharmacy.
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
+      await startPickupOrderAsRider(api, { riderAccessToken, orderId });
+      const { branchQR } = await arrivedAtPharmacyAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: regularPharmacistAccount.branchId,
       });
-      expect(confirmPaymentRes.ok, confirmPaymentRes.error || 'Admin confirm payment failed').toBe(true);
-      expect(confirmPaymentRes.body?.data?.administrator?.order?.confirmPayment?.id).toBe(orderId);
-
-      // Prepare order as pharmacist.
-      const prepareOrderRes = await safeGraphQL(api, {
-        query: PHARMACY_PREPARE_ORDER_QUERY,
-        variables: { orderId },
-        headers: bearer(pharmacistAccessToken),
-      });
-      expect(prepareOrderRes.ok, prepareOrderRes.error || 'Pharmacist prepare order failed').toBe(true);
-      expect(prepareOrderRes.body?.data?.pharmacy?.order?.prepare?.id).toBe(orderId);
-
-      // Set order for pickup as pharmacist.
-      const setForPickupRes = await safeGraphQL(api, {
-        query: PHARMACY_SET_FOR_PICKUP_QUERY,
-        variables: { orderId },
-        headers: bearer(pharmacistAccessToken),
-      });
-      expect(setForPickupRes.ok, setForPickupRes.error || 'Pharmacist set for pickup failed').toBe(true);
-      expect(setForPickupRes.body?.data?.pharmacy?.order?.setForPickup?.id).toBe(orderId);
-
-      // Assign rider to order as admin.
-      const assignRiderRes = await safeGraphQL(api, {
-        query: ADMIN_ASSIGN_RIDER_QUERY,
-        variables: {
-          orderId,
-          assignment: { riderId: Number(process.env.RIDER_USERID) },
-        },
-        headers: bearer(adminAccessToken),
-      });
-      expect(assignRiderRes.ok, assignRiderRes.error || 'Admin assign rider failed').toBe(true);
-      expect(assignRiderRes.body?.data?.administrator?.order?.assignRider?.id).toBe(orderId);
-      const assignedRiderId = assignRiderRes.body?.data?.administrator?.order?.assignRider?.rider?.id;
-
-      // Login as rider.
-      const { accessToken: riderAccessToken, raw: riderLoginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
-      expect(riderLoginRes.ok, riderLoginRes.error || 'Rider login failed').toBe(true);
-
-      // Start pickup order as rider.
-      const startPickupOrderRes = await safeGraphQL(api, {
-        query: RIDER_START_PICKUP_ORDER_QUERY,
-        variables: { orderId },
-        headers: bearer(riderAccessToken),
-      });
-      expect(startPickupOrderRes.ok, startPickupOrderRes.error || 'Rider start pickup order failed').toBe(true);
-      expect(startPickupOrderRes.body?.data?.rider?.order?.start?.id).toBe(orderId);
-
-      // Mark arrived at pharmacy as rider.
-      const arrivedAtPharmacyRes = await safeGraphQL(api, {
-        query: RIDER_ARRIVED_AT_PHARMACY_QUERY,
-        variables: {
-          orderId,
-          branchId: process.env.PHARMACIST_BRANCHID_REG01,
-        },
-        headers: bearer(riderAccessToken),
-      });
-      expect(arrivedAtPharmacyRes.ok, arrivedAtPharmacyRes.error || 'Rider arrived at pharmacy failed').toBe(true);
-      expect(arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.id).toBe(orderId);
-      const branchQR = arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.legs?.[0]?.branchQR;
-      expect(branchQR, 'Missing branchQR from arrivedAtPharmacy response').toBeTruthy();
 
       // Get pickup proof upload URL as rider.
       const { pickupProofUploadUrl, pickupProofBlobName } = await getPickupProofUploadUrlAsRider(api, {
@@ -270,31 +140,18 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
 
-      // Pickup order as rider.
-      const pickupOrderRes = await safeGraphQL(api, {
-        query: RIDER_PICKUP_ORDER_QUERY,
-        variables: {
-          orderId,
-          branchId: process.env.PHARMACIST_BRANCHID_REG01,
-          branchQR,
-        },
-        headers: bearer(riderAccessToken),
+      // Pickup order as rider and arrive at drop off.
+      await pickupOrderAsRider(api, {
+        riderAccessToken,
+        orderId,
+        branchId: regularPharmacistAccount.branchId,
+        branchQR,
       });
-      expect(pickupOrderRes.ok, pickupOrderRes.error || 'Rider pickup order failed').toBe(true);
-      expect(pickupOrderRes.body?.data?.rider?.order?.pickup?.id).toBe(orderId);
-
-      // Mark arrived at drop off as rider.
-      const arrivedAtDropOffRes = await safeGraphQL(api, {
-        query: RIDER_ARRIVED_AT_DROPOFF_QUERY,
-        variables: { orderId },
-        headers: bearer(riderAccessToken),
-      });
-      expect(arrivedAtDropOffRes.ok, arrivedAtDropOffRes.error || 'Rider arrived at drop off failed').toBe(true);
-      expect(arrivedAtDropOffRes.body?.data?.rider?.order?.arrivedAtDropOff?.id).toBe(orderId);
+      await arrivedAtDropOffAsRider(api, { riderAccessToken, orderId });
 
       // Get delivery proof upload URL as rider.
       const { deliveryProofUploadUrl, deliveryProofBlobName } = await getDeliveryProofUploadUrlAsRider(api, {
@@ -312,29 +169,12 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
         proof: { photo: deliveryProofBlobName },
       });
 
-      // Complete order as rider.
-      const completeOrderRes = await safeGraphQL(api, {
-        query: RIDER_COMPLETE_ORDER_QUERY,
-        variables: { orderId },
-        headers: bearer(riderAccessToken),
+      // Complete order as rider and rate rider as patient.
+      await completeOrderAsRider(api, { riderAccessToken, orderId });
+      await rateRiderAsPatient(api, {
+        patientAccessToken,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
-      expect(completeOrderRes.ok, completeOrderRes.error || 'Rider complete order failed').toBe(true);
-      expect(completeOrderRes.body?.data?.rider?.order?.complete?.id).toBe(orderId);
-
-      // Rate rider as patient.
-      const rating = Math.floor(Math.random() * 5) + 1;
-      const rateRiderRes = await safeGraphQL(api, {
-        query: PATIENT_RATE_RIDER_QUERY,
-        variables: {
-          rating: {
-            riderId: Number(assignedRiderId || process.env.RIDER_USERID),
-            rating,
-          },
-        },
-        headers: bearer(patientAccessToken),
-      });
-      expect(rateRiderRes.ok, rateRiderRes.error || 'Patient rate rider failed').toBe(true);
-      expect.soft(rateRiderRes.body?.data?.patient?.order?.rateRider?.rating).toBe(rating);
     }
   );
 
@@ -359,7 +199,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
       const attachmentPrescriptionItems = buildDeliverXAttachmentPrescriptionItemPayloads();
       // Login as patient.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Submit order as patient.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -367,7 +207,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
 
       // Login as pharmacist.
-      const { pharmacistAccessToken } = await loginPharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
       // Accept order as pharmacist.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
 
@@ -414,7 +254,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
 
       // Login as admin.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Confirm payment as admin.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
@@ -427,11 +267,11 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Login as rider.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Start pickup order as rider.
       await startPickupOrderAsRider(api, { riderAccessToken, orderId });
 
@@ -439,7 +279,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
       });
 
       // Get pickup proof upload URL as rider.
@@ -455,7 +295,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
 
@@ -463,7 +303,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await pickupOrderAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         branchQR,
       });
 
@@ -490,7 +330,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       // Rate rider as patient.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );
@@ -505,7 +345,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
       // Login as patient.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Submit order as patient.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -513,7 +353,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
 
       // Login as pharmacist.
-      const { pharmacistAccessToken } = await loginPharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
       // Accept order as pharmacist.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
       // Update prices as pharmacist.
@@ -540,7 +380,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await payOrderAsPatientForPickupOrder(api, { patientAccessToken, orderId, proofPhoto: proofOfPaymentBlobName });
 
       // Login as admin.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Confirm payment as admin.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
@@ -588,7 +428,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const riderPickupProofImagePath = path.resolve('upload/images/proofOfPickup.png');
       const riderDeliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
       // Login as patient.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Submit order as patient.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -596,7 +436,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
 
       // Login as pharmacist.
-      const { pharmacistAccessToken } = await loginPharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
       // Accept order as pharmacist.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
       // Update prices as pharmacist.
@@ -627,7 +467,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       });
 
       // Login as admin.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Confirm payment as admin.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
 
@@ -640,25 +480,19 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Login as rider.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Start pickup order as rider.
-      const startPickupOrderRes = await safeGraphQL(api, {
-        query: RIDER_START_PICKUP_ORDER_QUERY,
-        variables: { orderId },
-        headers: bearer(riderAccessToken),
-      });
-      expect(startPickupOrderRes.ok, startPickupOrderRes.error || 'Rider start pickup order failed').toBe(true);
-      expect(startPickupOrderRes.body?.data?.rider?.order?.start?.id).toBe(orderId);
+      await startPickupOrderAsRider(api, { riderAccessToken, orderId });
 
       // Mark arrived at pharmacy as rider.
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
       });
 
       // Get pickup proof upload URL as rider.
@@ -674,7 +508,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
 
@@ -682,7 +516,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await pickupOrderAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         branchQR,
       });
 
@@ -709,7 +543,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       // Rate rider as patient.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );

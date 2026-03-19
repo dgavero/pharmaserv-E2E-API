@@ -1,13 +1,7 @@
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  adminLoginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 
 const SET_RIDER_AVAILABLE_MUTATION = `
   mutation ($riderId: ID!) {
@@ -44,10 +38,7 @@ test.describe('GraphQL: Admin Set Rider Status', () => {
     },
     async ({ api }) => {
       // Admin login
-      const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: adminLoginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
 
       // Call mutation
@@ -121,10 +112,7 @@ test.describe('GraphQL: Admin Set Rider Unavailable', () => {
     },
     async ({ api }) => {
       // Admin login
-      const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: adminLoginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
 
       // Call mutation

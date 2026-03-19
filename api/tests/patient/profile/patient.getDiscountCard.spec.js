@@ -1,15 +1,8 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { loginAndGetTokens } from '../../../helpers/testUtilsAPI';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 
 const GET_DC_CARD = /* GraphQL */ `
   query ($patientId: ID!) {
@@ -25,7 +18,7 @@ const GET_DC_CARD = /* GraphQL */ `
   }
 `;
 
-const patientId = process.env.PATIENT_USER_USERNAME_ID; // Existing patient ID
+const patientId = getPatientAccount('default').patientId;
 const incorrectPatientId = 999; // Non-existing patient ID
 
 test.describe('GraphQL: Patient Get Discount Card Details', () => {
@@ -35,10 +28,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-76'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getDCRes = await safeGraphQL(api, {
@@ -58,10 +48,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-77'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const getDCRes = await safeGraphQL(api, {
         query: GET_DC_CARD,

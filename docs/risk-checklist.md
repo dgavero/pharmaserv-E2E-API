@@ -19,13 +19,18 @@ Use this checklist before and after implementing risky changes.
 - Is there already a stable UI readiness signal?
 - Can `safeWaitForElementVisible`, `safeWaitForElementHidden`, or `safeWaitForPageLoad` handle this instead?
 - If I need polling, is it bounded and tied to a real state change?
+- If there is retry/backoff logic, is it part of explicit bounded retry behavior rather than a fixed workflow sleep?
 
 ### Shared Helpers
 
 - Does this change modify:
-  - `api/helpers/testUtilsAPI.js`
+  - `api/helpers/graphqlUtils.js`
+  - `api/helpers/auth.js`
+  - `api/helpers/apiReporting.js`
   - `api/helpers/graphqlClient.js`
-  - `e2e/helpers/testUtilsUI.js`
+  - `e2e/helpers/uiActions.js`
+  - `e2e/helpers/testFailure.js`
+  - `e2e/helpers/reporting/`
   - `e2e/helpers/selectors.js`
   - `api/tests/e2e/shared/steps/`
   - `api/tests/e2e/shared/queries/`
@@ -39,6 +44,7 @@ Use this checklist before and after implementing risky changes.
 - Am I changing the meaning of an existing env var?
 - Does the change rely on `TEST_ENV`, branch IDs, reusable order IDs, or role credentials?
 - Does the new logic work for `DEV`, `QA`, and `PROD`, or is it intentionally scoped?
+- Am I reintroducing direct env-ID reads in specs where account/profile helpers already expose the same data?
 
 ### Fixed IDs and Reusable Records
 
@@ -59,6 +65,7 @@ Use this checklist before and after implementing risky changes.
 ### Merchant Branch Logic
 
 - Does the flow create orders with the correct merchant branch ID?
+- Is the branch ID coming from the active merchant account/context instead of a hidden env fallback?
 - Is regular vs PSE merchant behavior preserved?
 - Am I changing approved merchant branch assignment behavior?
 - Am I accidentally switching from branch lookup to a hardcoded branch ID?
@@ -138,8 +145,12 @@ Use this checklist before and after implementing risky changes.
 - `playwright.config.js`
 - `api/globalConfig.api.js`
 - `e2e/globalConfig.ui.js`
-- `api/helpers/testUtilsAPI.js`
-- `e2e/helpers/testUtilsUI.js`
+- `api/helpers/graphqlUtils.js`
+- `api/helpers/auth.js`
+- `api/helpers/apiReporting.js`
+- `e2e/helpers/uiActions.js`
+- `e2e/helpers/testFailure.js`
+- `e2e/helpers/reporting/`
 - `e2e/selectors/merchant.selectors.json`
 - `e2e/pages/merchantPortal/`
 - `e2e/tests/merchantPortal/actions/`

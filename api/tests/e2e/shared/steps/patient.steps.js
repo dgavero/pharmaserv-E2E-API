@@ -1,9 +1,12 @@
 import { expect } from '../../../../globalConfig.api.js';
 import fs from 'node:fs';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { loginAsPatientAndGetTokens } from '../../../../helpers/auth.js';
+import { getPatientCredentials } from '../../../../helpers/roleCredentials.js';
 import {
   PATIENT_SUBMIT_ORDER_QUERY,
   PATIENT_GET_PRESCRIPTION_UPLOAD_URL_QUERY,
+  PATIENT_SAVE_PRESCRIPTION_ORDER_QUERY,
   PATIENT_GET_DISCOUNT_UPLOAD_URL_QUERY,
   PATIENT_SAVE_DISCOUNT_CARD_QUERY,
   PATIENT_GET_ATTACHMENT_UPLOAD_URL_QUERY,
@@ -16,11 +19,12 @@ import {
   PATIENT_RATE_RIDER_QUERY,
 } from '../queries/patient.queries.js';
 
-export async function loginPatient(api) {
-  const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAndGetTokens(api, {
-    username: process.env.PATIENT_USER_USERNAME,
-    password: process.env.PATIENT_USER_PASSWORD,
-  });
+export async function loginPatient(api, { accountKey = 'default', credentials } = {}) {
+  const resolvedCredentials = credentials || getPatientCredentials(accountKey);
+  const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAsPatientAndGetTokens(
+    api,
+    resolvedCredentials
+  );
   expect(patientLoginRes.ok, patientLoginRes.error || 'Patient login failed').toBe(true);
   return { patientAccessToken };
 }
@@ -69,13 +73,18 @@ export async function uploadImageToSignedUrl(api, { uploadUrl, imagePath }) {
 }
 
 export async function savePrescriptionAsPatient(api, { patientAccessToken, patientId, photo }) {
-  const savePrescriptionRes = await api.post('/api/v1/pharmaserv/prescriptions', {
+  const savePrescriptionRes = await safeGraphQL(api, {
+    query: PATIENT_SAVE_PRESCRIPTION_ORDER_QUERY,
+    variables: {
+      prescription: {
+        patientId: Number(patientId),
+        photoToScan: photo,
+      },
+    },
     headers: bearer(patientAccessToken),
-    data: { patientId: Number(patientId), photo },
   });
-  expect(savePrescriptionRes.ok(), `Save prescription failed with status ${savePrescriptionRes.status()}`).toBe(true);
-  const savePrescriptionBody = await savePrescriptionRes.json();
-  const prescriptionId = savePrescriptionBody?.id;
+  expect(savePrescriptionRes.ok, savePrescriptionRes.error || 'Save prescription failed').toBe(true);
+  const prescriptionId = savePrescriptionRes.body?.data?.patient?.prescription?.scan?.id;
   expect(prescriptionId, 'Missing prescription id from save prescription response').toBeTruthy();
   return { prescriptionId };
 }

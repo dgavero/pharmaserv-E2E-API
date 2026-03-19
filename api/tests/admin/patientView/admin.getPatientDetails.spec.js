@@ -1,13 +1,7 @@
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  adminLoginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { GET_PATIENT_QUERY, GET_PAGED_PATIENTS_QUERY } from './admin.patientViewQueries.js';
 
 // Expected identity for the fixed email
@@ -26,10 +20,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     },
     async ({ api }) => {
       // 1) Admin login
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       // 2) Query patient detail by fixed email
@@ -63,10 +54,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
       const UNKNOWN_EMAIL = 'rainier99999@gmail.com';
 
       // Admin login
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       // Attempt detail with a non-existent email
@@ -117,10 +105,7 @@ test.describe('GraphQL: Admin Get Patient Detail', () => {
     },
     async ({ api }) => {
       // 1) Admin login
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       // 2) Query paged patients with hardcoded page/pageSize

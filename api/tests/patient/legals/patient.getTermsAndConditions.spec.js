@@ -1,5 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { safeGraphQL } from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL } from '../../../helpers/graphqlUtils.js';
 
 const GET_TNC_QUERY = /* GraphQL */ `
   query {

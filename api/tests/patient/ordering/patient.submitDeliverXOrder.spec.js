@@ -1,17 +1,19 @@
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { declineOrderAsPharmacist } from '../../../helpers/orderHelpers.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { SUBMIT_DELIVERX_ORDER_QUERY } from './patient.orderingQueries.js';
 import { buildPatientDeliverXOrderInput } from './patient.testData.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { loginPharmacist, declineOrderAsPharmacist } from '../../e2e/shared/steps/pharmacist.steps.js';
+
+async function declineSubmittedOrder(api, orderId) {
+  const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'reg01' });
+  await declineOrderAsPharmacist(api, {
+    pharmacistAccessToken,
+    orderId,
+    reason: 'Order is declined via API automated test (DeliverX)',
+  });
+}
 
 test.describe('GraphQL: Submit DeliverX Order', () => {
   test(
@@ -20,10 +22,7 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-101'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const orderDetails = buildPatientDeliverXOrderInput();
@@ -44,7 +43,7 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
       expect(node.status).toBe('NEW_ORDER');
 
       const orderId = node.id;
-      await declineOrderAsPharmacist(api, orderId);
+      await declineSubmittedOrder(api, orderId);
     }
   );
 

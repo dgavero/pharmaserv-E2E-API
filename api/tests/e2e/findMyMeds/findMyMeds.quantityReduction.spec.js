@@ -1,5 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
+import { getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { buildFindMyMedsBaseOrderInput, buildFindMyMedsBasePriceItems } from './findMyMeds.testData.js';
 import {
   loginPatient,
@@ -11,7 +12,7 @@ import {
   uploadImageToSignedUrl,
 } from '../shared/steps/patient.steps.js';
 import {
-  loginPsePharmacist,
+  loginPharmacist,
   acceptOrderAsPharmacist,
   updatePricesAsPharmacist,
   assignBranchToOrderAsPharmacist,
@@ -36,6 +37,9 @@ import {
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
 
+const defaultRiderAccount = getRiderAccount('default');
+const regularPharmacistAccount = getPharmacistAccount('reg02');
+
 test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
   test(
     'PHARMA-341 | FindMyMeds happy path with quantity reduction from pay order',
@@ -59,7 +63,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       const deliveryProofImagePath = path.resolve('upload/images/proofOfDelivery.png');
 
       // Patient: Login.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
         patientAccessToken,
@@ -67,7 +71,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       });
 
       // PSE Pharmacist: Login.
-      const { pharmacistAccessToken } = await loginPsePharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'pse01' });
       // PSE Pharmacist: Accept Order.
       await acceptOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
       // PSE Pharmacist: Update Prices.
@@ -80,7 +84,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       await assignBranchToOrderAsPharmacist(api, {
         pharmacistAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG02,
+        branchId: regularPharmacistAccount.branchId,
       });
       // PSE Pharmacist: Get Payment QR Code Upload URL.
       const { paymentQRCodeUploadUrl, paymentQRCodeBlobName } = await getPaymentQRCodeUploadUrlAsPharmacist(api, {
@@ -134,21 +138,21 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       });
 
       // Admin: Login.
-      const { adminAccessToken } = await loginAdmin(api);
+      const { adminAccessToken } = await loginAdmin(api, { accountKey: 'default' });
       // Admin: Confirm Payment.
       await confirmPaymentAsAdmin(api, { adminAccessToken, orderId });
       // Admin: Assign Rider To Order.
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // PSE Pharmacist: Prepare Order.
       await prepareOrderAsPharmacist(api, { pharmacistAccessToken, orderId });
 
       // Rider: Login.
-      const { riderAccessToken } = await loginRider(api);
+      const { riderAccessToken } = await loginRider(api, { accountKey: 'default' });
       // Rider: Start Pickup Order.
       await startPickupOrderAsRider(api, { riderAccessToken, orderId });
 
@@ -159,7 +163,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG02,
+        branchId: regularPharmacistAccount.branchId,
         requireBranchQR: false,
       });
       // Rider: Get Pickup Proof Upload URL.
@@ -175,14 +179,14 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG02,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
       // Rider: Pickup Order.
       await pickupOrderAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG02,
+        branchId: regularPharmacistAccount.branchId,
         branchQR,
         requireBranchQR: false,
       });
@@ -208,7 +212,7 @@ test.describe('GraphQL E2E Workflow: FindMyMeds Quantity Reduction', () => {
       // Patient: Rate Rider.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );

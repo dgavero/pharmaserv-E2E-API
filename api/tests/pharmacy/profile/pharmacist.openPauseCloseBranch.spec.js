@@ -1,14 +1,7 @@
+import { loginAsPharmacistAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  pharmacistLoginAndGetTokens,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import {
   PHARMACIST_OPEN_MY_BRANCH_QUERY,
   PHARMACIST_CLOSE_MY_BRANCH_QUERY,
@@ -22,10 +15,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-160'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const branchOpenRes = await safeGraphQL(api, {
@@ -48,10 +38,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-161'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const branchCloseRes = await safeGraphQL(api, {
@@ -74,10 +61,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-162'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const branchPauseRes = await safeGraphQL(api, {
@@ -105,10 +89,7 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       tag: ['@api', '@admin', '@positive', '@pharma-163'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG02,
-        password: process.env.PHARMACIST_PASSWORD_REG02,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg02'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       // Open Branch First

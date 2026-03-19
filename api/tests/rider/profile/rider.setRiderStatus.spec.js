@@ -1,9 +1,8 @@
+import { loginAsRiderAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  RIDER_SET_AVAILABLE_STATUS_QUERY,
-  RIDER_SET_UNAVAILABLE_STATUS_QUERY,
-} from '../profile/rider.profileQueries.js';
-import { safeGraphQL, bearer, riderLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
+import { RIDER_SET_AVAILABLE_STATUS_QUERY, RIDER_SET_UNAVAILABLE_STATUS_QUERY } from './rider.profileQueries.js';
 
 test.describe('GraphQL: Rider able to set status', () => {
   test(
@@ -12,10 +11,7 @@ test.describe('GraphQL: Rider able to set status', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-121'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const setAvailableStatusRes = await safeGraphQL(api, {
@@ -37,10 +33,7 @@ test.describe('GraphQL: Rider able to set status', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-122'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const setUnavailableStatusRes = await safeGraphQL(api, {

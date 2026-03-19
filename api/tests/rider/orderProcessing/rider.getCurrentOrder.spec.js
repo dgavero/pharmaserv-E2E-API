@@ -1,14 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_CURRENT_ORDER_QUERY } from './rider.orderQuestions.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  riderLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, loginAsRiderAndGetTokens } from '../../../helpers/auth.js';
 
 // No Order Rider credentials by environment
 const noOrderRiderByEnv = {
@@ -31,7 +24,7 @@ test.describe('GraphQL: Get Current Order', () => {
       const noOrderRider = noOrderRiderByEnv[testEnv];
       expect(noOrderRider, `Unsupported TEST_ENV=${testEnv}. Expected DEV, QA, or PROD.`).toBeTruthy();
 
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, {
         username: noOrderRider.username,
         password: noOrderRider.password,
       });

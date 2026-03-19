@@ -1,7 +1,11 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { GET_ADDRESS_QUERY, UPDATE_ADDRESS_QUERY } from './patient.profileQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 function updateAddressInput() {
   const addressName = `addressName${randomAlphanumeric(4)}`;
@@ -29,7 +33,7 @@ function updateAddressInput() {
 async function getFirstAddressId(api, accessToken) {
   const getAddressRes = await safeGraphQL(api, {
     query: GET_ADDRESS_QUERY,
-    variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
+    variables: { patientId: defaultPatientAccount.patientId },
     headers: bearer(accessToken),
   });
   expect(getAddressRes.ok, getAddressRes.error || 'Get Address request failed').toBe(true);
@@ -48,10 +52,7 @@ test.describe('GraphQL: Patient Update Address', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-178'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       // Update Address

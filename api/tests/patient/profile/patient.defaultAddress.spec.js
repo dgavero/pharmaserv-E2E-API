@@ -1,24 +1,15 @@
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  GET_ADDRESS_QUERY,
-  SET_DEFAULT_ADDRESS_QUERY,
-  GET_DEFAULT_ADDRESS_QUERY,
-} from './patient.profileQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  loginAndGetTokens,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { GET_ADDRESS_QUERY, SET_DEFAULT_ADDRESS_QUERY, GET_DEFAULT_ADDRESS_QUERY } from './patient.profileQueries.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 async function getFirstAddressId(api, accessToken) {
   const getAddressRes = await safeGraphQL(api, {
     query: GET_ADDRESS_QUERY,
-    variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
+    variables: { patientId: defaultPatientAccount.patientId },
     headers: bearer(accessToken),
   });
   expect(getAddressRes.ok, getAddressRes.error || 'Get Address request failed').toBe(true);
@@ -37,16 +28,13 @@ test.describe('GraphQL: Patient Default Address', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-288'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const addressId = await getFirstAddressId(api, accessToken);
       const setDefaultAddressRes = await safeGraphQL(api, {
         query: SET_DEFAULT_ADDRESS_QUERY,
-        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID, addressId },
+        variables: { patientId: defaultPatientAccount.patientId, addressId },
         headers: bearer(accessToken),
       });
       expect(setDefaultAddressRes.ok, setDefaultAddressRes.error || 'Set default address failed').toBe(
@@ -64,16 +52,13 @@ test.describe('GraphQL: Patient Default Address', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-289'],
     },
     async ({ api, noAuth }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const addressId = await getFirstAddressId(api, accessToken);
       const setDefaultAddressNoAuthRes = await safeGraphQL(api, {
         query: SET_DEFAULT_ADDRESS_QUERY,
-        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID, addressId },
+        variables: { patientId: defaultPatientAccount.patientId, addressId },
         headers: noAuth,
       });
       expect(setDefaultAddressNoAuthRes.ok).toBe(false);
@@ -97,7 +82,7 @@ test.describe('GraphQL: Patient Default Address', () => {
     async ({ api, invalidAuth }) => {
       const setDefaultAddressInvalidAuthRes = await safeGraphQL(api, {
         query: SET_DEFAULT_ADDRESS_QUERY,
-        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID, addressId: 1 },
+        variables: { patientId: defaultPatientAccount.patientId, addressId: 1 },
         headers: invalidAuth,
       });
       expect(setDefaultAddressInvalidAuthRes.ok).toBe(false);
@@ -119,15 +104,12 @@ test.describe('GraphQL: Patient Default Address', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-291'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getDefaultAddressRes = await safeGraphQL(api, {
         query: GET_DEFAULT_ADDRESS_QUERY,
-        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
+        variables: { patientId: defaultPatientAccount.patientId },
         headers: bearer(accessToken),
       });
       expect(getDefaultAddressRes.ok, getDefaultAddressRes.error || 'Get default address failed').toBe(
@@ -144,7 +126,7 @@ test.describe('GraphQL: Patient Default Address', () => {
     async ({ api, noAuth }) => {
       const getDefaultAddressNoAuthRes = await safeGraphQL(api, {
         query: GET_DEFAULT_ADDRESS_QUERY,
-        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
+        variables: { patientId: defaultPatientAccount.patientId },
         headers: noAuth,
       });
       expect(getDefaultAddressNoAuthRes.ok).toBe(false);
@@ -168,7 +150,7 @@ test.describe('GraphQL: Patient Default Address', () => {
     async ({ api, invalidAuth }) => {
       const getDefaultAddressInvalidAuthRes = await safeGraphQL(api, {
         query: GET_DEFAULT_ADDRESS_QUERY,
-        variables: { patientId: process.env.PATIENT_USER_USERNAME_ID },
+        variables: { patientId: defaultPatientAccount.patientId },
         headers: invalidAuth,
       });
       expect(getDefaultAddressInvalidAuthRes.ok).toBe(false);

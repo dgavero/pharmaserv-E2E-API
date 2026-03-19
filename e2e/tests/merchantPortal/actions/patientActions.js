@@ -1,7 +1,9 @@
 import { expect } from '../../../globalConfig.ui.js';
 import { Timeouts } from '../../../Timeouts.js';
-import { markFailed } from '../../../helpers/testUtilsUI.js';
-import { safeGraphQL, bearer, extractApiFailureSnippet } from '../../../../api/helpers/testUtilsAPI.js';
+import { markFailed } from '../../../helpers/testFailure.js';
+import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
+import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
+import { getPatientAccount, getPatientCredentials } from '../../../../api/helpers/roleCredentials.js';
 import {
   PATIENT_ACCEPT_QUOTE_QUERY,
   PATIENT_REQUEST_REQUOTE_QUERY,
@@ -18,7 +20,6 @@ import {
   rateRiderAsPatient,
   uploadImageToSignedUrl,
 } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
-import { buildHybridOrderInput } from '../generic.orderData.js';
 
 function failAction(actionLabel, error) {
   const rawMessage = String(error?.message || error || 'unknown error');
@@ -35,7 +36,7 @@ export const PatientPayModes = Object.freeze({
 
 export async function createHybridOrder(
   api,
-  { order, maxAttempts = 3, retryDelayMs = Timeouts.short } = {}
+  { order, maxAttempts = 3, retryDelayMs = Timeouts.short, patientAccountKey = 'default' } = {}
 ) {
   let lastError = null;
   const totalAttempts = Number.isFinite(Number(maxAttempts)) ? Math.max(1, Number(maxAttempts)) : 1;
@@ -43,7 +44,10 @@ export async function createHybridOrder(
 
   for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
     try {
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, {
+        accountKey: patientAccountKey,
+        credentials: getPatientCredentials(patientAccountKey),
+      });
       const { orderId, submitOrderNode } = await submitOrderAsPatient(api, {
         patientAccessToken,
         order,
@@ -69,27 +73,6 @@ export async function createHybridOrder(
   }
 
   failAction('createHybridOrder', lastError);
-}
-
-export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {
-  try {
-    const fallbackBranchId =
-      branchId ||
-      process.env.PHARMACIST_BRANCHID_PSE01 ||
-      process.env.PHARMACIST_BRANCHID_REG01 ||
-      1;
-    const orderInput = buildHybridOrderInput({
-      deliveryType,
-      branchId: omitBranchId ? fallbackBranchId : branchId,
-    });
-    // FindMyMeds branch assignment is done in merchant UI after accept.
-    if (omitBranchId) {
-      delete orderInput.branchId;
-    }
-    return createHybridOrder(api, { order: orderInput });
-  } catch (error) {
-    failAction('createHybridOrderForBranch', error);
-  }
 }
 
 export async function acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout = Timeouts.long }) {
@@ -228,18 +211,18 @@ export async function payOrderAsPatientWithProof(
   console.log('Finished payOrderAsPatientWithProof');
 }
 
-export async function rateRiderAsPatientAction(api, { patientAccessToken, riderId }) {
+export async function rateRiderAsPatientForHybrid(api, { patientAccessToken, riderId }) {
   try {
     await rateRiderAsPatient(api, {
       patientAccessToken,
       riderId,
     });
   } catch (error) {
-    failAction('rateRiderAsPatientAction', error);
+    failAction('rateRiderAsPatientForHybrid', error);
   }
 }
 
-export async function requestReQuoteAsPatientAction(
+export async function requestReQuoteAsPatientForHybrid(
   api,
   { patientAccessToken, orderId, timeout = Timeouts.extraLong }
 ) {
@@ -286,7 +269,7 @@ export async function requestReQuoteAsPatientAction(
       )
       .toBe('ok');
   } catch (error) {
-    failAction('requestReQuoteAsPatientAction', error);
+    failAction('requestReQuoteAsPatientForHybrid', error);
   }
 }
 

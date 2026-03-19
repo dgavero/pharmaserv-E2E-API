@@ -1,14 +1,7 @@
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  adminLoginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_ADS_LOCATION_MUTATION } from './admin.adsLocationQueries.js';
 
@@ -29,10 +22,7 @@ test.describe('GraphQL: Admin Create Ads Location', () => {
       tag: ['@api', '@admin', '@positive', '@create', '@pharma-219'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const locationInput = buildAdsLocationInput();

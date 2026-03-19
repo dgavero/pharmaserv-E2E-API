@@ -1,6 +1,6 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { loginAsRiderAndGetTokens } from '../../../helpers/auth.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { riderLoginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
 
 function builderName() {
   const firstName = `builderName${randomAlphanumeric(4)}`;
@@ -14,10 +14,7 @@ test.describe('GraphQL: Rider Authentication', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-116', '@smoke'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await riderLoginAndGetTokens(api, {
-        username: process.env.RIDER_USERNAME,
-        password: process.env.RIDER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
     }
   );

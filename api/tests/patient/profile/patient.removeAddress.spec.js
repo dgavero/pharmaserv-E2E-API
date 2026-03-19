@@ -1,19 +1,14 @@
-import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { REMOVE_ADDRESS_QUERY, CREATE_ADDRESS_QUERY } from './patient.profileQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { CREATE_ADDRESS_QUERY, REMOVE_ADDRESS_QUERY } from './patient.profileQueries.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 function newAddressInput() {
-  const patientId = process.env.PATIENT_USER_USERNAME_ID;
+  const patientId = defaultPatientAccount.patientId;
   const addressName = `addressName${randomAlphanumeric(4)}`;
   const address = `123 Test St, Test City, TC ${randomNum(3)}`;
   const city = `Test City`;
@@ -31,10 +26,7 @@ test.describe('GraphQL: Patient Remove Address', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-97'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       // Create new address and store the addressId to be removed later
@@ -76,10 +68,7 @@ test.describe('GraphQL: Patient Remove Address', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-98'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const removeAddressRes = await safeGraphQL(api, {

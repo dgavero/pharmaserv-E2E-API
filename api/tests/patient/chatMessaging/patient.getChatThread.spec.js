@@ -1,14 +1,7 @@
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  loginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { GET_CHAT_THREAD_QUERY } from './patient.chatMessagingQueries.js';
 import { CHAT_ORDER_ID, CHAT_THREAD_ID, CHAT_PARTIES_TYPE } from './patient.chatMessagingConstants.js';
 
@@ -19,10 +12,7 @@ test.describe('GraphQL: Patient Get Chat Thread', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-264'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getChatThreadRes = await safeGraphQL(api, {

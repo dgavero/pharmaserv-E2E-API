@@ -1,4 +1,7 @@
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import {
   GET_NOTIFICATIONS_QUERY,
   GET_NOTIFICATIONS_COUNT_QUERY,
@@ -6,16 +9,6 @@ import {
   SEEN_NOTIFICATION_QUERY,
   REMOVE_NOTIFICATION_QUERY,
 } from './patient.getHistoryNotificationQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_HTTP_STATUSES,
-  NOAUTH_MESSAGE_PATTERN,
-} from '../../../helpers/testUtilsAPI.js';
 
 async function getFirstNotificationId(api, accessToken) {
   const getNotificationsRes = await safeGraphQL(api, {
@@ -37,10 +30,7 @@ test.describe('GraphQL: Notification Details Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-188'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getNotificationsRes = await safeGraphQL(api, {
@@ -58,10 +48,7 @@ test.describe('GraphQL: Notification Details Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-189'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getNotificationsCountRes = await safeGraphQL(api, {
@@ -82,10 +69,7 @@ test.describe('GraphQL: Notification Details Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-190'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const seenAllRes = await safeGraphQL(api, {
@@ -103,10 +87,7 @@ test.describe('GraphQL: Notification Details Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-300'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const notificationId = await getFirstNotificationId(api, accessToken);
@@ -174,10 +155,7 @@ test.describe('GraphQL: Notification Details Patient', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-303'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const notificationId = await getFirstNotificationId(api, accessToken);

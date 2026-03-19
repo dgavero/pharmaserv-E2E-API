@@ -1,14 +1,10 @@
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { ADD_FAVORITE_MEDICINE_QUERY, GET_FAVORITE_MEDICINE_QUERY } from './patient.medicineQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 test.describe('GraphQL: Medicine Favorites', () => {
   test(
@@ -17,17 +13,14 @@ test.describe('GraphQL: Medicine Favorites', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-191'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const medicineId = 1;
       const addFavoriteMedicineRes = await safeGraphQL(api, {
         query: ADD_FAVORITE_MEDICINE_QUERY,
         variables: {
-          patientId: process.env.PATIENT_USER_USERNAME_ID,
+          patientId: defaultPatientAccount.patientId,
           medicineId: medicineId,
         },
         headers: bearer(accessToken),
@@ -37,7 +30,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
 
       if (!addFavoriteMedicineRes.ok) {
         if (!/already exists/i.test(message)) {
-          expect(addFavoriteMedicineRes.ok).toBe(true);
+          expect(addFavoriteMedicineRes.ok, addFavoriteMedicineRes.error || 'Add favorite medicine failed').toBe(true);
         } else console.log(`MedicineID already added as favorite.`);
       }
     }
@@ -49,10 +42,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
       tag: ['@api', '@patience', '@negative', '@pharma-192'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const medicineId = 1;
@@ -65,7 +55,10 @@ test.describe('GraphQL: Medicine Favorites', () => {
         headers: bearer(accessToken),
       });
 
-      expect(addFavoriteMedicineRes.ok).toBe(false);
+      expect(
+        addFavoriteMedicineRes.ok,
+        addFavoriteMedicineRes.error || 'Add favorite medicine for another patient should fail'
+      ).toBe(false);
 
       const { message, code, classification } = getGQLError(addFavoriteMedicineRes);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
@@ -80,21 +73,21 @@ test.describe('GraphQL: Medicine Favorites', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-193'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getFavoriteMedicineRes = await safeGraphQL(api, {
         query: GET_FAVORITE_MEDICINE_QUERY,
         variables: {
-          patientId: process.env.PATIENT_USER_USERNAME_ID,
+          patientId: defaultPatientAccount.patientId,
         },
         headers: bearer(accessToken),
       });
 
-      expect(getFavoriteMedicineRes.ok).toBe(true);
+      expect(
+        getFavoriteMedicineRes.ok,
+        getFavoriteMedicineRes.error || 'Get favorite medicine failed'
+      ).toBe(true);
     }
   );
 

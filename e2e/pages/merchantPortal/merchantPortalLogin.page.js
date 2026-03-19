@@ -1,6 +1,6 @@
-import { markFailed } from '../../helpers/testUtilsUI.js';
+import { markFailed } from '../../helpers/testFailure.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import { safeClick, safeInput, safeWaitForElementVisible } from '../../helpers/testUtilsUI.js';
+import { safeClick, safeInput, safeWaitForElementVisible } from '../../helpers/uiActions.js';
 import { Timeouts } from '../../Timeouts.js';
 
 export default class MerchantPortalLoginPage {
@@ -55,27 +55,36 @@ export default class MerchantPortalLoginPage {
 
   async assertFailedLogin() {
     // Accepts either known login error variant using one shared wait window, then probes both.
-    const deadline = Date.now() + Timeouts.standard;
+    const hasLoginErrorState = await this.waitForLoginErrorState();
+    if (!hasLoginErrorState) {
+      markFailed('Expected either invalid credentials OR invalid username error to be visible');
+    }
+  }
 
-    let errorCredsVisible = false;
-    let errorUsernameVisible = false;
+  async waitForLoginErrorState() {
+    // Poll for either known login error state within the standard login wait window.
+    const deadline = Date.now() + Timeouts.standard;
+    const probeIntervalMs = 200;
+
     while (Date.now() < deadline) {
-      errorCredsVisible = await this.page
+      const errorCredsVisible = await this.page
         .locator(this.s.errorCredsValidation)
         .first()
         .isVisible()
         .catch(() => false);
-      errorUsernameVisible = await this.page
+      const errorUsernameVisible = await this.page
         .locator(this.s.errorInvalidUsername)
         .first()
         .isVisible()
         .catch(() => false);
-      if (errorCredsVisible || errorUsernameVisible) break;
-      await this.page.waitForTimeout(200);
+
+      if (errorCredsVisible || errorUsernameVisible) {
+        return true;
+      }
+
+      await this.page.waitForTimeout(probeIntervalMs);
     }
 
-    if (!(errorCredsVisible || errorUsernameVisible)) {
-      markFailed('Expected either invalid credentials OR invalid username error to be visible');
-    }
+    return false;
   }
 }

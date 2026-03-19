@@ -1,14 +1,22 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { RESET_PASSWORD_QUERY } from './pharmacist.authenticationQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL } from '../../../helpers/graphqlUtils.js';
+
+function getRegularPharmacistPhoneNumber() {
+  const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+  const phoneNumbersByEnv = {
+    DEV: '+639178280093',
+    QA: '+639178887213',
+    PROD: '+639000000001',
+  };
+
+  const phoneNumber = phoneNumbersByEnv[testEnv];
+  if (!phoneNumber) {
+    throw new Error(`Unsupported TEST_ENV="${testEnv}" for pharmacist password reset phone number`);
+  }
+
+  return phoneNumber;
+}
 
 test.describe('GraphQL: Password Reset', () => {
   test(
@@ -20,7 +28,7 @@ test.describe('GraphQL: Password Reset', () => {
       const requestResetPasswordRes = await safeGraphQL(api, {
         query: RESET_PASSWORD_QUERY,
         variables: {
-          phoneNumber: process.env.PHARMACIST_PHONENUMBER_REG01,
+          phoneNumber: getRegularPharmacistPhoneNumber(),
         },
         headers: noAuth,
       });

@@ -1,7 +1,7 @@
 import { test } from '../../../globalConfig.api.js';
 import { buildPabiliBaseOrderInput } from './pabili.testData.js';
 import { loginPatient, submitOrderAsPatient } from '../shared/steps/patient.steps.js';
-import { loginPsePharmacist, declineOrderAsPharmacist } from '../shared/steps/pharmacist.steps.js';
+import { loginPharmacist, declineOrderAsPharmacist } from '../shared/steps/pharmacist.steps.js';
 
 test.describe('GraphQL E2E Workflow: Pabili Order Declined', () => {
   test(
@@ -11,7 +11,7 @@ test.describe('GraphQL E2E Workflow: Pabili Order Declined', () => {
     },
     async ({ api }) => {
       // Patient: Login.
-      const { patientAccessToken } = await loginPatient(api);
+      const { patientAccessToken } = await loginPatient(api, { accountKey: 'default' });
 
       // Patient: Submit Order.
       const { orderId } = await submitOrderAsPatient(api, {
@@ -20,7 +20,7 @@ test.describe('GraphQL E2E Workflow: Pabili Order Declined', () => {
       });
 
       // PSE Pharmacist: Login.
-      const { pharmacistAccessToken } = await loginPsePharmacist(api);
+      const { pharmacistAccessToken } = await loginPharmacist(api, { accountKey: 'pse01' });
 
       // PSE Pharmacist: Decline Order.
       await declineOrderAsPharmacist(api, {

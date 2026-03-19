@@ -1,17 +1,9 @@
+import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { GET_ORDER_BY_ID_QUERY } from '../orderManagement/pharmacist.orderManagementQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  adminLoginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-  pharmacistLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { getReusableTestIds } from '../../testData/reusableTestIds.js';
+import { GET_ORDER_BY_ID_QUERY } from './pharmacist.orderManagementQueries.js';
 
 const { orderId } = getReusableTestIds({ slot: 'slotOne' });
 
@@ -22,10 +14,7 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-172'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const getOrderByIdRes = await safeGraphQL(api, {
@@ -46,10 +35,7 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
       tag: ['@api', '@pharmacist', '@negative', '@pharma-173'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const getOrderByIdRes = await safeGraphQL(api, {

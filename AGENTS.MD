@@ -46,6 +46,7 @@ If any step cannot be completed confidently, stop and resolve that gap before ed
 - Do not bypass the merchant page objects for merchant order search, open, pricing, quote, or status verification if the behavior already exists there.
 - Do not assume or invent selectors. If selector work is required, inspect the current DOM first and choose the most stable signal actually exposed by the UI.
 - Do not introduce new env vars, credentials, fixed IDs, or branch assumptions unless the request requires them and the change is documented.
+- Do not read actor IDs or branch IDs directly from `process.env` in specs when an account/profile helper already exposes that data.
 - Do not add `page.waitForTimeout(...)`, `delay(...)`, or raw sleep-based waits when an existing safe wait helper or bounded probe can be used.
 - Do not widen the change into opportunistic cleanup or refactoring.
 - Do not change safe/stress execution behavior, Discord reporting, or secrets loading without explicit approval.
@@ -58,9 +59,13 @@ Treat these files and areas as approval-required:
 - `globalSetup.js`
 - `api/globalConfig.api.js`
 - `e2e/globalConfig.ui.js`
-- `api/helpers/testUtilsAPI.js`
+- `api/helpers/graphqlUtils.js`
+- `api/helpers/auth.js`
+- `api/helpers/apiReporting.js`
 - `api/helpers/graphqlClient.js`
-- `e2e/helpers/testUtilsUI.js`
+- `e2e/helpers/uiActions.js`
+- `e2e/helpers/testFailure.js`
+- `e2e/helpers/reporting/`
 - `e2e/helpers/selectors.js`
 - `e2e/selectors/merchant.selectors.json`
 - `e2e/pages/merchantPortal/`
@@ -127,6 +132,7 @@ Use `docs/change-workflow.md`. Do not edit before completing that workflow.
 - Keep positive and negative auth cases in the same `test.describe()` unless the local file structure already forces otherwise.
 - Assert success or failure first, then inspect the explicit node.
 - For unauthorized negatives, handle both transport-level failure and GraphQL `errors[]` when the resolver can return either.
+- Prefer role account/profile helpers when a spec needs both login data and actor-bound metadata such as `patientId`, `riderId`, or `branchId`.
 
 ### UI and Hybrid Merchant Tests
 
@@ -138,6 +144,7 @@ Use `docs/change-workflow.md`. Do not edit before completing that workflow.
 - Use `safeClick`, `safeInput`, `safeWaitForPageLoad`, `safeWaitForElementVisible`, and `markFailed(...)`.
 - When adding or changing selectors, inspect the rendered UI first and verify the selector against the current DOM before finalizing it.
 - Keep merchant order creation bound to the active merchant branch used by the test account.
+- Use delivery-specific builders in merchant hybrid specs instead of generic spec-local `deliveryType` orchestration.
 - Keep final merchant verification in page-object methods that check both order details and the correct Orders tab.
 - Preserve current merchant flow ordering: patient setup -> merchant UI actions -> downstream API actors -> merchant terminal verification.
 
@@ -172,6 +179,8 @@ This repository has mixed conventions. Follow the dominant local pattern in the 
 - safe helper usage over raw Playwright actions in merchant flows
 - page object and action reuse over spec-local workflow code
 - bounded retries and explicit waits over fixed sleeps
+- account/profile helpers over direct env-ID reads in specs
+- delivery-specific hybrid builders over generic `deliveryType` orchestration in specs
 
 ## Hybrid Merchant Hard Rules
 

@@ -1,13 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  loginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CODES, NOAUTH_CLASSIFICATIONS } from '../../../helpers/auth.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 
 const ME_QUERY = `
   query {
@@ -22,10 +16,10 @@ test.describe('GraphQL: Me', () => {
       tag: ['@api', '@patient', '@positive', '@login', '@pharma-3', '@smoke'],
     },
     async ({ api }) => {
-      const username = process.env.PATIENT_USER_USERNAME;
-      const password = process.env.PATIENT_USER_PASSWORD;
-
-      const { accessToken, raw: login } = await loginAndGetTokens(api, { username, password });
+      const { accessToken, raw: login } = await loginAsPatientAndGetTokens(
+        api,
+        getPatientCredentials('default')
+      );
 
       const meRes = await safeGraphQL(api, {
         query: ME_QUERY,

@@ -1,13 +1,7 @@
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  adminLoginAndGetTokens,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CODES,
-  NOAUTH_CLASSIFICATIONS,
-} from '../../../helpers/testUtilsAPI.js';
+import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 const CREATE_BRANCH_MUTATION = `
@@ -92,10 +86,7 @@ test.describe('GraphQL: Admin Create Branch', () => {
     },
     async ({ api }) => {
       // 1) Admin login
-      const { accessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
-        username: process.env.ADMIN_USERNAME,
-        password: process.env.ADMIN_PASSWORD,
-      });
+      const { accessToken, raw: adminLoginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
 
       // 2) Variables (branch only; meta kept separate)

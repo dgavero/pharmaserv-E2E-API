@@ -1,22 +1,12 @@
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { GET_ORDER_QUERY } from './patient.orderingQueries.js';
-import {
-  safeGraphQL,
-  bearer,
-  loginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
+import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 
 const { orderId } = getReusableTestIds({ slot: 'slotOne' });
-const nameUser = process.env.PATIENT_USER_USERNAME;
-const wordPass = process.env.PATIENT_USER_PASSWORD;
-const userId = process.env.PATIENT_USER_USERNAME_ID;
 
 test.describe('GraphQL: Patient Get Order', () => {
   test(
@@ -25,10 +15,10 @@ test.describe('GraphQL: Patient Get Order', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-113'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: nameUser,
-        password: wordPass,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(
+        api,
+        getPatientCredentials('default')
+      );
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getOrderRes = await safeGraphQL(api, {

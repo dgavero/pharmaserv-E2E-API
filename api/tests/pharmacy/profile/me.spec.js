@@ -1,15 +1,7 @@
-import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
+import { loginAsPharmacistAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  safeGraphQL,
-  bearer,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-  pharmacistLoginAndGetTokens,
-} from '../../../helpers/testUtilsAPI.js';
+import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { PHARMACIST_ME_QUERY } from './pharmacy.profileQueries.js';
 
 test.describe('GraphQL: Pharmacist Profile', () => {
@@ -19,10 +11,7 @@ test.describe('GraphQL: Pharmacist Profile', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-143', '@smoke'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const meRes = await safeGraphQL(api, {
@@ -39,10 +28,7 @@ test.describe('GraphQL: Pharmacist Profile', () => {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-144'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await pharmacistLoginAndGetTokens(api, {
-        username: process.env.PHARMACIST_USERNAME_REG01,
-        password: process.env.PHARMACIST_PASSWORD_REG01,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
       expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
       const meRes = await safeGraphQL(api, {

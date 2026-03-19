@@ -1,16 +1,17 @@
+import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 // import { randomAlphanumeric, randomNum } from '../../../helpers/globalTestUtils.js';
 // import { test, expect } from '../../globalConfig.api.js';
 // import { VERIFY_OTP_QUERY } from '../patient.queries.js';
 // import {
 //   safeGraphQL,
 //   bearer,
-//   adminLoginAndGetTokens,
+//   loginAsAdminAndGetTokens,
 //   getGQLError,
 //   NOAUTH_MESSAGE_PATTERN,
 //   NOAUTH_CLASSIFICATIONS,
 //   NOAUTH_CODES,
 //   NOAUTH_HTTP_STATUSES,
-// } from '../../helpers/testUtilsAPI.js';
+// } from '../../helpers/graphqlUtils.js';
 
 // function builderName() {
 //   const firstName = `builderName${randomAlphanumeric(4)}`;

@@ -34,8 +34,10 @@ Requirements:
 - If GraphQL is needed, place operations in the correct sibling query file instead of inlining long queries in the spec.
 - If merchant UI is involved, keep merchant actions in page objects and preserve hybrid merchant safeguards.
 - Use `safeGraphQL`, `bearer`, `getGQLError`, role login helpers, and descriptive `*Res` variable names where applicable.
+- Prefer account/profile helpers over direct env-ID reads when actor-bound IDs or branch IDs are needed.
 - Do not introduce new env vars, fixed IDs, or branch assumptions unless required and documented.
 - Do not add raw hard waits if an existing safe wait or bounded retry can be used.
+- For merchant hybrid order creation, prefer delivery-specific builders over generic `deliveryType` orchestration.
 - Do not assume selectors. If UI selectors are added or changed, inspect the rendered DOM and use the most stable selector currently exposed by the UI.
 
 Behavior To Cover:
@@ -104,8 +106,10 @@ Requirements:
 - If GraphQL is needed, place operations in the correct sibling query file instead of inlining long queries in the spec.
 - If merchant UI is involved, keep merchant actions in page objects and preserve hybrid merchant safeguards.
 - Use `safeGraphQL`, `bearer`, `getGQLError`, role login helpers, and descriptive `*Res` variable names where applicable.
+- Prefer account/profile helpers over direct env-ID reads when actor-bound IDs or branch IDs are needed.
 - Do not introduce new env vars, fixed IDs, or branch assumptions unless required and documented.
 - Do not add raw hard waits if an existing safe wait or bounded retry can be used.
+- For merchant hybrid order creation, prefer delivery-specific builders over generic `deliveryType` orchestration.
 - Do not assume selectors. If UI selectors are added or changed, inspect the rendered DOM and use the most stable selector currently exposed by the UI.
 
 Behavior To Preserve:
@@ -152,6 +156,8 @@ These rules are already embedded in the templates above and should remain there:
 - `If GraphQL is needed, place operations in the correct sibling query file instead of inlining long queries in the spec.`
 - `If merchant UI is involved, keep merchant actions in page objects and preserve hybrid merchant safeguards.`
 - `Use safeGraphQL, bearer, getGQLError, role login helpers, and descriptive *Res variable names where applicable.`
+- `Prefer account/profile helpers over direct env-ID reads when actor-bound IDs or branch IDs are needed.`
 - `Do not introduce new env vars, fixed IDs, or branch assumptions unless required and documented.`
 - `Do not add raw hard waits if an existing safe wait or bounded retry can be used.`
+- `For merchant hybrid order creation, prefer delivery-specific builders over generic deliveryType orchestration.`
 - `Do not assume selectors. If UI selectors are added or changed, inspect the rendered DOM and use the most stable selector currently exposed by the UI.`

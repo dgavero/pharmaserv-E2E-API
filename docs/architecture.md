@@ -39,7 +39,9 @@ API layout:
 
 - `api/globalConfig.api.js` shared API fixture and auth fixtures
 - `api/helpers/graphqlClient.js` GraphQL POST helper
-- `api/helpers/testUtilsAPI.js` normalized API helpers
+- `api/helpers/graphqlUtils.js` normalized GraphQL request helpers
+- `api/helpers/auth.js` shared auth and token helpers
+- `api/helpers/apiReporting.js` shared API failure reporting helpers
 - `api/tests/<role>/<feature>/...` role-based feature tests
 - `api/tests/e2e/...` API-only workflow tests
 - `api/tests/e2e/shared/queries/` shared workflow GraphQL docs
@@ -48,7 +50,9 @@ API layout:
 UI/hybrid layout:
 
 - `e2e/globalConfig.ui.js` UI fixture plus per-test API context
-- `e2e/helpers/testUtilsUI.js` safe UI helper layer
+- `e2e/helpers/uiActions.js` safe UI action and wait helpers
+- `e2e/helpers/testFailure.js` UI failure state and screenshot helpers
+- `e2e/helpers/reporting/discordReporterClient.js` Discord queueing and flush client
 - `e2e/helpers/selectors.js` selector loader/resolver
 - `e2e/selectors/merchant.selectors.json` merchant selector source
 - `e2e/pages/merchantPortal/` merchant page objects
@@ -108,20 +112,47 @@ This wrapper standardizes:
 - `errorMessage`
 - `errorPath`
 
-Auth and header helpers also live in `api/helpers/testUtilsAPI.js`:
+Auth and header helpers also live in `api/helpers/auth.js` and `api/helpers/graphqlUtils.js`:
 
 - `bearer(token)`
-- `loginAndGetTokens(...)`
-- `adminLoginAndGetTokens(...)`
-- `riderLoginAndGetTokens(...)`
-- `pharmacistLoginAndGetTokens(...)`
+- `loginAsPatientAndGetTokens(...)`
+- `loginAsAdminAndGetTokens(...)`
+- `loginAsRiderAndGetTokens(...)`
+- `loginAsPharmacistAndGetTokens(...)`
 - `getGQLError(...)`
+
+Named credential resolution is centralized separately:
+
+- `api/helpers/roleCredentials.js`
+  - preferred account/profile helpers:
+    - `getPatientAccount('default')`
+    - `getAdminAccount('default')`
+    - `getRiderAccount('default')`
+    - `getPharmacistAccount('reg01' | 'reg02' | 'pse01' | 'admin')`
+  - legacy compatibility aliases still exist as `get*Credentials(...)`, but new code should use account/profile helpers
+- `e2e/helpers/merchantCredentials.js`
+  - `getMerchantPortalAccount('e2e-reg01' | 'e2e-pse01')`
+
+Boundary rule:
+
+- auth helpers execute role-specific login mutations and require `{ username, password }`
+- credential resolvers map named account keys to env-backed credentials and account metadata
+- prefer account/profile helpers in specs when actor-bound IDs such as `patientId`, `riderId`, or `branchId` are needed
+- do not read actor IDs or branch IDs directly from env in specs when a resolver already exposes them
+- workflow steps and specs choose the account key explicitly instead of reading role login env vars inline
+- shared API workflow steps should remain override-friendly, so callers can still pass explicit credentials or explicit workflow data when needed
 
 Example placement:
 
 - patient feature query docs: `api/tests/patient/ordering/patient.orderingQueries.js`
 - admin feature spec: `api/tests/admin/riderManagement/rider.getDocumentToken.spec.js`
 - API workflow shared step module: `api/tests/e2e/shared/steps/patient.steps.js`
+
+Workflow guidance:
+
+- prefer shared workflow steps in `api/tests/e2e/shared/steps/` over repeated inline role login plus `safeGraphQL(...)` when an equivalent shared step already exists
+- keep long GraphQL operations in query files, even inside workflow tests
+- use raw transport calls only for signed upload URLs or other non-GraphQL endpoints that are actually exposed by the product
 
 ## UI and Hybrid Merchant Layer
 
@@ -153,9 +184,41 @@ Hybrid action modules:
 - `e2e/tests/merchantPortal/actions/adminActions.js`
 - `e2e/tests/merchantPortal/actions/riderActions.js`
 
+Hybrid action naming is actor-first and explicit:
+
+- `loginAsAdminForHybrid(...)`
+- `confirmPaymentAsAdminForHybrid(...)`
+- `assignRiderToOrderAsAdminForHybrid(...)`
+- `rateRiderAsPatientForHybrid(...)`
+- `completeDeliveryAsRiderForHybrid(...)`
+
 Shared hybrid input builders:
 
 - `e2e/tests/merchantPortal/generic.orderData.js`
+- preferred hybrid-spec usage is delivery-specific builder calls such as:
+  - `buildDeliverXHybridOrderInput(...)`
+  - `buildPabiliHybridOrderInput(...)`
+  - `buildFindMyMedsHybridOrderInput(...)`
+- avoid generic `deliveryType` orchestration in merchant hybrid specs when a delivery-specific builder already exists
+
+Shared hybrid context setup:
+
+- `e2e/tests/merchantPortal/merchantPortalContext.js`
+  - resolves the active merchant account profile
+  - returns `account`, `loginPage`, `ordersPage`, and `orderDetailsPage`
+
+Merchant account profiles are explicit and branch-bound:
+
+- `getMerchantPortalAccount('e2e-reg01' | 'e2e-pse01')`
+  - returns resolved `username`
+  - returns resolved `password`
+  - returns stable `assignedBranchId`
+
+Hybrid merchant specs should use the same merchant account object for:
+
+- UI login
+- patient order branch binding
+- merchant-account-specific flow data
 
 ## Selectors
 
@@ -285,8 +348,12 @@ These are architecture-critical and should not be changed casually:
 - `playwright.config.js`
 - `api/globalConfig.api.js`
 - `e2e/globalConfig.ui.js`
-- `api/helpers/testUtilsAPI.js`
-- `e2e/helpers/testUtilsUI.js`
+- `api/helpers/graphqlUtils.js`
+- `api/helpers/auth.js`
+- `api/helpers/apiReporting.js`
+- `e2e/helpers/uiActions.js`
+- `e2e/helpers/testFailure.js`
+- `e2e/helpers/reporting/discordReporterClient.js`
 - `e2e/selectors/merchant.selectors.json`
 - `e2e/pages/merchantPortal/`
 - `e2e/tests/merchantPortal/actions/`

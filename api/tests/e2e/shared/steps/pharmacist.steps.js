@@ -1,5 +1,7 @@
 import { expect } from '../../../../globalConfig.api.js';
-import { safeGraphQL, bearer, pharmacistLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { loginAsPharmacistAndGetTokens } from '../../../../helpers/auth.js';
+import { getPharmacistCredentials } from '../../../../helpers/roleCredentials.js';
 import {
   PHARMACY_ACCEPT_ORDER_QUERY,
   PHARMACY_CONFIRM_ORDER_QUERY,
@@ -19,21 +21,39 @@ import {
   PHARMACY_DECLINE_ORDER_QUERY,
 } from '../queries/pharmacist.queries.js';
 
-export async function loginPharmacist(api) {
-  const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await pharmacistLoginAndGetTokens(api, {
-    username: process.env.PHARMACIST_USERNAME_REG01,
-    password: process.env.PHARMACIST_PASSWORD_REG01,
-  });
-  expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'Pharmacist login failed').toBe(true);
-  return { pharmacistAccessToken };
+const PRESCRIPTION_ITEM_MUTATION_RETRY_TIMEOUT_MS = 5000;
+const PRESCRIPTION_ITEM_MUTATION_RETRY_INTERVAL_MS = 500;
+
+async function runPrescriptionItemMutationWithRetry(api, requestConfig, {
+  expectedId,
+  failureMessage,
+}) {
+  let latestRes;
+
+  await expect
+    .poll(
+      async () => {
+        latestRes = await safeGraphQL(api, requestConfig);
+        return latestRes.body?.data?.pharmacy?.order?.updatePrescriptionItem?.id === expectedId;
+      },
+      {
+        timeout: PRESCRIPTION_ITEM_MUTATION_RETRY_TIMEOUT_MS,
+        intervals: [PRESCRIPTION_ITEM_MUTATION_RETRY_INTERVAL_MS],
+      }
+    )
+    .toBe(true);
+
+  expect(latestRes.ok, latestRes.error || failureMessage).toBe(true);
+  return latestRes;
 }
 
-export async function loginPsePharmacist(api) {
-  const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await pharmacistLoginAndGetTokens(api, {
-    username: process.env.PHARMACIST_USERNAME_PSE01,
-    password: process.env.PHARMACIST_PASSWORD_PSE01,
-  });
-  expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'PSE pharmacist login failed').toBe(true);
+export async function loginPharmacist(api, { accountKey = 'reg01', credentials } = {}) {
+  const resolvedCredentials = credentials || getPharmacistCredentials(accountKey);
+  const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await loginAsPharmacistAndGetTokens(
+    api,
+    resolvedCredentials
+  );
+  expect(pharmacistLoginRes.ok, pharmacistLoginRes.error || 'Pharmacist login failed').toBe(true);
   return { pharmacistAccessToken };
 }
 
@@ -126,7 +146,6 @@ export async function addPrescriptionItemAsPharmacist(api, { pharmacistAccessTok
       `[DEBUG_WORKFLOW_IDS] addPrescriptionItem orderId=${orderId} medicineId=${prescriptionItem?.medicineId} prescriptionItemId=${addedPrescriptionItem.id}`
     );
   }
-  await new Promise((resolve) => setTimeout(resolve, 1000));
   return { prescriptionItemId: addedPrescriptionItem.id, medicineId: addedPrescriptionItem.medicine.id };
 }
 
@@ -146,26 +165,29 @@ export async function updateAvailablePrescriptionItemAsPharmacist(api, {
       `[DEBUG_WORKFLOW_IDS] updateAvailablePrescriptionItem orderId=${orderId} prescriptionItemId=${prescriptionItemId} medicineId=${medicineId ?? 'N/A'}`
     );
   }
-  const updatePrescriptionItemRes = await safeGraphQL(api, {
-    query: PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
-    variables: {
-      orderId,
-      prescriptionItemId,
-      prescriptionItem: {
-        medicineId,
-        quantity,
-        unitPrice,
-        vatExempt,
-        specialInstructions,
-        source,
+  const updatePrescriptionItemRes = await runPrescriptionItemMutationWithRetry(
+    api,
+    {
+      query: PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
+      variables: {
+        orderId,
+        prescriptionItemId,
+        prescriptionItem: {
+          medicineId,
+          quantity,
+          unitPrice,
+          vatExempt,
+          specialInstructions,
+          source,
+        },
       },
+      headers: bearer(pharmacistAccessToken),
     },
-    headers: bearer(pharmacistAccessToken),
-  });
-  expect(
-    updatePrescriptionItemRes.ok,
-    updatePrescriptionItemRes.error || 'Pharmacist update available prescription item failed'
-  ).toBe(true);
+    {
+      expectedId: prescriptionItemId,
+      failureMessage: 'Pharmacist update available prescription item failed',
+    }
+  );
   expect(updatePrescriptionItemRes.body?.data?.pharmacy?.order?.updatePrescriptionItem?.id).toBe(prescriptionItemId);
 }
 
@@ -175,12 +197,18 @@ export async function replaceMedicineAsPharmacist(api, {
   prescriptionItemId,
   prescriptionItem,
 }) {
-  const replaceMedicineRes = await safeGraphQL(api, {
-    query: PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
-    variables: { orderId, prescriptionItemId, prescriptionItem },
-    headers: bearer(pharmacistAccessToken),
-  });
-  expect(replaceMedicineRes.ok, replaceMedicineRes.error || 'Pharmacist replace medicine failed').toBe(true);
+  const replaceMedicineRes = await runPrescriptionItemMutationWithRetry(
+    api,
+    {
+      query: PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
+      variables: { orderId, prescriptionItemId, prescriptionItem },
+      headers: bearer(pharmacistAccessToken),
+    },
+    {
+      expectedId: prescriptionItemId,
+      failureMessage: 'Pharmacist replace medicine failed',
+    }
+  );
   expect(replaceMedicineRes.body?.data?.pharmacy?.order?.updatePrescriptionItem?.id).toBe(prescriptionItemId);
 }
 

@@ -1,9 +1,10 @@
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import {
-  GET_PRESCRIPTION_QUERY,
-  SCAN_PRESCRIGET_PRESCRIPTION_QUERYPTION_QUERY,
-} from './patient.prescriptionQueries.js';
-import { safeGraphQL, bearer, loginAndGetTokens } from '../../../helpers/testUtilsAPI.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { GET_PRESCRIPTION_QUERY } from './patient.prescriptionQueries.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 test.describe('GraphQL: Get Prescription', () => {
   test(
@@ -12,21 +13,18 @@ test.describe('GraphQL: Get Prescription', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-181'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getPrescriptionRes = await safeGraphQL(api, {
         query: GET_PRESCRIPTION_QUERY,
         variables: {
-          patientId: process.env.PATIENT_USER_USERNAME_ID,
+          patientId: defaultPatientAccount.patientId,
         },
         headers: bearer(accessToken),
       });
 
-      expect(getPrescriptionRes.ok).toBe(true);
+      expect(getPrescriptionRes.ok, getPrescriptionRes.error || 'Get prescription failed').toBe(true);
     }
   );
 });

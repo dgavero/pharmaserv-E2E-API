@@ -133,9 +133,14 @@ Details: [secrets/README.md](./secrets/README.md)
 ## Core Docs
 
 - Usage and run patterns: [USAGE.md](./USAGE.md)
-- Testing vision and engineering principles: [PROJECTVISIONS.md](./PROJECTVISIONS.md)
-- API test authoring source-of-truth: [AGENTS.MD](./AGENTS.MD)
+- API test authoring source-of-truth: [AGENTS.md](./AGENTS.md)
 - Version history: [CHANGELOG.md](./CHANGELOG.md)
+- Framework architecture and extension rules:
+  - [docs/architecture.md](./docs/architecture.md)
+  - [docs/test-layer-map.md](./docs/test-layer-map.md)
+  - [docs/coding-standards.md](./docs/coding-standards.md)
+  - [docs/change-workflow.md](./docs/change-workflow.md)
+  - [docs/risk-checklist.md](./docs/risk-checklist.md)
 
 ## Project Structure
 
@@ -154,11 +159,39 @@ pharmaserv-E2E-API/
 ├── scripts/publish-report.js
 ├── playwright.config.js
 ├── globalSetup.js
-└── AGENTS.MD
+└── AGENTS.md
 ```
 
 ## Notes
 
-- API test creation/update rules are maintained in `AGENTS.MD`.
+- API test creation/update rules are maintained in `AGENTS.md`.
 - Keep GraphQL operations in sibling query files for reuse.
 - Prefer descriptive response variable naming with `Res` suffix only.
+
+## Current Framework Direction
+
+- API auth uses explicit role logins plus named account/profile resolution.
+- API workflow specs should prefer shared workflow steps under `api/tests/e2e/shared/steps/` over repeated inline role login + `safeGraphQL(...)`.
+- Merchant hybrid specs use:
+  - `merchantPortalContext.js`
+  - `getMerchantPortalAccount(...)`
+  - merchant page objects for merchant operations
+  - hybrid action modules for patient/admin/rider API orchestration
+- Merchant hybrid branch binding is explicit through the active merchant account profile.
+- Active rider/patient/branch IDs should resolve through account/profile helpers, not direct spec-level env reads.
+
+## Preferred Extension Path
+
+- New API feature test:
+  - add the spec under `api/tests/<role>/<feature>/`
+  - place long GraphQL operations in a sibling query file
+  - use account/profile helpers instead of direct env ID reads
+- New API workflow test:
+  - add or reuse operations in `api/tests/e2e/shared/queries/`
+  - add or reuse actor transitions in `api/tests/e2e/shared/steps/`
+  - keep the spec orchestration-only
+- New hybrid merchant test:
+  - bootstrap merchant state with `merchantPortalContext.js`
+  - keep merchant operations in page objects
+  - keep patient/admin/rider API actions in hybrid action modules
+  - create orders with delivery-specific builders such as `buildDeliverXHybridOrderInput(...)`, `buildPabiliHybridOrderInput(...)`, or `buildFindMyMedsHybridOrderInput(...)`

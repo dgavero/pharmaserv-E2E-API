@@ -1,12 +1,15 @@
 import { expect } from '../../../../globalConfig.api.js';
-import { safeGraphQL, bearer, adminLoginAndGetTokens } from '../../../../helpers/testUtilsAPI.js';
+import { safeGraphQL, bearer } from '../../../../helpers/graphqlUtils.js';
+import { loginAsAdminAndGetTokens } from '../../../../helpers/auth.js';
+import { getAdminCredentials } from '../../../../helpers/roleCredentials.js';
 import { ADMIN_CONFIRM_PAYMENT_QUERY, ADMIN_ASSIGN_RIDER_QUERY } from '../queries/admin.queries.js';
 
-export async function loginAdmin(api) {
-  const { accessToken: adminAccessToken, raw: adminLoginRes } = await adminLoginAndGetTokens(api, {
-    username: process.env.ADMIN_USERNAME,
-    password: process.env.ADMIN_PASSWORD,
-  });
+export async function loginAdmin(api, { accountKey = 'default', credentials } = {}) {
+  const resolvedCredentials = credentials || getAdminCredentials(accountKey);
+  const { accessToken: adminAccessToken, raw: adminLoginRes } = await loginAsAdminAndGetTokens(
+    api,
+    resolvedCredentials
+  );
   expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
   return { adminAccessToken };
 }

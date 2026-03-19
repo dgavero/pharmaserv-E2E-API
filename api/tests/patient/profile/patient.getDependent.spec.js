@@ -1,15 +1,7 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { loginAndGetTokens } from '../../../helpers/testUtilsAPI';
-import {
-  safeGraphQL,
-  bearer,
-  adminLoginAndGetTokens,
-  getGQLError,
-  NOAUTH_MESSAGE_PATTERN,
-  NOAUTH_CLASSIFICATIONS,
-  NOAUTH_CODES,
-  NOAUTH_HTTP_STATUSES,
-} from '../../../helpers/testUtilsAPI.js';
+import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
+import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 
 const GET_DEPENDENT_QUERY = /* GraphQL */ `
   query {
@@ -31,10 +23,7 @@ test.describe('GraphQL: Patient Get Dependent', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-71'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAndGetTokens(api, {
-        username: process.env.PATIENT_USER_USERNAME,
-        password: process.env.PATIENT_USER_PASSWORD,
-      });
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const getDependentRes = await safeGraphQL(api, {
