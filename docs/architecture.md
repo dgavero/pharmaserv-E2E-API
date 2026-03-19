@@ -129,11 +129,7 @@ Named credential resolution is centralized separately:
     - `getAdminAccount('default')`
     - `getRiderAccount('default')`
     - `getPharmacistAccount('reg01' | 'reg02' | 'pse01' | 'admin')`
-  - compatibility/minimal-login helpers:
-    - `getPatientCredentials('default')`
-    - `getAdminCredentials('default')`
-    - `getRiderCredentials('default')`
-    - `getPharmacistCredentials('reg01' | 'reg02' | 'pse01' | 'admin')`
+  - legacy compatibility aliases still exist as `get*Credentials(...)`, but new code should use account/profile helpers
 - `e2e/helpers/merchantCredentials.js`
   - `getMerchantPortalAccount('e2e-reg01' | 'e2e-pse01')`
 

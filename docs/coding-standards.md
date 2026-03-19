@@ -205,11 +205,8 @@ Credential resolution:
   - `getRiderAccount('default')`
   - `getPharmacistAccount('reg01')`
   - `getMerchantPortalAccount('e2e-pse01')`
-- credential-only helpers remain acceptable for minimal login-only cases:
-  - `getPatientCredentials('default')`
-  - `getAdminCredentials('default')`
-  - `getRiderCredentials('default')`
-  - `getPharmacistCredentials('reg01')`
+- do not add new credential-only helper call sites when an account/profile helper exists
+- legacy `get*Credentials()` exports are compatibility aliases only
 - do not read role username/password env vars directly inside shared workflow steps
 - do not read actor IDs or branch IDs directly in specs when an account/profile helper already exposes them
 

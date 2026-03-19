@@ -1,6 +1,6 @@
 import { safeGraphQL, bearer } from './graphqlUtils.js';
 import { loginAsPharmacistAndGetTokens } from './auth.js';
-import { getPharmacistCredentials } from './roleCredentials.js';
+import { getPharmacistAccount } from './roleCredentials.js';
 import { expect } from '../globalConfig.api.js';
 import { DECLINE_ORDER_QUERY } from '../tests/pharmacy/orderManagement/pharmacist.orderManagementQueries.js';
 
@@ -12,7 +12,7 @@ export async function declineOrderAsPharmacist(api, orderId) {
   // Login as pharmacist
   const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(
     api,
-    getPharmacistCredentials('reg01')
+    getPharmacistAccount('reg01')
   );
   expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
 
