@@ -97,6 +97,7 @@ Put in this layer:
 - flow tags and summary comments
 - calls into page objects and role action modules
 - merchant account/context bootstrap through `merchantPortalContext.js`
+- delivery-specific hybrid order builders such as `buildDeliverXHybridOrderInput(...)`, `buildPabiliHybridOrderInput(...)`, and `buildFindMyMedsHybridOrderInput(...)`
 
 Do not put in this layer:
 
@@ -104,6 +105,7 @@ Do not put in this layer:
 - duplicated order search/open/status logic
 - raw selector strings for shared merchant UI elements
 - merchant operational shortcuts that bypass the page objects
+- generic spec-local `deliveryType` orchestration when a delivery-specific hybrid builder already exists
 
 ## 4. Page Objects
 

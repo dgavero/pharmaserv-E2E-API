@@ -196,3 +196,9 @@ For framework extension work, also use:
 - `docs/coding-standards.md`
 - `docs/change-workflow.md`
 - `docs/risk-checklist.md`
+
+## Current Repo Expectations
+
+- Switching `TEST_ENV` should not require code edits.
+- Prefer account/profile helpers over direct env-ID reads in tests.
+- Prefer delivery-specific hybrid builders over generic delivery-type orchestration in merchant hybrid specs.

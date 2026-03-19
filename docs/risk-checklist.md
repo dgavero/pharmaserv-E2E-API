@@ -19,6 +19,7 @@ Use this checklist before and after implementing risky changes.
 - Is there already a stable UI readiness signal?
 - Can `safeWaitForElementVisible`, `safeWaitForElementHidden`, or `safeWaitForPageLoad` handle this instead?
 - If I need polling, is it bounded and tied to a real state change?
+- If there is retry/backoff logic, is it part of explicit bounded retry behavior rather than a fixed workflow sleep?
 
 ### Shared Helpers
 
@@ -43,6 +44,7 @@ Use this checklist before and after implementing risky changes.
 - Am I changing the meaning of an existing env var?
 - Does the change rely on `TEST_ENV`, branch IDs, reusable order IDs, or role credentials?
 - Does the new logic work for `DEV`, `QA`, and `PROD`, or is it intentionally scoped?
+- Am I reintroducing direct env-ID reads in specs where account/profile helpers already expose the same data?
 
 ### Fixed IDs and Reusable Records
 

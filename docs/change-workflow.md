@@ -56,6 +56,7 @@ Questions to answer:
 - Does a shared helper or page object already handle this behavior?
 - Does this area already have a query file?
 - Is this an approval-required area?
+- If the spec needs actor-bound IDs or branch IDs, does an account/profile helper already expose them?
 
 ## Step 4: Check Local Patterns
 

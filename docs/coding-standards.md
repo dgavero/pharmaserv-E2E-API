@@ -69,8 +69,8 @@ Use this file for code-shape rules. Use `docs/change-workflow.md` for process.
 Example shape:
 
 ```js
-const creds = getPatientCredentials('default');
-const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, creds);
+const patientAccount = getPatientAccount('default');
+const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, patientAccount);
 expect(loginRes.ok, loginRes.error || 'Login failed').toBe(true);
 
 const getOrderRes = await safeGraphQL(api, {
@@ -199,13 +199,19 @@ Credential resolution:
 - resolve named env-backed accounts through:
   - `api/helpers/roleCredentials.js`
   - `e2e/helpers/merchantCredentials.js`
-- prefer explicit account keys such as:
+- prefer account/profile helpers when IDs or branch context are needed:
+  - `getPatientAccount('default')`
+  - `getAdminAccount('default')`
+  - `getRiderAccount('default')`
+  - `getPharmacistAccount('reg01')`
+  - `getMerchantPortalAccount('e2e-pse01')`
+- credential-only helpers remain acceptable for minimal login-only cases:
   - `getPatientCredentials('default')`
   - `getAdminCredentials('default')`
   - `getRiderCredentials('default')`
   - `getPharmacistCredentials('reg01')`
-  - `getMerchantPortalAccount('e2e-pse01')`
 - do not read role username/password env vars directly inside shared workflow steps
+- do not read actor IDs or branch IDs directly in specs when an account/profile helper already exposes them
 
 ## Assertion Rules
 
@@ -261,6 +267,7 @@ For files under `e2e/tests/merchantPortal/` and `e2e/pages/merchantPortal/`:
 - Patient, admin, and rider transitions may remain API-driven through action modules or shared API workflow steps.
 - Bind created orders to the active merchant branch used by the current merchant account.
 - Use `merchantPortalContext.js` plus `getMerchantPortalAccount(...)` instead of reading merchant env vars directly in specs.
+- Use delivery-specific builders such as `buildDeliverXHybridOrderInput(...)`, `buildPabiliHybridOrderInput(...)`, and `buildFindMyMedsHybridOrderInput(...)` in merchant hybrid specs.
 - Use exact booking reference search. No first-card fallback.
 - Completed and cancelled checks belong in page-object verification methods, not in spec-local locator assertions.
 
@@ -273,6 +280,8 @@ When adding a new test or extending an existing flow:
 3. Reuse an existing shared workflow step before writing inline role login plus `safeGraphQL(...)`.
 4. For hybrid merchant tests, keep merchant operations in page objects and patient/admin/rider transitions in action modules.
 5. For hybrid account data, use `getMerchantPortalAccount(...)` through `merchantPortalContext.js` instead of reading env vars directly.
+6. For actor-bound IDs in API or hybrid specs, use account/profile helpers instead of direct env-ID reads.
+7. For merchant hybrid order creation, prefer delivery-specific builders over generic `deliveryType` orchestration.
 6. If a helper needs defaults, keep them overrideable instead of hardcoding one fixed account or one fixed payload shape.
 
 ## Current Dominant Patterns vs Older Styles
@@ -291,7 +300,7 @@ Older style still present in parts of the repo:
 - inline GraphQL in specs
 - broader auth-message matching
 - more direct spec-local logic
-- occasional raw waits and env-coupled fixed IDs
+- some legacy feature specs outside the main workflow path may still be more direct than the preferred modern pattern
 
 When editing:
 

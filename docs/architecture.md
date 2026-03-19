@@ -124,10 +124,16 @@ Auth and header helpers also live in `api/helpers/auth.js` and `api/helpers/grap
 Named credential resolution is centralized separately:
 
 - `api/helpers/roleCredentials.js`
-  - `getPatientCredentials('default')`
-  - `getAdminCredentials('default')`
-  - `getRiderCredentials('default')`
-  - `getPharmacistCredentials('reg01' | 'reg02' | 'pse01' | 'admin')`
+  - preferred account/profile helpers:
+    - `getPatientAccount('default')`
+    - `getAdminAccount('default')`
+    - `getRiderAccount('default')`
+    - `getPharmacistAccount('reg01' | 'reg02' | 'pse01' | 'admin')`
+  - compatibility/minimal-login helpers:
+    - `getPatientCredentials('default')`
+    - `getAdminCredentials('default')`
+    - `getRiderCredentials('default')`
+    - `getPharmacistCredentials('reg01' | 'reg02' | 'pse01' | 'admin')`
 - `e2e/helpers/merchantCredentials.js`
   - `getMerchantPortalAccount('e2e-reg01' | 'e2e-pse01')`
 
@@ -135,6 +141,8 @@ Boundary rule:
 
 - auth helpers execute role-specific login mutations and require `{ username, password }`
 - credential resolvers map named account keys to env-backed credentials and account metadata
+- prefer account/profile helpers in specs when actor-bound IDs such as `patientId`, `riderId`, or `branchId` are needed
+- do not read actor IDs or branch IDs directly from env in specs when a resolver already exposes them
 - workflow steps and specs choose the account key explicitly instead of reading role login env vars inline
 - shared API workflow steps should remain override-friendly, so callers can still pass explicit credentials or explicit workflow data when needed
 
@@ -191,6 +199,11 @@ Hybrid action naming is actor-first and explicit:
 Shared hybrid input builders:
 
 - `e2e/tests/merchantPortal/generic.orderData.js`
+- preferred hybrid-spec usage is delivery-specific builder calls such as:
+  - `buildDeliverXHybridOrderInput(...)`
+  - `buildPabiliHybridOrderInput(...)`
+  - `buildFindMyMedsHybridOrderInput(...)`
+- avoid generic `deliveryType` orchestration in merchant hybrid specs when a delivery-specific builder already exists
 
 Shared hybrid context setup:
 
