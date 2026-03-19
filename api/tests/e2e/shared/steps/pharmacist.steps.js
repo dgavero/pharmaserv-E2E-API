@@ -21,6 +21,32 @@ import {
   PHARMACY_DECLINE_ORDER_QUERY,
 } from '../queries/pharmacist.queries.js';
 
+const PRESCRIPTION_ITEM_MUTATION_RETRY_TIMEOUT_MS = 5000;
+const PRESCRIPTION_ITEM_MUTATION_RETRY_INTERVAL_MS = 500;
+
+async function runPrescriptionItemMutationWithRetry(api, requestConfig, {
+  expectedId,
+  failureMessage,
+}) {
+  let latestRes;
+
+  await expect
+    .poll(
+      async () => {
+        latestRes = await safeGraphQL(api, requestConfig);
+        return latestRes.body?.data?.pharmacy?.order?.updatePrescriptionItem?.id === expectedId;
+      },
+      {
+        timeout: PRESCRIPTION_ITEM_MUTATION_RETRY_TIMEOUT_MS,
+        intervals: [PRESCRIPTION_ITEM_MUTATION_RETRY_INTERVAL_MS],
+      }
+    )
+    .toBe(true);
+
+  expect(latestRes.ok, latestRes.error || failureMessage).toBe(true);
+  return latestRes;
+}
+
 export async function loginPharmacist(api, { accountKey = 'reg01', credentials } = {}) {
   const resolvedCredentials = credentials || getPharmacistCredentials(accountKey);
   const { accessToken: pharmacistAccessToken, raw: pharmacistLoginRes } = await loginAsPharmacistAndGetTokens(
@@ -120,7 +146,6 @@ export async function addPrescriptionItemAsPharmacist(api, { pharmacistAccessTok
       `[DEBUG_WORKFLOW_IDS] addPrescriptionItem orderId=${orderId} medicineId=${prescriptionItem?.medicineId} prescriptionItemId=${addedPrescriptionItem.id}`
     );
   }
-  await new Promise((resolve) => setTimeout(resolve, 1000));
   return { prescriptionItemId: addedPrescriptionItem.id, medicineId: addedPrescriptionItem.medicine.id };
 }
 
@@ -140,26 +165,29 @@ export async function updateAvailablePrescriptionItemAsPharmacist(api, {
       `[DEBUG_WORKFLOW_IDS] updateAvailablePrescriptionItem orderId=${orderId} prescriptionItemId=${prescriptionItemId} medicineId=${medicineId ?? 'N/A'}`
     );
   }
-  const updatePrescriptionItemRes = await safeGraphQL(api, {
-    query: PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
-    variables: {
-      orderId,
-      prescriptionItemId,
-      prescriptionItem: {
-        medicineId,
-        quantity,
-        unitPrice,
-        vatExempt,
-        specialInstructions,
-        source,
+  const updatePrescriptionItemRes = await runPrescriptionItemMutationWithRetry(
+    api,
+    {
+      query: PHARMACY_UPDATE_AVAILABLE_PRESCRIPTION_ITEM_QUERY,
+      variables: {
+        orderId,
+        prescriptionItemId,
+        prescriptionItem: {
+          medicineId,
+          quantity,
+          unitPrice,
+          vatExempt,
+          specialInstructions,
+          source,
+        },
       },
+      headers: bearer(pharmacistAccessToken),
     },
-    headers: bearer(pharmacistAccessToken),
-  });
-  expect(
-    updatePrescriptionItemRes.ok,
-    updatePrescriptionItemRes.error || 'Pharmacist update available prescription item failed'
-  ).toBe(true);
+    {
+      expectedId: prescriptionItemId,
+      failureMessage: 'Pharmacist update available prescription item failed',
+    }
+  );
   expect(updatePrescriptionItemRes.body?.data?.pharmacy?.order?.updatePrescriptionItem?.id).toBe(prescriptionItemId);
 }
 
@@ -169,12 +197,18 @@ export async function replaceMedicineAsPharmacist(api, {
   prescriptionItemId,
   prescriptionItem,
 }) {
-  const replaceMedicineRes = await safeGraphQL(api, {
-    query: PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
-    variables: { orderId, prescriptionItemId, prescriptionItem },
-    headers: bearer(pharmacistAccessToken),
-  });
-  expect(replaceMedicineRes.ok, replaceMedicineRes.error || 'Pharmacist replace medicine failed').toBe(true);
+  const replaceMedicineRes = await runPrescriptionItemMutationWithRetry(
+    api,
+    {
+      query: PHARMACY_UPDATE_PRESCRIPTION_ITEM_QUERY,
+      variables: { orderId, prescriptionItemId, prescriptionItem },
+      headers: bearer(pharmacistAccessToken),
+    },
+    {
+      expectedId: prescriptionItemId,
+      failureMessage: 'Pharmacist replace medicine failed',
+    }
+  );
   expect(replaceMedicineRes.body?.data?.pharmacy?.order?.updatePrescriptionItem?.id).toBe(prescriptionItemId);
 }
 

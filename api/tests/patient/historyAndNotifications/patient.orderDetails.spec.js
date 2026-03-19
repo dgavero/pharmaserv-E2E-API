@@ -19,7 +19,7 @@ test.describe('GraphQL: Order Details Patient', () => {
         headers: bearer(accessToken),
       });
 
-      expect(getActiveOrderRes.ok).toBe(true);
+      expect(getActiveOrderRes.ok, getActiveOrderRes.error || 'Get active orders failed').toBe(true);
     }
   );
 
@@ -37,7 +37,7 @@ test.describe('GraphQL: Order Details Patient', () => {
         headers: bearer(accessToken),
       });
 
-      expect(getOrderHistoryRes.ok).toBe(true);
+      expect(getOrderHistoryRes.ok, getOrderHistoryRes.error || 'Get order history failed').toBe(true);
     }
   );
 });

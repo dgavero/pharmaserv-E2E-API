@@ -1,6 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
-import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 
@@ -18,7 +18,7 @@ const GET_DC_CARD = /* GraphQL */ `
   }
 `;
 
-const patientId = process.env.PATIENT_USER_USERNAME_ID; // Existing patient ID
+const patientId = getPatientAccount('default').patientId;
 const incorrectPatientId = 999; // Non-existing patient ID
 
 test.describe('GraphQL: Patient Get Discount Card Details', () => {

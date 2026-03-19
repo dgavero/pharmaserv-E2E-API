@@ -7,7 +7,6 @@ import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 
 const { orderId } = getReusableTestIds({ slot: 'slotOne' });
-const userId = process.env.PATIENT_USER_USERNAME_ID;
 
 test.describe('GraphQL: Patient Get Order', () => {
   test(

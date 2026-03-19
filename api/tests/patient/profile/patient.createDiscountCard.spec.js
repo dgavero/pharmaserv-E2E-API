@@ -1,5 +1,5 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import { getPatientCredentials, getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getPatientAccount, getPatientCredentials, getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import {
   loginAsPatientAndGetTokens,
@@ -10,6 +10,8 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/auth.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 const CREATE_DC_CARD = /* GraphQL */ `
   mutation ($discountCard: DiscountCardRequest!) {
@@ -28,7 +30,7 @@ const CREATE_DC_CARD = /* GraphQL */ `
 `;
 
 function discountCardInput() {
-  const patientId = process.env.PATIENT_USER_USERNAME_ID;
+  const patientId = defaultPatientAccount.patientId;
   const cardType = `Discount Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `Wats-${randomAlphanumeric(8)}`;
@@ -47,16 +49,19 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const discountCardData = discountCardInput();
-      const createDCRes = await safeGraphQL(api, {
+      const createDiscountCardRes = await safeGraphQL(api, {
         query: CREATE_DC_CARD,
         variables: { discountCard: discountCardData },
         headers: bearer(accessToken),
       });
 
       // Main Assertion
-      expect(createDCRes.ok, createDCRes.error || 'Create Discount Card request failed').toBe(true);
+      expect(
+        createDiscountCardRes.ok,
+        createDiscountCardRes.error || 'Create Discount Card request failed'
+      ).toBe(true);
 
-      const createdDCNode = createDCRes.body.data.patient.discountCard.create;
+      const createdDCNode = createDiscountCardRes.body.data.patient.discountCard.create;
       expect.soft(createdDCNode.name).toBe(discountCardData.name);
       expect.soft(createdDCNode.cardType).toBe(discountCardData.cardType);
       expect.soft(createdDCNode.cardNumber).toBe(discountCardData.cardNumber);
@@ -71,16 +76,16 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
     },
     async ({ api, noAuth }) => {
       const discountCardData = discountCardInput();
-      const createDCNoAuthRes = await safeGraphQL(api, {
+      const createDiscountCardNoAuthRes = await safeGraphQL(api, {
         query: CREATE_DC_CARD,
         variables: { discountCard: discountCardData },
         headers: noAuth,
       });
 
       // Main Assertion
-      expect(createDCNoAuthRes.ok, 'Create Discount Card no auth request should fail').toBe(false);
+      expect(createDiscountCardNoAuthRes.ok, 'Create Discount Card no auth request should fail').toBe(false);
 
-      const { message, code, classification } = getGQLError(createDCNoAuthRes);
+      const { message, code, classification } = getGQLError(createDiscountCardNoAuthRes);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
       expect(NOAUTH_CODES).toContain(code);
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
@@ -94,19 +99,22 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
     },
     async ({ api, invalidAuth }) => {
       const discountCardData = discountCardInput();
-      const createDCInvalidAuthRes = await safeGraphQL(api, {
+      const createDiscountCardInvalidAuthRes = await safeGraphQL(api, {
         query: CREATE_DC_CARD,
         variables: { discountCard: discountCardData },
         headers: invalidAuth,
       });
 
       // Main Assertion
-      expect(createDCInvalidAuthRes.ok, 'Create Discount Card with invalid auth request should fail').toBe(false);
+      expect(
+        createDiscountCardInvalidAuthRes.ok,
+        'Create Discount Card with invalid auth request should fail'
+      ).toBe(false);
 
       // Transport-level 401 (no GraphQL errors[])
-      expect(createDCInvalidAuthRes.ok).toBe(false);
-      expect(createDCInvalidAuthRes.httpOk).toBe(false);
-      expect(NOAUTH_HTTP_STATUSES).toContain(createDCInvalidAuthRes.httpStatus);
+      expect(createDiscountCardInvalidAuthRes.ok).toBe(false);
+      expect(createDiscountCardInvalidAuthRes.httpOk).toBe(false);
+      expect(NOAUTH_HTTP_STATUSES).toContain(createDiscountCardInvalidAuthRes.httpStatus);
     }
   );
 
@@ -121,7 +129,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
 
       const discountCardData = discountCardInput();
       discountCardData.name = ''; // Missing name
-      const createDCRes = await safeGraphQL(api, {
+      const createDiscountCardRes = await safeGraphQL(api, {
         query: CREATE_DC_CARD,
         variables: { discountCard: discountCardData },
         headers: bearer(accessToken),
@@ -129,11 +137,11 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
 
       // Main Assertion
       expect(
-        createDCRes.ok,
-        createDCRes.error || 'Create Discount Card with missing name should fail with missing Name'
+        createDiscountCardRes.ok,
+        createDiscountCardRes.error || 'Create Discount Card with missing name should fail with missing Name'
       ).toBe(false);
 
-      const { message, code, classification } = getGQLError(createDCRes);
+      const { message, code, classification } = getGQLError(createDiscountCardRes);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
       expect(NOAUTH_CODES).toContain(code);
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);

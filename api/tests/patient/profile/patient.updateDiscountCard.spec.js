@@ -1,12 +1,14 @@
 import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { UPDATE_DISCOUNT_CARD_QUERY } from './patient.profileQueries.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
+const defaultPatientAccount = getPatientAccount('default');
+
 function updateDiscountCardInput() {
-  const patientId = process.env.PATIENT_USER_USERNAME_ID; // Existing patient ID for testing
+  const patientId = defaultPatientAccount.patientId;
   const cardType = `Watsons Club Card`;
   const name = `Suki Card - Watsons`;
   const cardNumber = `${randomAlphanumeric(8)}`;

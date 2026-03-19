@@ -1,13 +1,16 @@
 import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
+import { getPharmacistAccount, getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import {
   PHARMACIST_UPDATE_BRANCH_QUERY,
   PHARMACIST_GET_PAGED_BRANCH_QUERY,
   PHARMACIST_GET_BRANCH_BY_ID_QUERY,
 } from './pharmacist.branchManagementQueries.js';
+
+const regularPharmacistAccount = getPharmacistAccount('reg01');
+const secondRegularPharmacistAccount = getPharmacistAccount('reg02');
 
 test.describe('GraphQL: Branch Management Actions', () => {
   test(
@@ -22,7 +25,7 @@ test.describe('GraphQL: Branch Management Actions', () => {
       const updateBranchRes = await safeGraphQL(api, {
         query: PHARMACIST_UPDATE_BRANCH_QUERY,
         variables: {
-          branchId: process.env.PHARMACIST_BRANCHID_REG02,
+          branchId: secondRegularPharmacistAccount.branchId,
           branch: {
             name: `Pharmacy API - Branch 02 Updated ${randomAlphanumeric(5)}`,
           },
@@ -72,7 +75,7 @@ test.describe('GraphQL: Branch Management Actions', () => {
       const getBranchByIdRes = await safeGraphQL(api, {
         query: PHARMACIST_GET_BRANCH_BY_ID_QUERY,
         variables: {
-          branchId: process.env.PHARMACIST_BRANCHID_REG01,
+          branchId: regularPharmacistAccount.branchId,
         },
         headers: bearer(accessToken),
       });

@@ -1,7 +1,9 @@
 import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
+
+const defaultRiderAccount = getRiderAccount('default');
 
 const GET_DOCUMENT_TOKEN_QUERY = /* GraphQL */ `
   query ($riderId: ID!, $type: DocumentType!) {
@@ -28,7 +30,7 @@ test.describe('GraphQL: Get Document Token', () => {
 
       const getDocumentTokenRes = await safeGraphQL(api, {
         query: GET_DOCUMENT_TOKEN_QUERY,
-        variables: { riderId: process.env.RIDER_USERID, type: `DRIVER_LICENSE` },
+        variables: { riderId: defaultRiderAccount.riderId, type: `DRIVER_LICENSE` },
         headers: bearer(accessToken),
       });
 
@@ -51,7 +53,7 @@ test.describe('GraphQL: Get Document Token', () => {
     async ({ api, noAuth }) => {
       const getDocumentTokenNoAuthRes = await safeGraphQL(api, {
         query: GET_DOCUMENT_TOKEN_QUERY,
-        variables: { riderId: process.env.RIDER_USERID, type: `DRIVER_LICENSE` },
+        variables: { riderId: defaultRiderAccount.riderId, type: `DRIVER_LICENSE` },
         headers: noAuth,
       });
 
@@ -77,7 +79,7 @@ test.describe('GraphQL: Get Document Token', () => {
     async ({ api, invalidAuth }) => {
       const getDocumentTokenInvalidAuthRes = await safeGraphQL(api, {
         query: GET_DOCUMENT_TOKEN_QUERY,
-        variables: { riderId: process.env.RIDER_USERID, type: `DRIVER_LICENSE` },
+        variables: { riderId: defaultRiderAccount.riderId, type: `DRIVER_LICENSE` },
         headers: invalidAuth,
       });
 

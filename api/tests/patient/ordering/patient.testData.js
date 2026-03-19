@@ -1,3 +1,9 @@
+import { getPatientAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
+
+const defaultPatientAccount = getPatientAccount('default');
+const regularPharmacistAccount = getPharmacistAccount('reg01');
+const psePharmacistAccount = getPharmacistAccount('pse01');
+
 function resolvePatientOrderingMedicineIds() {
   const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
   const medicineIdsByEnv = {
@@ -52,7 +58,7 @@ function buildDeliverXPrescriptionItems() {
 export function buildPatientFindMyMedsOrderInput() {
   return {
     deliveryType: 'FIND_MY_MEDS',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
+    patientId: defaultPatientAccount.patientId,
     prescriptionItems: buildSearchPrescriptionItems(),
     addressName: 'TEST HOME API',
     address: 'TEST HOUSING API',
@@ -64,8 +70,8 @@ export function buildPatientFindMyMedsOrderInput() {
 export function buildPatientDeliverXOrderInput() {
   return {
     deliveryType: 'DELIVER_X',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: process.env.PHARMACIST_BRANCHID_REG01,
+    patientId: defaultPatientAccount.patientId,
+    branchId: regularPharmacistAccount.branchId,
     prescriptionItems: buildDeliverXPrescriptionItems(),
     addressName: 'TEST Home API',
     address: 'TEST HOUSING API',
@@ -77,8 +83,8 @@ export function buildPatientDeliverXOrderInput() {
 export function buildPatientPabiliOrderInput() {
   return {
     deliveryType: 'PABILI',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: process.env.PHARMACIST_BRANCHID_PSE01,
+    patientId: defaultPatientAccount.patientId,
+    branchId: psePharmacistAccount.branchId,
     prescriptionItems: buildSearchPrescriptionItems(),
     addressName: 'Home',
     address: 'Unit 243 Baranca Bldg, Mandaluyong Housing',
@@ -91,8 +97,8 @@ export function buildPatientSpecificOrderInput() {
   const medicineIds = resolvePatientOrderingMedicineIds();
   return {
     deliveryType: 'DELIVER_X',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: process.env.PHARMACIST_BRANCHID_REG01,
+    patientId: defaultPatientAccount.patientId,
+    branchId: regularPharmacistAccount.branchId,
     prescriptionItems: [
       {
         medicineId: medicineIds.baseFirstMedicineId,

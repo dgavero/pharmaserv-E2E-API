@@ -1,8 +1,10 @@
 import { loginAsRiderAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getRiderCredentials } from '../../../helpers/roleCredentials.js';
+import { getRiderAccount, getRiderCredentials } from '../../../helpers/roleCredentials.js';
 import { ME_RIDER_QUERY } from './rider.profileQueries.js';
+
+const defaultRiderAccount = getRiderAccount('default');
 
 test.describe('GraphQL: Get Rider Profile', () => {
   test(
@@ -24,7 +26,7 @@ test.describe('GraphQL: Get Rider Profile', () => {
 
       const riderNode = meRiderRes.body.data.rider.me;
       expect(riderNode).toBeTruthy();
-      expect.soft(riderNode.id).toBe(process.env.RIDER_USERID);
+      expect.soft(riderNode.id).toBe(defaultRiderAccount.riderId);
       expect.soft(riderNode.username).toBe(process.env.RIDER_USERNAME);
     }
   );

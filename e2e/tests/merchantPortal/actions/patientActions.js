@@ -3,7 +3,7 @@ import { Timeouts } from '../../../Timeouts.js';
 import { markFailed } from '../../../helpers/testFailure.js';
 import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
 import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
-import { getPatientCredentials } from '../../../../api/helpers/roleCredentials.js';
+import { getPatientAccount, getPatientCredentials } from '../../../../api/helpers/roleCredentials.js';
 import {
   PATIENT_ACCEPT_QUOTE_QUERY,
   PATIENT_REQUEST_REQUOTE_QUERY,
@@ -20,7 +20,6 @@ import {
   rateRiderAsPatient,
   uploadImageToSignedUrl,
 } from '../../../../api/tests/e2e/shared/steps/patient.steps.js';
-import { buildHybridOrderInput } from '../generic.orderData.js';
 
 function failAction(actionLabel, error) {
   const rawMessage = String(error?.message || error || 'unknown error');
@@ -74,22 +73,6 @@ export async function createHybridOrder(
   }
 
   failAction('createHybridOrder', lastError);
-}
-
-export async function createHybridOrderForBranch(api, { deliveryType, branchId, omitBranchId = false }) {
-  try {
-    if (!omitBranchId && !Number(branchId)) {
-      markFailed(`Missing branchId for hybrid ${deliveryType} order creation`);
-    }
-    const orderInput = buildHybridOrderInput({
-      deliveryType,
-      branchId: Number(branchId),
-      allowMissingBranchId: omitBranchId,
-    });
-    return createHybridOrder(api, { order: orderInput });
-  } catch (error) {
-    failAction('createHybridOrderForBranch', error);
-  }
 }
 
 export async function acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId, timeout = Timeouts.long }) {

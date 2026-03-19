@@ -1,8 +1,10 @@
 import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { SCAN_PRESCRIPTION_QUERY } from './patient.prescriptionQueries.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 test.describe('GraphQL: Scan Prescription', () => {
   test(
@@ -19,7 +21,7 @@ test.describe('GraphQL: Scan Prescription', () => {
         query: SCAN_PRESCRIPTION_QUERY,
         variables: {
           prescription: {
-            patientId: process.env.PATIENT_USER_USERNAME_ID,
+            patientId: defaultPatientAccount.patientId,
             photoToScan: photo,
           },
         },

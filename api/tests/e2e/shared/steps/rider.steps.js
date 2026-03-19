@@ -41,11 +41,21 @@ export async function startPickupOrderAsRider(api, { riderAccessToken, orderId }
 }
 
 export async function arrivedAtPharmacyAsRider(api, { riderAccessToken, orderId, branchId, requireBranchQR = true }) {
-  const arrivedAtPharmacyRes = await safeGraphQL(api, {
-    query: RIDER_ARRIVED_AT_PHARMACY_QUERY,
-    variables: { orderId, branchId },
-    headers: bearer(riderAccessToken),
-  });
+  let arrivedAtPharmacyRes;
+  await expect
+    .poll(
+      async () => {
+        arrivedAtPharmacyRes = await safeGraphQL(api, {
+          query: RIDER_ARRIVED_AT_PHARMACY_QUERY,
+          variables: { orderId, branchId },
+          headers: bearer(riderAccessToken),
+        });
+        return arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.id === orderId;
+      },
+      { timeout: 5000, intervals: [250, 500, 1000] }
+    )
+    .toBe(true);
+
   expect(arrivedAtPharmacyRes.ok, arrivedAtPharmacyRes.error || 'Rider arrived at pharmacy failed').toBe(true);
   expect(arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy?.id).toBe(orderId);
   const arrivedNode = arrivedAtPharmacyRes.body?.data?.rider?.order?.arrivedAtPharmacy;

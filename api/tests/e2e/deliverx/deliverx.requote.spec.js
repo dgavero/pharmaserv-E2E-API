@@ -1,5 +1,6 @@
 import { test } from '../../../globalConfig.api.js';
 import path from 'node:path';
+import { getPatientAccount, getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import {
   loginPatient,
   submitOrderAsPatient,
@@ -43,6 +44,10 @@ import {
   buildDeliverXRequoteData,
 } from './deliverx.testData.js';
 
+const defaultPatientAccount = getPatientAccount('default');
+const defaultRiderAccount = getRiderAccount('default');
+const regularPharmacistAccount = getPharmacistAccount('reg01');
+
 test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
   test(
     'PHARMA-338 | DeliverX delivery fulfillment happy path with requote',
@@ -72,7 +77,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       // Patient: Save Prescription.
       const { prescriptionId } = await savePrescriptionAsPatient(api, {
         patientAccessToken,
-        patientId: process.env.PATIENT_USER_USERNAME_ID,
+        patientId: defaultPatientAccount.patientId,
         photo: prescriptionBlobName,
       });
 
@@ -88,7 +93,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       // Patient: Save Discount Card.
       const { discountCardId } = await saveDiscountCardAsPatient(api, {
         patientAccessToken,
-        patientId: process.env.PATIENT_USER_USERNAME_ID,
+        patientId: defaultPatientAccount.patientId,
         photo: discountBlobName,
       });
 
@@ -195,7 +200,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Rider: Login.
@@ -206,7 +211,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
       });
       // Rider: Get Pickup Proof Upload URL.
       const { pickupProofUploadUrl, pickupProofBlobName } = await getPickupProofUploadUrlAsRider(api, {
@@ -221,14 +226,14 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
       // Rider: Pickup Order.
       await pickupOrderAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         branchQR,
       });
       // Rider: Arrived at Drop Off.
@@ -254,7 +259,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Requote', () => {
       // Patient: Rate Rider.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );

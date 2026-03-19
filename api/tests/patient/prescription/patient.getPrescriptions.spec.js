@@ -1,8 +1,10 @@
 import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { GET_PRESCRIPTION_QUERY } from './patient.prescriptionQueries.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 test.describe('GraphQL: Get Prescription', () => {
   test(
@@ -17,12 +19,12 @@ test.describe('GraphQL: Get Prescription', () => {
       const getPrescriptionRes = await safeGraphQL(api, {
         query: GET_PRESCRIPTION_QUERY,
         variables: {
-          patientId: process.env.PATIENT_USER_USERNAME_ID,
+          patientId: defaultPatientAccount.patientId,
         },
         headers: bearer(accessToken),
       });
 
-      expect(getPrescriptionRes.ok).toBe(true);
+      expect(getPrescriptionRes.ok, getPrescriptionRes.error || 'Get prescription failed').toBe(true);
     }
   );
 });

@@ -1,6 +1,6 @@
 import { markFailed } from '../../../helpers/testFailure.js';
 import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
-import { getAdminCredentials } from '../../../../api/helpers/roleCredentials.js';
+import { getAdminCredentials, getRiderAccount } from '../../../../api/helpers/roleCredentials.js';
 import {
   loginAdmin,
   confirmPaymentAsAdmin,
@@ -12,6 +12,8 @@ function failAction(actionLabel, error) {
   const snippet = extractApiFailureSnippet({ error: { message: rawMessage }, errors: [] });
   markFailed(`${actionLabel} failed:\n${snippet || rawMessage}`);
 }
+
+const defaultRiderAccount = getRiderAccount('default');
 
 export async function loginAsAdminForHybrid(api, { accountKey = 'default' } = {}) {
   try {
@@ -35,7 +37,7 @@ export async function confirmPaymentAsAdminForHybrid(api, { adminAccessToken, or
 
 export async function assignRiderToOrderAsAdminForHybrid(
   api,
-  { adminAccessToken, orderId, riderId = process.env.RIDER_USERID }
+  { adminAccessToken, orderId, riderId = defaultRiderAccount.riderId }
 ) {
   try {
     const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {

@@ -82,9 +82,6 @@ test.describe('Merchant Portal | Login', () => {
       await firstLogin.login(merchantAccount.username, merchantAccount.password);
       await firstLogin.assertSuccessLogin();
 
-      await page.waitForTimeout(1000);
-      console.log('closing browser to open a new one');
-
       const opened = await safeOpenNewContextPage(browser, '/login');
       if (!opened) {
         markFailed(`Failed to open fresh context for second login: ${getLastError(page)}`);

@@ -1,8 +1,10 @@
 import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { ADD_FAVORITE_MEDICINE_QUERY, GET_FAVORITE_MEDICINE_QUERY } from './patient.medicineQueries.js';
+
+const defaultPatientAccount = getPatientAccount('default');
 
 test.describe('GraphQL: Medicine Favorites', () => {
   test(
@@ -18,7 +20,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
       const addFavoriteMedicineRes = await safeGraphQL(api, {
         query: ADD_FAVORITE_MEDICINE_QUERY,
         variables: {
-          patientId: process.env.PATIENT_USER_USERNAME_ID,
+          patientId: defaultPatientAccount.patientId,
           medicineId: medicineId,
         },
         headers: bearer(accessToken),
@@ -28,7 +30,7 @@ test.describe('GraphQL: Medicine Favorites', () => {
 
       if (!addFavoriteMedicineRes.ok) {
         if (!/already exists/i.test(message)) {
-          expect(addFavoriteMedicineRes.ok).toBe(true);
+          expect(addFavoriteMedicineRes.ok, addFavoriteMedicineRes.error || 'Add favorite medicine failed').toBe(true);
         } else console.log(`MedicineID already added as favorite.`);
       }
     }
@@ -53,7 +55,10 @@ test.describe('GraphQL: Medicine Favorites', () => {
         headers: bearer(accessToken),
       });
 
-      expect(addFavoriteMedicineRes.ok).toBe(false);
+      expect(
+        addFavoriteMedicineRes.ok,
+        addFavoriteMedicineRes.error || 'Add favorite medicine for another patient should fail'
+      ).toBe(false);
 
       const { message, code, classification } = getGQLError(addFavoriteMedicineRes);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
@@ -74,12 +79,15 @@ test.describe('GraphQL: Medicine Favorites', () => {
       const getFavoriteMedicineRes = await safeGraphQL(api, {
         query: GET_FAVORITE_MEDICINE_QUERY,
         variables: {
-          patientId: process.env.PATIENT_USER_USERNAME_ID,
+          patientId: defaultPatientAccount.patientId,
         },
         headers: bearer(accessToken),
       });
 
-      expect(getFavoriteMedicineRes.ok).toBe(true);
+      expect(
+        getFavoriteMedicineRes.ok,
+        getFavoriteMedicineRes.error || 'Get favorite medicine failed'
+      ).toBe(true);
     }
   );
 

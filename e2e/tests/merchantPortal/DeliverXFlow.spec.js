@@ -4,19 +4,18 @@ import { Timeouts } from '../../Timeouts.js';
 import { markFailed } from '../../helpers/testFailure.js';
 import { safeWaitForElementHidden } from '../../helpers/uiActions.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
+import { getPatientAccount, getRiderAccount } from '../../../api/helpers/roleCredentials.js';
 import { createMerchantPortalContext } from './merchantPortalContext.js';
 import {
   buildBasePriceItems,
   buildBasePrescriptionItems,
   buildDeliverXAttachmentNoPrescriptionHybridOrderInput,
   buildDeliverXHybridOrderInput,
-  HybridDeliveryTypes,
 } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
   createHybridOrder,
-  createHybridOrderForBranch,
   ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
   requestReQuoteAsPatientForHybrid,
@@ -32,6 +31,9 @@ import {
   loginAsRiderForHybrid,
   completeDeliveryAsRiderForHybrid,
 } from './actions/riderActions.js';
+
+const defaultPatientAccount = getPatientAccount('default');
+const defaultRiderAccount = getRiderAccount('default');
 
 test.describe('Merchant Portal | DeliverX Full Flow', () => {
   test(
@@ -55,6 +57,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       }));
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
         order: buildDeliverXHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
           branchId: merchant.account.assignedBranchId,
           prescriptionItems: submittedPrescriptionItems,
         }),
@@ -104,7 +107,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // API (rider): complete fulfillment.
@@ -134,7 +137,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (patient): rate rider.
       await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
@@ -155,9 +158,11 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.DELIVER_X,
-        branchId: merchant.account.assignedBranchId,
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildDeliverXHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          branchId: merchant.account.assignedBranchId,
+        }),
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
@@ -231,9 +236,11 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.DELIVER_X,
-        branchId: merchant.account.assignedBranchId,
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildDeliverXHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          branchId: merchant.account.assignedBranchId,
+        }),
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
@@ -280,7 +287,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // API (rider): complete fulfillment.
@@ -294,7 +301,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (patient): rate rider.
       await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
@@ -319,6 +326,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (patient): create attachment-only order with no prescription items.
       const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
         order: buildDeliverXAttachmentNoPrescriptionHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
           branchId: merchant.account.assignedBranchId,
         }),
       });
@@ -370,7 +378,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // API (rider): complete fulfillment.
@@ -384,7 +392,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (patient): rate rider.
       await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
@@ -408,9 +416,11 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-reg01' });
 
       // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.DELIVER_X,
-        branchId: merchant.account.assignedBranchId,
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildDeliverXHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          branchId: merchant.account.assignedBranchId,
+        }),
       });
 
       // UI (merchant): accept, upload QR, update prices, request payment.
@@ -492,7 +502,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // API (rider): complete fulfillment.
@@ -506,7 +516,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       // API (patient): rate rider.
       await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.

@@ -1,14 +1,15 @@
 import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
+import { getPatientAccount, getRiderAccount } from '../../../api/helpers/roleCredentials.js';
 import { createMerchantPortalContext } from './merchantPortalContext.js';
 import {
   buildBasePriceItems,
-  HybridDeliveryTypes,
+  buildPabiliHybridOrderInput,
 } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
-  createHybridOrderForBranch,
+  createHybridOrder,
   ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
   rateRiderAsPatientForHybrid,
@@ -23,6 +24,9 @@ import {
   sendQuoteAsRiderForHybrid,
   startPickupAndArriveAtPharmacyAsRiderForHybrid,
 } from './actions/riderActions.js';
+
+const defaultPatientAccount = getPatientAccount('default');
+const defaultRiderAccount = getRiderAccount('default');
 
 test.describe('Merchant Portal | Pabili Full Flow', () => {
   test(
@@ -42,9 +46,11 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
 
       // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.PABILI,
-        branchId: merchant.account.assignedBranchId,
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildPabiliHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          branchId: merchant.account.assignedBranchId,
+        }),
       });
 
       // UI (merchant): login and accept order.
@@ -62,7 +68,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // API (rider): start flow and send rider quote.
@@ -114,7 +120,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       // API (patient): rate rider.
       await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
@@ -139,9 +145,11 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
 
       // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.PABILI,
-        branchId: merchant.account.assignedBranchId,
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildPabiliHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          branchId: merchant.account.assignedBranchId,
+        }),
       });
 
       // UI (merchant): login, accept order, update prices, upload QR, and send quote.
@@ -159,7 +167,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
@@ -197,7 +205,7 @@ test.describe('Merchant Portal | Pabili Full Flow', () => {
       // API (patient): rate rider.
       await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.

@@ -1,11 +1,12 @@
 import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
+import { getPatientAccount, getRiderAccount } from '../../../api/helpers/roleCredentials.js';
 import { createMerchantPortalContext } from './merchantPortalContext.js';
-import { buildBasePriceItems, HybridDeliveryTypes } from './generic.orderData.js';
+import { buildBasePriceItems, buildFindMyMedsHybridOrderInput } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
-  createHybridOrderForBranch,
+  createHybridOrder,
   ensurePatientPaymentQRCodeAccessible,
   payOrderAsPatientWithProof,
   rateRiderAsPatientForHybrid,
@@ -16,6 +17,9 @@ import {
   loginAsAdminForHybrid,
 } from './actions/adminActions.js';
 import { completeDeliveryAsRiderForHybrid } from './actions/riderActions.js';
+
+const defaultPatientAccount = getPatientAccount('default');
+const defaultRiderAccount = getRiderAccount('default');
 
 test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
   test(
@@ -34,9 +38,11 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
 
       // API (patient): create order.
-      const { patientAccessToken, orderId, bookingRef } = await createHybridOrderForBranch(api, {
-        deliveryType: HybridDeliveryTypes.FIND_MY_MEDS,
-        omitBranchId: true,
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildFindMyMedsHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          allowMissingBranchId: true,
+        }),
       });
 
       // UI (merchant): login, accept order, assign branch, upload QR, update prices, and send quote.
@@ -74,7 +80,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdminForHybrid(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // UI (merchant): prepare then set for pickup.
@@ -93,7 +99,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       // API (patient): rate rider.
       await rateRiderAsPatientForHybrid(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.

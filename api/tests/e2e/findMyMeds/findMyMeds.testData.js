@@ -1,3 +1,5 @@
+import { getPatientAccount } from '../../../helpers/roleCredentials.js';
+
 function resolveFindMyMedsMedicineIds() {
   const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
   const medicineIdsByEnv = {
@@ -39,10 +41,11 @@ export function buildFindMyMedsBasePriceItems({ quantity = 1 } = {}) {
   ];
 }
 
-export function buildFindMyMedsBaseOrderInput() {
+export function buildFindMyMedsBaseOrderInput({ patientId } = {}) {
+  const defaultPatientAccount = getPatientAccount('default');
   return {
     deliveryType: 'FIND_MY_MEDS',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
+    patientId: patientId || defaultPatientAccount.patientId,
     prescriptionItems: buildFindMyMedsBasePrescriptionItems(),
     addressName: 'Home API',
     address: 'Test API Address',

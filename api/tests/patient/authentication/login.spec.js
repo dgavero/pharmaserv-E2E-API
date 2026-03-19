@@ -37,17 +37,17 @@ test.describe('GraphQL: Patient Login', () => {
     async ({ api }) => {
       const creds = buildValidCreds();
 
-      const loginUser = await safeGraphQL(api, {
+      const loginRes = await safeGraphQL(api, {
         query: LOGIN_MUTATION,
         variables: creds,
       });
 
       await test.step('GraphQL should succeed', async () => {
-        expect(loginUser.ok, loginUser.error || 'GraphQL call failed').toBe(true);
+        expect(loginRes.ok, loginRes.error || 'GraphQL call failed').toBe(true);
       });
 
       await test.step('Validate tokens (strings)', async () => {
-        const tokens = loginUser.body?.data?.patient?.auth?.login;
+        const tokens = loginRes.body?.data?.patient?.auth?.login;
         expect(tokens, 'Missing data.patient.auth.login').toBeTruthy();
 
         expect.soft(typeof tokens.accessToken).toBe('string');
@@ -64,17 +64,17 @@ test.describe('GraphQL: Patient Login', () => {
     async ({ api }) => {
       const creds = buildInvalidCreds();
 
-      const loginAttempt = await safeGraphQL(api, {
+      const invalidLoginRes = await safeGraphQL(api, {
         query: LOGIN_MUTATION,
         variables: creds,
       });
 
       await test.step('Login should fail', async () => {
-        expect(loginAttempt.ok, 'API accepted invalid credentials (expected rejection)').toBe(false);
+        expect(invalidLoginRes.ok, 'API accepted invalid credentials (expected rejection)').toBe(false);
       });
 
       await test.step('Assert error details', async () => {
-        const { message, code, classification, path } = getGQLError(loginAttempt);
+        const { message, code, classification, path } = getGQLError(invalidLoginRes);
 
         // Fuzzy message: allow any invalid/unauthorized phrasing
         expect(message.toLowerCase()).toMatch(/(invalid|incorrect|unauthorized)/);
@@ -84,7 +84,7 @@ test.describe('GraphQL: Patient Login', () => {
         expect.soft(classification).toBe('UNAUTHORIZED');
 
         // Safety: no tokens should be present on failure
-        const node = loginAttempt.body?.data?.patient?.auth?.login;
+        const node = invalidLoginRes.body?.data?.patient?.auth?.login;
         expect.soft(node?.accessToken ?? null).toBeFalsy();
         expect.soft(node?.refreshToken ?? null).toBeFalsy();
       });

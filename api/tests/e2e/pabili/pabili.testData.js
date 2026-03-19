@@ -1,3 +1,5 @@
+import { getPatientAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
+
 function resolvePabiliMedicineIds() {
   const testEnv = String(process.env.TEST_ENV || 'DEV').toUpperCase();
   const medicineIdsByEnv = {
@@ -39,11 +41,13 @@ export function buildPabiliBasePriceItems({ quantity = 1 } = {}) {
   ];
 }
 
-export function buildPabiliBaseOrderInput() {
+export function buildPabiliBaseOrderInput({ patientId, branchId } = {}) {
+  const defaultPatientAccount = getPatientAccount('default');
+  const defaultPharmacistAccount = getPharmacistAccount('reg02');
   return {
     deliveryType: 'PABILI',
-    patientId: process.env.PATIENT_USER_USERNAME_ID,
-    branchId: Number(process.env.PHARMACIST_BRANCHID_REG02 || 1),
+    patientId: patientId || defaultPatientAccount.patientId,
+    branchId: branchId || defaultPharmacistAccount.branchId,
     prescriptionItems: buildPabiliBasePrescriptionItems(),
     addressName: 'Home API',
     address: 'Test API Address',

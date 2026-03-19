@@ -1,5 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
+import { getRiderAccount } from '../../../helpers/roleCredentials.js';
 import { buildPabiliBaseOrderInput, buildPabiliBasePriceItems } from './pabili.testData.js';
 import {
   loginPatient,
@@ -37,6 +38,8 @@ import {
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
 
+const defaultRiderAccount = getRiderAccount('default');
+
 test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () => {
   test(
     'PHARMA-345 | Pabili happy path where rider sends quote then order completes',
@@ -72,7 +75,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Rider: Login.
@@ -202,7 +205,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Rider Sends Quote)', () 
       // Patient: Rate Rider.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );

@@ -2,6 +2,7 @@ import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
+import { getReusableTestIds } from '../../testData/reusableTestIds.js';
 import { ACCEPT_ORDER_QUERY } from './pharmacist.orderManagementQueries.js';
 
 test.describe('GraphQL: Pharmacy Accept Order', () => {
@@ -17,7 +18,7 @@ test.describe('GraphQL: Pharmacy Accept Order', () => {
       const acceptOrderRes = await safeGraphQL(api, {
         query: ACCEPT_ORDER_QUERY,
         variables: {
-          orderId: process.env.PHARMACIST_REUSABLE_ORDERID_REG01, // Already accepted orderId
+          orderId: getReusableTestIds({ slot: 'slotOne' }).orderId, // Already accepted regular orderId
         },
         headers: bearer(accessToken),
       });

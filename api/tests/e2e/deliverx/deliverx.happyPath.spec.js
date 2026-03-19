@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
+import { getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import {
   buildDeliverXBaseOrderInput,
   buildDeliverXAttachmentNoPrescriptionOrderInput,
@@ -43,6 +44,9 @@ import {
   setDeliveryProofAsRider,
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
+
+const defaultRiderAccount = getRiderAccount('default');
+const regularPharmacistAccount = getPharmacistAccount('reg01');
 
 test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
   test(
@@ -111,7 +115,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Login as rider, start pickup, and arrive at pharmacy.
@@ -120,7 +124,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
       });
 
       // Get pickup proof upload URL as rider.
@@ -136,7 +140,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
 
@@ -144,7 +148,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await pickupOrderAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         branchQR,
       });
       await arrivedAtDropOffAsRider(api, { riderAccessToken, orderId });
@@ -169,7 +173,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await completeOrderAsRider(api, { riderAccessToken, orderId });
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );
@@ -263,7 +267,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Login as rider.
@@ -275,7 +279,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
       });
 
       // Get pickup proof upload URL as rider.
@@ -291,7 +295,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
 
@@ -299,7 +303,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await pickupOrderAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         branchQR,
       });
 
@@ -326,7 +330,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       // Rate rider as patient.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );
@@ -476,7 +480,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Login as rider.
@@ -488,7 +492,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       const { branchQR } = await arrivedAtPharmacyAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
       });
 
       // Get pickup proof upload URL as rider.
@@ -504,7 +508,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await setPickupProofAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         proof: { photo: pickupProofBlobName },
       });
 
@@ -512,7 +516,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       await pickupOrderAsRider(api, {
         riderAccessToken,
         orderId,
-        branchId: process.env.PHARMACIST_BRANCHID_REG01,
+        branchId: regularPharmacistAccount.branchId,
         branchQR,
       });
 
@@ -539,7 +543,7 @@ test.describe('GraphQL E2E Workflow: DeliverX Happy Path', () => {
       // Rate rider as patient.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );

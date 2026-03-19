@@ -69,7 +69,7 @@ export function buildHybridOrderInput({
   deliveryType,
   branchId,
   allowMissingBranchId = false,
-  patientId = process.env.PATIENT_USER_USERNAME_ID,
+  patientId,
   prescriptionItems = buildBasePrescriptionItems(),
   addressName = 'Home API',
   address = 'Test API Address',
@@ -85,7 +85,7 @@ export function buildHybridOrderInput({
     throw new Error(`Missing/invalid branchId for hybrid ${normalizedDeliveryType} order input`);
   }
   if (!patientId) {
-    throw new Error('Missing PATIENT_USER_USERNAME_ID for hybrid order input');
+    throw new Error('Missing patientId for hybrid order input');
   }
 
   return {
@@ -111,7 +111,7 @@ export function buildDeliverXHybridOrderInput({ branchId, ...overrides } = {}) {
   });
 }
 
-export function buildDeliverXAttachmentNoPrescriptionHybridOrderInput({ branchId } = {}) {
+export function buildDeliverXAttachmentNoPrescriptionHybridOrderInput({ branchId, ...overrides } = {}) {
   return buildDeliverXHybridOrderInput({
     branchId,
     discountCardIds: [],
@@ -123,6 +123,7 @@ export function buildDeliverXAttachmentNoPrescriptionHybridOrderInput({ branchId
       },
     ],
     deliveryInstructions: 'Deliver with care',
+    ...overrides,
   });
 }
 

@@ -1,5 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
+import { getRiderAccount } from '../../../helpers/roleCredentials.js';
 import { buildPabiliBaseOrderInput, buildPabiliBasePriceItems } from './pabili.testData.js';
 import {
   loginPatient,
@@ -39,6 +40,8 @@ import {
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
 
+const defaultRiderAccount = getRiderAccount('default');
+
 test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)', () => {
   test(
     'PHARMA-343 | Pabili happy path where pharmaserv sends quote from order to rider completion',
@@ -74,7 +77,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // PSE Pharmacist: Update Prices.
@@ -198,7 +201,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       // Patient: Rate Rider.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );
@@ -237,7 +240,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // Rider: Login.
@@ -363,7 +366,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       // Patient: Rate Rider.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );
@@ -402,7 +405,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       const { assignedRiderId } = await assignRiderToOrderAsAdmin(api, {
         adminAccessToken,
         orderId,
-        riderId: process.env.RIDER_USERID,
+        riderId: defaultRiderAccount.riderId,
       });
 
       // PSE Pharmacist: Update Prices (set quantity=10 for all medicines in quote).
@@ -535,7 +538,7 @@ test.describe('GraphQL E2E Workflow: Pabili Happy Path (Pharmaserv Sends Quote)'
       // Patient: Rate Rider.
       await rateRiderAsPatient(api, {
         patientAccessToken,
-        riderId: assignedRiderId || process.env.RIDER_USERID,
+        riderId: assignedRiderId || defaultRiderAccount.riderId,
       });
     }
   );
