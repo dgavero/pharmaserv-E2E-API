@@ -34,6 +34,25 @@ export const GET_PRESCRIPTION_QUERY = /* GraphQL */ `
   }
 `;
 
+export const GET_PRESCRIPTION_DETAIL_QUERY = /* GraphQL */ `
+  query ($prescriptionId: ID!, $patientId: ID!) {
+    patient {
+      prescription {
+        detail(prescriptionId: $prescriptionId, patientId: $patientId) {
+          id
+          photo
+          prescriptionItems {
+            medicine {
+              brand
+              genericName
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const REMOVE_PRESCRIPTION_QUERY = /* GraphQL */ `
   mutation ($prescriptionId: ID!) {
     patient {
