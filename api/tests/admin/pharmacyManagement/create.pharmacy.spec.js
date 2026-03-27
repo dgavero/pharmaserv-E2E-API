@@ -3,20 +3,7 @@ import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
-
-const CREATE_PHARMACY_MUTATION = `
-  mutation ($pharmacy: PharmacyRequest!) {
-    administrator {
-      pharmacy {
-        create(pharmacy: $pharmacy) {
-          id
-          code
-          name
-        }
-      }
-    }
-  }
-`;
+import { CREATE_PHARMACY_MUTATION } from './admin.pharmacyManagementQueries.js';
 
 /** Reusable randomized input (for both positive and negatives) */
 function buildPharmacyInput() {

@@ -2,24 +2,7 @@ import { loginAsAdminAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
-
-const GET_PAGED_BRANCHES_QUERY = `
-  query ($pharmacyId: ID!, $filter: FilterRequest!) {
-    administrator {
-      branch {
-        pagedBranches(pharmacyId: $pharmacyId, filter: $filter) {
-          page {
-            totalSize
-          }
-          items {
-            id
-            name
-          }
-        }
-      }
-    }
-  }
-`;
+import { GET_PAGED_BRANCHES_QUERY } from './admin.pharmacyManagementQueries.js';
 
 function buildPagedBranchesVariables() {
   const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
