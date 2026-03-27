@@ -79,6 +79,73 @@ export const UPDATE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
   }
 `;
 
+export const CREATE_IDENTIFICATION_CARD_QUERY = /* GraphQL */ `
+  mutation ($identificationCard: IdentificationCardRequest!) {
+    patient {
+      identificationCard {
+        create(identificationCard: $identificationCard) {
+          id
+          cardType
+          cardId
+          frontPhoto
+          backPhoto
+        }
+      }
+    }
+  }
+`;
+
+export const GET_IDENTIFICATION_CARD_UPLOAD_URL_QUERY = /* GraphQL */ `
+  query ($ext: String!) {
+    patient {
+      identificationCardUploadURL(ext: $ext) {
+        blobName
+        url
+      }
+    }
+  }
+`;
+
+export const GET_IDENTIFICATION_CARDS_QUERY = /* GraphQL */ `
+  query ($patientId: ID!) {
+    patient {
+      identificationCards(patientId: $patientId) {
+        id
+        cardType
+        cardId
+        frontPhoto
+        backPhoto
+      }
+    }
+  }
+`;
+
+export const UPDATE_IDENTIFICATION_CARD_QUERY = /* GraphQL */ `
+  mutation ($identificationCardId: ID!, $identificationCard: IdentificationCardRequest!) {
+    patient {
+      identificationCard {
+        update(identificationCardId: $identificationCardId, identificationCard: $identificationCard) {
+          id
+          cardType
+          cardId
+          frontPhoto
+          backPhoto
+        }
+      }
+    }
+  }
+`;
+
+export const REMOVE_IDENTIFICATION_CARD_QUERY = /* GraphQL */ `
+  mutation ($identificationCardId: ID!) {
+    patient {
+      identificationCard {
+        remove(identificationCardId: $identificationCardId)
+      }
+    }
+  }
+`;
+
 export const SET_DEFAULT_ADDRESS_QUERY = /* GraphQL */ `
   mutation ($patientId: ID!, $addressId: ID!) {
     patient {
