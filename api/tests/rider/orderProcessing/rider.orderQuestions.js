@@ -66,6 +66,34 @@ export const GET_CURRENT_ORDER_QUERY = /* GraphQL */ `
   }
 `;
 
+export const GET_ASSIGNED_ORDERS_QUERY = /* GraphQL */ `
+  query {
+    rider {
+      assignedOrders {
+        id
+        deliveryType
+        patient {
+          firstName
+          lastName
+        }
+        legs {
+          branch {
+            id
+            code
+            name
+          }
+          branchQR
+          status
+        }
+        status
+        dropOffAddress {
+          deliveryInstructions
+        }
+      }
+    }
+  }
+`;
+
 // Used for Start Pickup Order
 export const START_PICKUP_ORDER_QUERY = /* GraphQL */ `
   mutation ($orderId: ID!) {
@@ -123,6 +151,16 @@ export const UPDATE_PRICES_QUERY = /* GraphQL */ `
           quantity
           unitPrice
         }
+      }
+    }
+  }
+`;
+
+export const UPDATE_RIDER_LOCATION_QUERY = /* GraphQL */ `
+  mutation ($pathPoint: PathPointRequest!) {
+    rider {
+      order {
+        updateLocation(pathPoint: $pathPoint)
       }
     }
   }
