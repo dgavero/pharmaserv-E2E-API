@@ -1,18 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { safeGraphQL } from '../../../helpers/graphqlUtils.js';
-
-const GET_PRIVACY_POLICY_QUERY = /* GraphQL */ `
-  query {
-    patient {
-      legals {
-        privacyPolicy {
-          title
-          content
-        }
-      }
-    }
-  }
-`;
+import { GET_PATIENT_PRIVACY_POLICY_QUERY } from './patient.legalsQueries.js';
 
 test.describe('GraphQL: Get Privacy Policy', () => {
   test(
@@ -22,7 +10,7 @@ test.describe('GraphQL: Get Privacy Policy', () => {
     },
     async ({ api, noAuth }) => {
       const getPrivacyPolicyRes = await safeGraphQL(api, {
-        query: GET_PRIVACY_POLICY_QUERY,
+        query: GET_PATIENT_PRIVACY_POLICY_QUERY,
         headers: noAuth,
       });
 

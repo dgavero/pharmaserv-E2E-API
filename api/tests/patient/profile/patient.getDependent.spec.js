@@ -2,19 +2,7 @@ import { test, expect } from '../../../globalConfig.api.js';
 import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
 import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
-
-const GET_DEPENDENT_QUERY = /* GraphQL */ `
-  query {
-    patient {
-      dependents {
-        id
-        firstName
-        lastName
-        email
-      }
-    }
-  }
-`;
+import { GET_DEPENDENTS_QUERY } from './patient.profileQueries.js';
 
 test.describe('GraphQL: Patient Get Dependent', () => {
   test(
@@ -27,7 +15,7 @@ test.describe('GraphQL: Patient Get Dependent', () => {
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const getDependentRes = await safeGraphQL(api, {
-        query: GET_DEPENDENT_QUERY,
+        query: GET_DEPENDENTS_QUERY,
         headers: bearer(accessToken),
       });
 

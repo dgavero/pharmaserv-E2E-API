@@ -1,25 +1,13 @@
 import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
-
-const SET_RIDER_DOCUMENT_QUERY = /* GraphQL */ `
-  mutation ($riderId: ID!, $document: DocumentRequest!) {
-    administrator {
-      rider {
-        setDocument(riderId: $riderId, document: $document) {
-          type
-          photo
-        }
-      }
-    }
-  }
-`;
+import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
+import { SET_RIDER_DOCUMENT_QUERY } from './rider.riderManagementQueries.js';
 
 function buildRiderDocument() {
   const type = `DRIVER_LICENSE`;
   const photo = `dd-123456-8888-5643.png`;
-  const riderId = 2;
+  const riderId = getRiderAccount('default').riderId;
   return { riderId, type, photo };
 }
 const riderDocument = buildRiderDocument();

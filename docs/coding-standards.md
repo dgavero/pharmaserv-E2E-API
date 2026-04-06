@@ -117,6 +117,11 @@ Rule:
 - if a sibling query file already exists, add the new operation there
 - if a shared workflow query file already exists for that actor/workflow path, prefer adding the operation there instead of embedding it in a step or spec
 
+Legacy drift note:
+
+- a few older feature specs still inline GraphQL for historical reasons
+- do not treat those as the preferred pattern for new work
+
 ## Page Objects and Actions
 
 ### Page Object Rules
@@ -255,6 +260,21 @@ Current mixed reality:
 
 - older or fragile flows still contain some hard waits and short polling loops
 - do not copy those into new code unless there is no stable signal and the reason is documented in the surrounding code
+
+## Known Legacy Drift To Avoid Copying
+
+These patterns still exist in parts of the repo, but they are not the preferred model for new changes:
+
+- env-driven `TEST_ENV` record maps in older test-data modules
+- commented legacy code that shows direct env-ID reads in specs
+- residual retry sleeps in older helper or action paths
+- inline GraphQL in untouched legacy specs
+
+When a task touches one of those files:
+
+- keep the requested fix minimal
+- do not spread the legacy pattern into sibling files
+- prefer the newer pattern when adding any new code in the same area
 
 ## Hybrid Merchant Rules
 

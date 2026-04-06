@@ -9,19 +9,7 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/auth.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
-
-const ADD_DEPENDENT_QUERY = /* GraphQL */ `
-  mutation ($patient: PatientRequest!) {
-    patient {
-      addDependent(patient: $patient) {
-        id
-        firstName
-        lastName
-        email
-      }
-    }
-  }
-`;
+import { ADD_DEPENDENT_QUERY } from './patient.profileQueries.js';
 
 function newDependentInput() {
   const firstName = `Dev`;

@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { markFailed } from '../../helpers/testFailure.js';
 import {
   safeClick,
@@ -221,36 +222,38 @@ export default class MerchantOrdersPage {
       markFailed(`Search results did not stabilize for ${tabLabelLower} booking ref ${searchTerm}`);
     }
 
-    const probeDeadline = Date.now() + Timeouts.short;
-    const probeIntervalMs = 300;
     let isSearchValueRetained = false;
     let isNoResultsVisible = false;
     let isOrderCardVisible = false;
     let sawNoResultsDuringProbe = false;
 
-    while (Date.now() < probeDeadline) {
-      const searchInput = await this.getVisibleSearchInput(tabLabelLower);
-      const searchValueAfterEnter = await searchInput.inputValue().catch(() => '');
-      isSearchValueRetained = searchValueAfterEnter.trim() === searchTerm;
-      isNoResultsVisible = await this.page
-        .locator(this.noResultsFoundMessage)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      isOrderCardVisible = await this.page
-        .locator(orderCardBookingReferenceID)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      sawNoResultsDuringProbe = sawNoResultsDuringProbe || isNoResultsVisible;
-
-      // Treat the exact booking-ref card as the only early terminal success signal.
-      // "No results found" can flash while the filtered cards are still settling.
-      if (isSearchValueRetained && isOrderCardVisible) {
-        break;
-      }
-
-      await this.page.waitForTimeout(probeIntervalMs);
+    try {
+      await expect
+        .poll(
+          async () => {
+            const searchInput = await this.getVisibleSearchInput(tabLabelLower);
+            const searchValueAfterEnter = await searchInput.inputValue().catch(() => '');
+            isSearchValueRetained = searchValueAfterEnter.trim() === searchTerm;
+            isNoResultsVisible = await this.page
+              .locator(this.noResultsFoundMessage)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            isOrderCardVisible = await this.page
+              .locator(orderCardBookingReferenceID)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            sawNoResultsDuringProbe = sawNoResultsDuringProbe || isNoResultsVisible;
+            return isSearchValueRetained && isOrderCardVisible;
+          },
+          {
+            timeout: Timeouts.short,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
     }
 
     // Preserve whether empty-state appeared at all, but only after the full probe window.

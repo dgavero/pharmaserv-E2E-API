@@ -3,20 +3,7 @@ import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
 import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
-
-const GET_DC_CARD = /* GraphQL */ `
-  query ($patientId: ID!) {
-    patient {
-      discountCards(patientId: $patientId) {
-        id
-        name
-        cardType
-        cardNumber
-        photo
-      }
-    }
-  }
-`;
+import { GET_DISCOUNT_CARDS_QUERY } from './patient.profileQueries.js';
 
 const patientId = getPatientAccount('default').patientId;
 const incorrectPatientId = 999; // Non-existing patient ID
@@ -32,7 +19,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const getDCRes = await safeGraphQL(api, {
-        query: GET_DC_CARD,
+        query: GET_DISCOUNT_CARDS_QUERY,
         variables: { patientId },
         headers: bearer(accessToken),
       });
@@ -51,7 +38,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const getDCRes = await safeGraphQL(api, {
-        query: GET_DC_CARD,
+        query: GET_DISCOUNT_CARDS_QUERY,
         variables: { patientId: incorrectPatientId },
         headers: bearer(accessToken),
       });
@@ -73,7 +60,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api, noAuth }) => {
       const getDCNoAuthRes = await safeGraphQL(api, {
-        query: GET_DC_CARD,
+        query: GET_DISCOUNT_CARDS_QUERY,
         variables: { patientId },
         headers: noAuth,
       });
@@ -95,7 +82,7 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
     },
     async ({ api, invalidAuth }) => {
       const getDCInvalidAuthRes = await safeGraphQL(api, {
-        query: GET_DC_CARD,
+        query: GET_DISCOUNT_CARDS_QUERY,
         variables: { patientId },
         headers: invalidAuth,
       });

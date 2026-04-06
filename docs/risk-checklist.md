@@ -45,6 +45,7 @@ Use this checklist before and after implementing risky changes.
 - Does the change rely on `TEST_ENV`, branch IDs, reusable order IDs, or role credentials?
 - Does the new logic work for `DEV`, `QA`, and `PROD`, or is it intentionally scoped?
 - Am I reintroducing direct env-ID reads in specs where account/profile helpers already expose the same data?
+- Am I copying an older env-driven test-data map into a new spec or helper instead of reusing the existing account/profile or test-data resolution path?
 
 ### Fixed IDs and Reusable Records
 
@@ -101,6 +102,7 @@ Use this checklist before and after implementing risky changes.
 
 - Is the code in the correct layer?
 - Did I add logic to a spec that should live in a helper, action module, or page object instead?
+- Did I stop and ask when the target layer or workflow order was unclear?
 
 ### Scope
 
@@ -117,6 +119,7 @@ Use this checklist before and after implementing risky changes.
 
 - Did I avoid introducing new hard waits?
 - If I had to add a wait, is the reason obvious in code?
+- Did I avoid copying a legacy retry sleep from an older helper or action path when a bounded probe or existing wait helper would work?
 
 ### Assertions
 
@@ -127,6 +130,7 @@ Use this checklist before and after implementing risky changes.
 
 - Did I preserve current env resolution behavior?
 - Did I avoid silent coupling to one environment unless the file already behaves that way?
+- Did I avoid adding new direct env-ID coupling or new spec-local `TEST_ENV` record maps?
 
 ### Workflow Safety
 

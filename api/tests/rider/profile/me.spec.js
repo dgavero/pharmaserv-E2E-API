@@ -1,7 +1,7 @@
 import { loginAsRiderAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getRiderAccount, getRiderCredentials } from '../../../helpers/roleCredentials.js';
+import { getRiderAccount } from '../../../helpers/roleCredentials.js';
 import { ME_RIDER_QUERY } from './rider.profileQueries.js';
 
 const defaultRiderAccount = getRiderAccount('default');
@@ -13,7 +13,7 @@ test.describe('GraphQL: Get Rider Profile', () => {
       tag: ['@api', '@rider', '@positive', '@pharma-118', '@smoke'],
     },
     async ({ api }) => {
-      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, defaultRiderAccount);
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
 
       const meRiderRes = await safeGraphQL(api, {
@@ -27,7 +27,7 @@ test.describe('GraphQL: Get Rider Profile', () => {
       const riderNode = meRiderRes.body.data.rider.me;
       expect(riderNode).toBeTruthy();
       expect.soft(riderNode.id).toBe(defaultRiderAccount.riderId);
-      expect.soft(riderNode.username).toBe(process.env.RIDER_USERNAME);
+      expect.soft(riderNode.username).toBe(defaultRiderAccount.username);
     }
   );
 

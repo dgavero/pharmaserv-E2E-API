@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { Timeouts } from '../Timeouts';
 import { clearCurrentPage, getCurrentPage, setCurrentPage } from './testFailure.js';
 
@@ -151,20 +152,29 @@ export async function safeWaitForPageLoad(
   }
 
   while (remainingMs() > 0) {
-    let hasVisibleLoader = false;
-
-    for (const selector of loadingSelectors) {
-      try {
-        if (await page.locator(selector).first().isVisible()) {
-          hasVisibleLoader = true;
-          break;
-        }
-      } catch {
-      }
+    try {
+      await expect
+        .poll(
+          async () => {
+            for (const selector of loadingSelectors) {
+              try {
+                if (await page.locator(selector).first().isVisible()) {
+                  return false;
+                }
+              } catch {
+              }
+            }
+            return true;
+          },
+          {
+            timeout: remainingMs(),
+            intervals: [100],
+          }
+        )
+        .toBe(true);
+    } catch {
     }
-
-    if (!hasVisibleLoader) break;
-    await page.waitForTimeout(100);
+    break;
   }
 
   for (const selector of loadingSelectors) {
@@ -197,24 +207,37 @@ export async function safeWaitForPageLoad(
         return logSuccessAndReturn();
       }
 
-      while (remainingMs() > 0) {
-        for (const selector of selectorList) {
-          try {
-            if (await page.locator(selector).first().isVisible()) {
-              if (hasUnexpectedLoginRedirect()) {
-                setLastErrorForPage(page, new Error('Unexpected redirect to /login'));
-                return logFailureAndReturn();
+      try {
+        await expect
+          .poll(
+            async () => {
+              for (const selector of selectorList) {
+                try {
+                  if (await page.locator(selector).first().isVisible()) {
+                    return true;
+                  }
+                } catch {
+                }
               }
-              return logSuccessAndReturn();
+              return false;
+            },
+            {
+              timeout: remainingMs(),
+              intervals: [100],
             }
-          } catch {
-          }
-        }
-        await page.waitForTimeout(100);
+          )
+          .toBe(true);
+      } catch (error) {
+        console.log('Target selector check failed: none became visible before timeout.');
+        setLastErrorForPage(page, error);
+        return logFailureAndReturn();
       }
-      console.log('Target selector check failed: none became visible before timeout.');
-      setLastErrorForPage(page, new Error(`None of selectors became visible: ${selectorList.join(' | ')}`));
-      return logFailureAndReturn();
+
+      if (hasUnexpectedLoginRedirect()) {
+        setLastErrorForPage(page, new Error('Unexpected redirect to /login'));
+        return logFailureAndReturn();
+      }
+      return logSuccessAndReturn();
     }
 
     const urlBudget = remainingMs();
@@ -244,23 +267,34 @@ export async function safeFill(
   const expected = text == null ? '' : String(text);
   let lastError = null;
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const loc = page.locator(selector);
-      await loc.waitFor({ state: 'visible', timeout });
-      await loc.fill(expected, { timeout });
+  try {
+    await expect
+      .poll(
+        async () => {
+          try {
+            const loc = page.locator(selector);
+            await loc.waitFor({ state: 'visible', timeout });
+            await loc.fill(expected, { timeout });
 
-      const actual = await loc.inputValue({ timeout });
-      if (actual === expected) return true;
+            const actual = await loc.inputValue({ timeout });
+            if (actual === expected) return true;
 
-      lastError = new Error(`safeFill verification mismatch: expected "${expected}", got "${actual}"`);
-    } catch (error) {
-      lastError = error;
-    }
-
-    if (attempt < retries) {
-      await page.waitForTimeout(retryDelayMs);
-    }
+            lastError = new Error(`safeFill verification mismatch: expected "${expected}", got "${actual}"`);
+            return false;
+          } catch (error) {
+            lastError = error;
+            return false;
+          }
+        },
+        {
+          timeout: timeout + retries * retryDelayMs,
+          intervals: [retryDelayMs],
+        }
+      )
+      .toBe(true);
+    return true;
+  } catch (error) {
+    lastError = error;
   }
 
   setLastErrorForPage(page, lastError || new Error('safeFill failed'));

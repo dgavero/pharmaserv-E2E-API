@@ -1,18 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { safeGraphQL } from '../../../helpers/graphqlUtils.js';
-
-const GET_TNC_QUERY = /* GraphQL */ `
-  query {
-    patient {
-      legals {
-        termsAndConditions {
-          title
-          content
-        }
-      }
-    }
-  }
-`;
+import { GET_PATIENT_TERMS_AND_CONDITIONS_QUERY } from './patient.legalsQueries.js';
 
 test.describe('GraphQL: Get Terms and Conditions', () => {
   test(
@@ -22,7 +10,7 @@ test.describe('GraphQL: Get Terms and Conditions', () => {
     },
     async ({ api, noAuth }) => {
       const getTNCRes = await safeGraphQL(api, {
-        query: GET_TNC_QUERY,
+        query: GET_PATIENT_TERMS_AND_CONDITIONS_QUERY,
         headers: noAuth,
       });
 

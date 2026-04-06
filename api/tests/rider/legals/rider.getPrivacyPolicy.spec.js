@@ -1,18 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import { safeGraphQL } from '../../../helpers/graphqlUtils.js';
-
-const GET_PRIVACY_POLICY_QUERY = /* GraphQL */ `
-  query {
-    rider {
-      legals {
-        privacyPolicy {
-          title
-          content
-        }
-      }
-    }
-  }
-`;
+import { GET_RIDER_PRIVACY_POLICY_QUERY } from './rider.legalsQueries.js';
 
 test.describe('GraphQL: Get Rider Privacy Policy', () => {
   test(
@@ -22,7 +10,7 @@ test.describe('GraphQL: Get Rider Privacy Policy', () => {
     },
     async ({ api, noAuth }) => {
       const getPrivacyPolicyRes = await safeGraphQL(api, {
-        query: GET_PRIVACY_POLICY_QUERY,
+        query: GET_RIDER_PRIVACY_POLICY_QUERY,
         headers: noAuth,
       });
 

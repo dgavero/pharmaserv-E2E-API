@@ -21,11 +21,25 @@ Before editing code, every coding task must follow this contract:
    - env or fixed-ID coupling
    - hybrid workflow or selector risk
 4. State whether approval is required based on the approval-required areas in this file.
-5. Propose the smallest viable change plan.
-6. Implement only that plan.
-7. Self-review the result against `docs/risk-checklist.md` and `docs/change-workflow.md` before finishing.
+5. State explicit assumptions, unresolved unknowns, and what must be confirmed before editing.
+6. Propose the smallest viable change plan.
+7. Implement only that plan.
+8. Self-review the result against `docs/risk-checklist.md` and `docs/change-workflow.md` before finishing.
 
 If any step cannot be completed confidently, stop and resolve that gap before editing.
+
+## Stop And Ask Conditions
+
+Stop and ask the user before editing if any of the following is true:
+
+- The target layer is unclear between `api/`, `e2e/`, shared workflow reuse, or docs-only work.
+- The requested behavior depends on an ID, account, branch, reusable record, or schedule rule that is not already discoverable from the local helper, profile, fixture, or test-data path.
+- The request could plausibly be implemented in more than one workflow order, branch-binding path, or actor transition order and the prompt does not choose between them.
+- The change needs a selector update but the current DOM has not been inspected.
+- The request appears to require an approval-required shared area and the user did not explicitly ask for that area to change.
+- The local files show conflicting patterns and it is not clear whether the task is a small local fix or a repo-wide convention change.
+
+If you stop, explain the exact ambiguity or risk in repository terms and ask only for the missing decision needed to proceed.
 
 ## Repository Facts
 
@@ -181,6 +195,17 @@ This repository has mixed conventions. Follow the dominant local pattern in the 
 - bounded retries and explicit waits over fixed sleeps
 - account/profile helpers over direct env-ID reads in specs
 - delivery-specific hybrid builders over generic `deliveryType` orchestration in specs
+
+## Known Legacy Drift To Not Copy
+
+Some older files still contain patterns that new changes should not copy unless the user explicitly asks to clean them up:
+
+- env-driven `TEST_ENV` test-data maps and reusable record mappings in older test-data modules
+- commented legacy spec code that still shows direct env or fixed-ID coupling
+- residual bounded retry sleeps in a few older helper or action paths where no stable readiness signal has been cleaned up yet
+- older inline GraphQL left in untouched legacy specs
+
+Treat those as compatibility debt, not as preferred examples for new work. When touching one of those files for a small task, keep the fix minimal unless the user explicitly asks for drift cleanup.
 
 ## Hybrid Merchant Hard Rules
 

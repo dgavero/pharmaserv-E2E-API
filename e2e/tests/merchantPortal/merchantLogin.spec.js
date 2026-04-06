@@ -2,8 +2,7 @@ import { markFailed } from '../../helpers/testFailure.js';
 import MerchantPortalLoginPage from '../../pages/merchantPortal/merchantPortalLogin.page.js';
 import { test } from '../../../e2e/globalConfig.ui.js';
 import { getMerchantPortalAccount } from '../../helpers/merchantCredentials.js';
-import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import { safeClick, safeFill, safeInput, safeNavigateToUrl, safeOpenNewContextPage, safeWaitForPageLoad, safeWaitForElementVisible, getLastError } from '../../helpers/uiActions.js';
+import { safeOpenNewContextPage, getLastError } from '../../helpers/uiActions.js';
 
 test.describe('Merchant Portal | Login', () => {
   test(
@@ -25,22 +24,9 @@ test.describe('Merchant Portal | Login', () => {
     'E2E-2 | Merchant Should NOT be able login with incorrect credentials',
     { tag: ['@ui', '@merchant', '@login', '@negative', '@merchant-portal', '@e2e-2'] },
     async ({ page }) => {
-      const sel = loadSelectors('merchant');
       const login = new MerchantPortalLoginPage(page);
       await login.open();
-
-      if (!(await safeFill(page, getSelector(sel, 'Login.Username'), 'wronguser'))) {
-        markFailed('Failed to fill invalid username');
-      }
-
-      if (!(await safeFill(page, getSelector(sel, 'Login.Password'), 'wrongpass'))) {
-        markFailed('Failed to fill invalid password');
-      }
-
-      if (!(await safeClick(page, getSelector(sel, 'Login.Submit')))) {
-        markFailed('Could not click login submit');
-      }
-
+      await login.submitLoginFormWithFill('wronguser', 'wrongpass');
       await login.assertFailedLogin();
     }
   );
@@ -52,19 +38,10 @@ test.describe('Merchant Portal | Login', () => {
     },
 
     async ({ page }) => {
-      const sel = loadSelectors('merchant');
       const login = new MerchantPortalLoginPage(page);
 
       await login.open();
-      if (!(await safeFill(page, getSelector(sel, 'Login.Username'), ''))) {
-        markFailed('Failed to fill empty username');
-      }
-      if (!(await safeFill(page, getSelector(sel, 'Login.Password'), ''))) {
-        markFailed('Failed to fill empty password');
-      }
-      if (!(await safeClick(page, getSelector(sel, 'Login.Submit')))) {
-        markFailed('Failed to click login submit with empty credentials');
-      }
+      await login.submitLoginFormWithFill('', '');
       await login.assertFailedLogin();
     }
   );

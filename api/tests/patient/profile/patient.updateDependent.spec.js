@@ -3,32 +3,31 @@ import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.
 import { test, expect } from '../../../globalConfig.api.js';
 import { randomNum } from '../../../../helpers/globalTestUtils.js';
 import { getPatientCredentials, getAdminCredentials } from '../../../helpers/roleCredentials.js';
-
-const UPDATE_DEPENDENT_QUERY = /* GraphQL */ `
-  mutation ($dependentId: ID!, $patient: PatientRequest!) {
-    patient {
-      updateDependent(dependentId: $dependentId, patient: $patient) {
-        id
-        firstName
-        lastName
-        email
-        gender
-        height
-        weight
-        bloodType
-      }
-    }
-  }
-`;
+import { GET_DEPENDENTS_QUERY, UPDATE_DEPENDENT_QUERY } from './patient.profileQueries.js';
 
 const notDependentId = 999999; // assuming this ID does not belong to any dependent of the patient
-const dependentId = process.env.PATIENT_USER_USERNAME_RELATED_ID; // hardcoded and linked to used patient
 function updateDependentInput() {
   const height = randomNum(3);
   const weight = randomNum(3);
   const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   const bloodType = bloodTypes[Math.floor(Math.random() * bloodTypes.length)];
   return { height, weight, bloodType };
+}
+
+async function getExistingDependentId(api, accessToken) {
+  const getDependentsRes = await safeGraphQL(api, {
+    query: GET_DEPENDENTS_QUERY,
+    headers: bearer(accessToken),
+  });
+  expect(getDependentsRes.ok, getDependentsRes.error || 'Get dependents request failed').toBe(true);
+
+  const dependentsNode = getDependentsRes.body?.data?.patient?.dependents;
+  expect(Array.isArray(dependentsNode), 'Expected patient.dependents to be an array').toBe(true);
+  expect(dependentsNode.length, 'Expected at least one existing dependent').toBeGreaterThan(0);
+
+  const dependentId = dependentsNode[0]?.id;
+  expect(dependentId, 'Missing dependent id from patient.dependents').toBeTruthy();
+  return dependentId;
 }
 
 test.describe('GraphQL: Patient Update Dependent', () => {
@@ -41,6 +40,7 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
+      const dependentId = await getExistingDependentId(api, accessToken);
       const updateDependentData = updateDependentInput();
       const updateDependentRes = await safeGraphQL(api, {
         query: UPDATE_DEPENDENT_QUERY,
@@ -64,6 +64,10 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-68'],
     },
     async ({ api, noAuth }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const dependentId = await getExistingDependentId(api, accessToken);
       const updateDependentData = updateDependentInput();
       const updateDependentNoAuthRes = await safeGraphQL(api, {
         query: UPDATE_DEPENDENT_QUERY,
@@ -90,6 +94,10 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       tag: ['@api', '@patient', '@negative', '@pharma-69'],
     },
     async ({ api, invalidAuth }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const dependentId = await getExistingDependentId(api, accessToken);
       const updateDependentData = updateDependentInput();
       const updateDependentInvalidAuthRes = await safeGraphQL(api, {
         query: UPDATE_DEPENDENT_QUERY,
