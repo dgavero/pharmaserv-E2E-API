@@ -3,34 +3,9 @@ import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import { CREATE_DISCOUNT_CARD_QUERY, REMOVE_DISCOUNT_CARD_QUERY } from './patient.profileQueries.js';
 
 const defaultPatientAccount = getPatientAccount('default');
-
-const REMOVE_DC_CARD = /* GraphQL */ `
-  mutation ($discountCardId: ID!) {
-    patient {
-      discountCard {
-        remove(discountCardId: $discountCardId)
-      }
-    }
-  }
-`;
-
-const CREATE_DC_CARD = /* GraphQL */ `
-  mutation ($discountCard: DiscountCardRequest!) {
-    patient {
-      discountCard {
-        create(discountCard: $discountCard) {
-          id
-          name
-          cardType
-          cardNumber
-          photo
-        }
-      }
-    }
-  }
-`;
 
 const unownedDiscountCardId = 9999;
 
@@ -57,7 +32,7 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
       // Create a discount card to be removed and get its ID
       const discountCardData = discountCardInput();
       const createDiscountCardRes = await safeGraphQL(api, {
-        query: CREATE_DC_CARD,
+        query: CREATE_DISCOUNT_CARD_QUERY,
         variables: { discountCard: discountCardData },
         headers: bearer(accessToken),
       });
@@ -72,7 +47,7 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
 
       // Remove the created discount card
       const removeDiscountCardRes = await safeGraphQL(api, {
-        query: REMOVE_DC_CARD,
+        query: REMOVE_DISCOUNT_CARD_QUERY,
         variables: { discountCardId },
         headers: bearer(accessToken),
       });
@@ -94,7 +69,7 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
       const removeDiscountCardRes = await safeGraphQL(api, {
-        query: REMOVE_DC_CARD,
+        query: REMOVE_DISCOUNT_CARD_QUERY,
         variables: { discountCardId: unownedDiscountCardId },
         headers: bearer(accessToken),
       });

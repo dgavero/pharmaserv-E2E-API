@@ -2,7 +2,7 @@ import { loginAsPatientAndGetTokens } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getPatientAccount, getPatientCredentials } from '../../../helpers/roleCredentials.js';
-import { UPDATE_DISCOUNT_CARD_QUERY } from './patient.profileQueries.js';
+import { GET_DISCOUNT_CARDS_QUERY, UPDATE_DISCOUNT_CARD_QUERY } from './patient.profileQueries.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 
 const defaultPatientAccount = getPatientAccount('default');
@@ -27,7 +27,15 @@ test.describe('GraphQL: Update Discount Card Patient', () => {
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const updateCardData = updateDiscountCardInput();
-      const patientCardId = process.env.PATIENT_USER_USENAME_CARDID;
+      const getDiscountCardsRes = await safeGraphQL(api, {
+        query: GET_DISCOUNT_CARDS_QUERY,
+        variables: { patientId: defaultPatientAccount.patientId },
+        headers: bearer(accessToken),
+      });
+      expect(getDiscountCardsRes.ok, getDiscountCardsRes.error || 'Get discount cards request failed').toBe(true);
+
+      const patientCardId = getDiscountCardsRes.body?.data?.patient?.discountCards?.[0]?.id;
+      expect(patientCardId, 'Missing existing discount card id for update test').toBeTruthy();
 
       const updateDiscountCardRes = await safeGraphQL(api, {
         query: UPDATE_DISCOUNT_CARD_QUERY,

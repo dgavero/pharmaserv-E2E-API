@@ -1,35 +1,18 @@
 import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { REGISTER_RIDER_MUTATION, UPDATE_RIDER_MUTATION } from './rider.riderManagementQueries.js';
 
-// RiderID to update
-const riderId = 4;
-
-// GQL: Update Rider
-const UPDATE_RIDER_MUTATION = /* GraphQL */ `
-  mutation ($riderId: ID!, $rider: RiderRequest!) {
-    administrator {
-      rider {
-        update(riderId: $riderId, rider: $rider) {
-          id
-          uuid
-          firstName
-          lastName
-          username
-        }
-      }
-    }
-  }
-`;
+const defaultRiderAccount = getRiderAccount('default');
 
 function buildRiderUpdateInput() {
   const firstName = `UpdatedFirstName${randomAlphanumeric(4)}`;
   const lastName = `UpdatedLastName${randomAlphanumeric(4)}`;
   const email = `updatedrider+${randomAlphanumeric(8)}@example.com`;
   const username = `updatedrider_${randomAlphanumeric(8)}`;
-  const phoneNumber = `+63${randomNum(10)}`;
+  const phoneNumber = `+639${String(randomNum(9)).padStart(9, '0')}`;
   const houseNumber = `${randomNum(3)}`;
   const street = `${randomNum(3)} Main St`;
   const barangay = `Barangay ${randomAlphanumeric(4)}`;
@@ -49,6 +32,20 @@ function buildRiderUpdateInput() {
   };
 }
 
+async function registerRiderForUpdate(api, accessToken) {
+  const riderInput = buildRiderUpdateInput();
+  const registerRiderRes = await safeGraphQL(api, {
+    query: REGISTER_RIDER_MUTATION,
+    variables: { rider: { ...riderInput, password: 'Password123' } },
+    headers: bearer(accessToken),
+  });
+  expect(registerRiderRes.ok, registerRiderRes.error || 'Register rider setup failed').toBe(true);
+
+  const riderId = registerRiderRes.body?.data?.administrator?.rider?.register?.id;
+  expect(riderId, 'Missing rider id from register rider setup').toBeTruthy();
+  return riderId;
+}
+
 test.describe('GraphQL: Update Rider', () => {
   test(
     'PHARMA-44 | Should be able to Update Rider Details [4] with valid Auth',
@@ -62,6 +59,7 @@ test.describe('GraphQL: Update Rider', () => {
 
       // Build update input
       const riderUpdateInput = buildRiderUpdateInput();
+      const riderId = await registerRiderForUpdate(api, accessToken);
 
       const updateRiderRes = await safeGraphQL(api, {
         query: UPDATE_RIDER_MUTATION,
@@ -97,6 +95,7 @@ test.describe('GraphQL: Update Rider', () => {
 
       // Build update input with missing firstName
       const riderUpdateInput = buildRiderUpdateInput();
+      const riderId = await registerRiderForUpdate(api, accessToken);
       delete riderUpdateInput.firstName;
 
       const updateRiderRes = await safeGraphQL(api, {
@@ -122,6 +121,7 @@ test.describe('GraphQL: Update Rider', () => {
     { tag: ['@api', '@admin', '@negative', '@pharma-46'] },
     async ({ api, noAuth }) => {
       const riderUpdateInput = buildRiderUpdateInput();
+      const riderId = defaultRiderAccount.riderId;
 
       const updateRiderNoAuth = await safeGraphQL(api, {
         query: UPDATE_RIDER_MUTATION,
@@ -149,6 +149,7 @@ test.describe('GraphQL: Update Rider', () => {
     },
     async ({ api, invalidAuth }) => {
       const riderUpdateInput = buildRiderUpdateInput();
+      const riderId = defaultRiderAccount.riderId;
 
       const updateRiderInvalidAuth = await safeGraphQL(api, {
         query: UPDATE_RIDER_MUTATION,

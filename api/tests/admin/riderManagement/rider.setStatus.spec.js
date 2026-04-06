@@ -1,34 +1,10 @@
 import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
+import { SET_RIDER_AVAILABLE_MUTATION, SET_RIDER_UNAVAILABLE_MUTATION } from './rider.riderManagementQueries.js';
 
-const SET_RIDER_AVAILABLE_MUTATION = `
-  mutation ($riderId: ID!) {
-    administrator {
-      rider {
-        setAvailable(riderId: $riderId) {
-          status
-        }
-      }
-    }
-  }
-`;
-
-const SET_RIDER_UNAVAILABLE_MUTATION = `
-  mutation ($riderId: ID!) {
-    administrator {
-      rider {
-        setUnavailable(riderId: $riderId) {
-          status
-        }
-      }
-    }
-  }
-`;
-
-// Hardcoded expected riderId
-const riderId = 1;
+const riderId = getRiderAccount('default').riderId;
 
 test.describe('GraphQL: Admin Set Rider Status', () => {
   test(

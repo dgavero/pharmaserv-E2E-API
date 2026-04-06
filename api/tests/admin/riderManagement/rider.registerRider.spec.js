@@ -3,6 +3,7 @@ import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
+import { REGISTER_RIDER_MUTATION } from './rider.riderManagementQueries.js';
 
 // Build Correct Rider Input Payload
 function buildRiderInput() {
@@ -31,23 +32,6 @@ function buildRiderInput() {
     password,
   };
 }
-
-// GQL: Register Rider
-const REGISTER_RIDER_MUTATION = /* GraphQL */ `
-  mutation ($rider: RiderRegister!) {
-    administrator {
-      rider {
-        register(rider: $rider) {
-          id
-          uuid
-          firstName
-          lastName
-          username
-        }
-      }
-    }
-  }
-`;
 
 test.describe('GraphQL: Rider Register', () => {
   test(

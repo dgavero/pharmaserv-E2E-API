@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import {
   safeClick,
   safeInput,
@@ -254,19 +255,24 @@ export default class MerchantOrderDetailsPage {
       markFailed('First edit button is not visible for pricing');
     }
 
-    const deadline = Date.now() + Timeouts.short;
-    const probeIntervalMs = 300;
-
-    while (Date.now() < deadline) {
-      const editButtonCount = await this.page.locator(this.s.editItemButtons).count();
-      if (editButtonCount > 0) {
-        return editButtonCount;
-      }
-
-      await this.page.waitForTimeout(probeIntervalMs);
+    let editButtonCount = 0;
+    try {
+      await expect
+        .poll(
+          async () => {
+            editButtonCount = await this.page.locator(this.s.editItemButtons).count();
+            return editButtonCount > 0;
+          },
+          {
+            timeout: Timeouts.short,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
     }
 
-    return 0;
+    return editButtonCount;
   }
 
   async openEditItemByIndex(index) {
@@ -467,77 +473,88 @@ export default class MerchantOrderDetailsPage {
 
   async dismissPickListOverlayIfPresent() {
     // Dismisses the pick-list preview overlay once it appears so the next pickup action becomes clickable.
-    const deadline = Date.now() + Timeouts.short;
-    const probeIntervalMs = 200;
+    try {
+      await expect
+        .poll(
+          async () => {
+            const overlayVisible = await this.page
+              .locator(this.s.pickListPrintButton)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            if (overlayVisible) {
+              await this.page.keyboard.press('Escape').catch(() => {});
 
-    while (Date.now() < deadline) {
-      const overlayVisible = await this.page
-        .locator(this.s.pickListPrintButton)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      if (overlayVisible) {
-        await this.page.keyboard.press('Escape').catch(() => {});
+              const overlayHidden = await safeWaitForElementHidden(this.page, this.s.pickListPrintButton, {
+                timeout: Timeouts.short,
+              });
+              if (!overlayHidden) {
+                markFailed('Pick-list overlay did not close after generating pick list');
+              }
+              return true;
+            }
 
-        const overlayHidden = await safeWaitForElementHidden(this.page, this.s.pickListPrintButton, {
-          timeout: Timeouts.short,
-        });
-        if (!overlayHidden) {
-          markFailed('Pick-list overlay did not close after generating pick list');
-        }
-        return;
-      }
+            const pickupButtonVisible = await this.page
+              .locator(this.s.pickupReadyButton)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            if (!pickupButtonVisible) {
+              return false;
+            }
 
-      const pickupButtonVisible = await this.page
-        .locator(this.s.pickupReadyButton)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      if (pickupButtonVisible) {
-        const currentLabel = await this.page.locator(this.s.pickupReadyButton).first().innerText().catch(() => '');
-        if (String(currentLabel || '').includes('Ready for Pick Up')) {
-          return;
-        }
-      }
-
-      await this.page.waitForTimeout(probeIntervalMs);
+            const currentLabel = await this.page.locator(this.s.pickupReadyButton).first().innerText().catch(() => '');
+            return String(currentLabel || '').includes('Ready for Pick Up');
+          },
+          {
+            timeout: Timeouts.short,
+            intervals: [200],
+          }
+        )
+        .toBe(true);
+    } catch {
     }
   }
 
   async waitForPickupState({ expectedStatusSelector, expectedActionLabel, failureContext }) {
     // Polls the live order-details view until either the expected status heading or the next pickup action label appears.
-    const deadline = Date.now() + Timeouts.short;
-    const probeIntervalMs = 300;
+    try {
+      await expect
+        .poll(
+          async () => {
+            if (expectedStatusSelector) {
+              const statusVisible = await this.page
+                .locator(expectedStatusSelector)
+                .first()
+                .isVisible()
+                .catch(() => false);
+              if (statusVisible) {
+                return true;
+              }
+            }
 
-    while (Date.now() < deadline) {
-      if (expectedStatusSelector) {
-        const statusVisible = await this.page
-          .locator(expectedStatusSelector)
-          .first()
-          .isVisible()
-          .catch(() => false);
-        if (statusVisible) {
-          return;
-        }
-      }
+            const pickupButtonVisible = await this.page
+              .locator(this.s.pickupReadyButton)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            if (!pickupButtonVisible) {
+              return false;
+            }
 
-      const pickupButtonVisible = await this.page
-        .locator(this.s.pickupReadyButton)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      if (pickupButtonVisible) {
-        const pickupReadyButton = this.page.locator(this.s.pickupReadyButton).first();
-        const currentLabel = await pickupReadyButton.innerText().catch(() => '');
-        if (expectedActionLabel && String(currentLabel || '').includes(expectedActionLabel)) {
-          return;
-        }
-      }
-
-      await this.page.waitForTimeout(probeIntervalMs);
+            const pickupReadyButton = this.page.locator(this.s.pickupReadyButton).first();
+            const currentLabel = await pickupReadyButton.innerText().catch(() => '');
+            return expectedActionLabel ? String(currentLabel || '').includes(expectedActionLabel) : false;
+          },
+          {
+            timeout: Timeouts.short,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
+      markFailed(`Order did not advance to ${failureContext}`);
     }
-
-    markFailed(`Order did not advance to ${failureContext}`);
   }
 
   async waitForQuoteSubmissionToSettle() {
@@ -550,6 +567,13 @@ export default class MerchantOrderDetailsPage {
     return safeWaitForElementVisible(this.page, this.s.requestPaymentButton, {
       timeout: Timeouts.short,
     });
+  }
+
+  async waitForRequestPaymentIdleBeforeResend() {
+    // Ensures the request-payment control is out of loading state before re-sending the quote.
+    if (!(await safeWaitForElementHidden(this.page, this.s.requestPaymentLoadingButton))) {
+      markFailed('Request payment is still loading before re-send quote');
+    }
   }
 
   async verifyQuantityChangedModalAppeared() {

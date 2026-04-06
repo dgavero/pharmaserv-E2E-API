@@ -8,35 +8,9 @@ import {
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
+import { GET_RIDER_DOCUMENT_QUERY, GET_RIDER_DOCUMENTS_QUERY } from './rider.riderManagementQueries.js';
 
 const defaultRiderAccount = getRiderAccount('default');
-
-const GET_RIDER_DOCUMENT_QUERY = /* GraphQL */ `
-  query ($riderId: ID!, $type: DocumentType!) {
-    administrator {
-      rider {
-        document(riderId: $riderId, type: $type) {
-          type
-          photo
-        }
-      }
-    }
-  }
-`;
-
-const GET_RIDER_DOCUMENTS_QUERY = /* GraphQL */ `
-  query ($riderId: ID!) {
-    administrator {
-      rider {
-        documents(riderId: $riderId) {
-          type
-          photo
-        }
-      }
-    }
-  }
-`;
-
 const riderId = defaultRiderAccount.riderId;
 const riderDocumentType = 'DRIVER_LICENSE';
 

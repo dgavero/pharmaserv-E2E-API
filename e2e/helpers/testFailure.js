@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { enqueueDiscordMessage } from './reporting/discordReporterClient.js';
+import { formatKnownIssueMarkdown } from '../../helpers/knownIssues.js';
 
 let currentTestTitle = null;
 let currentPage = null;
@@ -9,7 +10,11 @@ let pendingFailureReason = null;
 const failedOnceByTitle = new Set();
 
 function formatMsg(emoji, title, reason) {
-  return reason ? `${emoji} ${title}\nReason: ${reason}` : `${emoji} ${title}`;
+  const relatedIssueMarkdown = formatKnownIssueMarkdown(title);
+  const lines = [`${emoji} ${title}`];
+  if (relatedIssueMarkdown) lines.push(relatedIssueMarkdown);
+  if (reason) lines.push(`Reason: ${reason}`);
+  return lines.join('\n');
 }
 
 export function setCurrentTestTitle(title) {

@@ -3,23 +3,7 @@ import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.
 import { test, expect } from '../../../globalConfig.api.js';
 import { randomNum } from '../../../../helpers/globalTestUtils.js';
 import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
-
-const UPDATE_PATIENT_QUERY = /* GraphQL */ `
-  mutation ($patient: PatientRequest!) {
-    patient {
-      update(patient: $patient) {
-        id
-        firstName
-        lastName
-        email
-        gender
-        height
-        weight
-        bloodType
-      }
-    }
-  }
-`;
+import { UPDATE_PATIENT_QUERY } from './patient.profileQueries.js';
 
 function updatePatientInput() {
   const height = randomNum(3);

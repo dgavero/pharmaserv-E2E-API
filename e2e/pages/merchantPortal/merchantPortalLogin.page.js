@@ -1,6 +1,7 @@
+import { expect } from '@playwright/test';
 import { markFailed } from '../../helpers/testFailure.js';
 import { loadSelectors, getSelector } from '../../helpers/selectors.js';
-import { safeClick, safeInput, safeWaitForElementVisible } from '../../helpers/uiActions.js';
+import { safeClick, safeFill, safeInput, safeWaitForElementVisible } from '../../helpers/uiActions.js';
 import { Timeouts } from '../../Timeouts.js';
 
 export default class MerchantPortalLoginPage {
@@ -29,6 +30,11 @@ export default class MerchantPortalLoginPage {
       markFailed('Merchant login requires non-empty username and password');
     }
 
+    await this.submitLoginForm(user, pass);
+  }
+
+  async submitLoginForm(user = '', pass = '') {
+    // Submits the login form using typing semantics for standard happy-path login.
     if (!(await safeInput(this.page, this.s.loginUsername, user))) {
       markFailed('Failed to input username');
     }
@@ -37,6 +43,22 @@ export default class MerchantPortalLoginPage {
       markFailed('Failed to input password');
     }
 
+    if (!(await safeWaitForElementVisible(this.page, this.s.loginSubmit))) {
+      markFailed('Login submit button is not visible');
+    }
+    if (!(await safeClick(this.page, this.s.loginSubmit))) {
+      markFailed('Failed to click login');
+    }
+  }
+
+  async submitLoginFormWithFill(user = '', pass = '') {
+    // Uses fill semantics so negative tests can intentionally submit empty or invalid credentials.
+    if (!(await safeFill(this.page, this.s.loginUsername, user))) {
+      markFailed('Failed to fill username');
+    }
+    if (!(await safeFill(this.page, this.s.loginPassword, pass))) {
+      markFailed('Failed to fill password');
+    }
     if (!(await safeWaitForElementVisible(this.page, this.s.loginSubmit))) {
       markFailed('Login submit button is not visible');
     }
@@ -63,28 +85,32 @@ export default class MerchantPortalLoginPage {
 
   async waitForLoginErrorState() {
     // Poll for either known login error state within the standard login wait window.
-    const deadline = Date.now() + Timeouts.standard;
-    const probeIntervalMs = 200;
+    try {
+      await expect
+        .poll(
+          async () => {
+            const errorCredsVisible = await this.page
+              .locator(this.s.errorCredsValidation)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            const errorUsernameVisible = await this.page
+              .locator(this.s.errorInvalidUsername)
+              .first()
+              .isVisible()
+              .catch(() => false);
 
-    while (Date.now() < deadline) {
-      const errorCredsVisible = await this.page
-        .locator(this.s.errorCredsValidation)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const errorUsernameVisible = await this.page
-        .locator(this.s.errorInvalidUsername)
-        .first()
-        .isVisible()
-        .catch(() => false);
-
-      if (errorCredsVisible || errorUsernameVisible) {
-        return true;
-      }
-
-      await this.page.waitForTimeout(probeIntervalMs);
+            return errorCredsVisible || errorUsernameVisible;
+          },
+          {
+            timeout: Timeouts.standard,
+            intervals: [200],
+          }
+        )
+        .toBe(true);
+      return true;
+    } catch {
+      return false;
     }
-
-    return false;
   }
 }

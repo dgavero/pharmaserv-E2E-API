@@ -8,7 +8,7 @@ test.describe('GraphQL: Get Rider Rating Summary', () => {
   test(
     'PHARMA-315 | Should be able to get rider rating summary',
     {
-      tag: ['@api', '@rider', '@positive', '@pharma-315', '@smoke'],
+      tag: ['@api', '@rider', '@positive', '@pharma-315'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));

@@ -20,6 +20,14 @@ Classify what is being asked:
 
 If the request is ambiguous, resolve the target layer before editing.
 
+Stop and ask if the prompt does not make the target layer clear enough to distinguish between:
+
+- `api` feature work
+- `api` workflow reuse
+- merchant UI or hybrid work
+- shared helper or config work
+- docs-only work
+
 ## Step 2: Classify the Domain and Role
 
 Identify the affected role and domain:
@@ -58,6 +66,8 @@ Questions to answer:
 - Is this an approval-required area?
 - If the spec needs actor-bound IDs or branch IDs, does an account/profile helper already expose them?
 
+If the task needs actor-bound IDs, branch IDs, reusable records, selector changes, or schedule-sensitive behavior and the local source of truth is still unclear after this step, stop and ask before editing.
+
 ## Step 4: Check Local Patterns
 
 Read the local neighboring files before writing code.
@@ -95,6 +105,13 @@ Before editing, explicitly check:
 If yes, treat the change as high-risk and keep the plan minimal.
 
 If the change touches any approval-required area from `AGENTS.md`, do not proceed silently. Call out the blast radius first.
+
+Also stop and ask before editing if:
+
+- multiple plausible workflow orders would satisfy the prompt
+- the task would require a selector change without DOM inspection
+- the task appears to require shared-area edits that were not explicitly requested
+- the only apparent implementation path depends on inventing env-specific IDs, branch IDs, or reusable records
 
 Approval rule for normal test work:
 
@@ -162,6 +179,8 @@ Before finishing, review for:
 - generic variable naming
 - new hard waits
 - new env assumptions
+- copied legacy `TEST_ENV` record maps or direct env-ID patterns into new code
+- copied residual retry sleeps from older helper or action paths into new code
 - accidental shared helper/config changes
 - unrelated cleanup in the same diff
 

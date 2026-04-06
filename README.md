@@ -134,7 +134,6 @@ Details: [secrets/README.md](./secrets/README.md)
 
 - Usage and run patterns: [USAGE.md](./USAGE.md)
 - API test authoring source-of-truth: [AGENTS.md](./AGENTS.md)
-- Version history: [CHANGELOG.md](./CHANGELOG.md)
 - Framework architecture and extension rules:
   - [docs/architecture.md](./docs/architecture.md)
   - [docs/test-layer-map.md](./docs/test-layer-map.md)

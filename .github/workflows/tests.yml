@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 4 * * *'
   workflow_dispatch:
     inputs:
       run_mode:
@@ -108,7 +108,7 @@ jobs:
           elif [[ "${EVENT_NAME}" == "push" ]]; then
             RUN_TAGS="smoke"
           elif [[ "${EVENT_NAME}" == "schedule" ]]; then
-            RUN_TAGS=""
+            RUN_TAGS="smoke"
           fi
 
           if [[ "${MODE}" == "stress" ]]; then
@@ -178,9 +178,9 @@ jobs:
               echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=${{ steps.selector.outputs.run_tags }} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
               TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" DISCORD_GREP_LABEL=smoke npm run test:all:safe
             elif [[ "${{ github.event_name }}" == "schedule" ]]; then
-              echo "Running SAFE mode full batches (schedule)"
-              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=__ALL__ npm run test:all:safe"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
+              echo "Running SAFE mode smoke batches (schedule DEV)"
+              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=${{ steps.selector.outputs.run_tags }} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
+              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" DISCORD_GREP_LABEL=smoke npm run test:all:safe
             elif [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
               echo "Running SAFE mode with specific TAGS in a single pass"
               echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=${{ steps.selector.outputs.run_tags }} PROJECT=e2e,api npx playwright test"
@@ -206,5 +206,71 @@ jobs:
         if: always()
         with:
           name: playwright-report
+          path: .playwright-report
+          include-hidden-files: true
+
+  qa-scheduled-full:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Configure git identity for report publish
+        run: |
+          git config --global user.name "${GIT_COMMITTER_NAME}"
+          git config --global user.email "${GIT_COMMITTER_EMAIL}"
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Install sops
+        shell: bash
+        run: |
+          bash scripts/secrets/install-sops.sh
+      - name: Load encrypted secrets
+        shell: bash
+        run: |
+          if [[ -z "${SOPS_AGE_KEY:-}" ]]; then
+            echo "Missing SOPS_AGE_KEY secret"
+            exit 1
+          fi
+
+          TEST_ENV=QA node scripts/secrets/load-secrets.js --env QA --github-env --required
+      - name: Set report routing by branch
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
+            echo "CI routing: main branch -> env test channels"
+          else
+            echo "REPORT_PUBLISH=0" >> "$GITHUB_ENV"
+            echo "CI routing: non-main branch -> LOCAL_RUNS_CHANNELID"
+          fi
+      - name: Validate required credentials
+        shell: bash
+        run: |
+          missing=0
+          for key in ADMIN_USERNAME ADMIN_PASSWORD PATIENT_USER_USERNAME PATIENT_USER_PASSWORD RIDER_USERNAME RIDER_PASSWORD; do
+            if [[ -z "${!key:-}" ]]; then
+              echo "Missing required credential variable: ${key}"
+              missing=1
+            fi
+          done
+          if [[ "${missing}" -ne 0 ]]; then
+            echo "Required credential vars are missing in decrypted secrets for TEST_ENV=QA."
+            exit 1
+          fi
+      - name: Run QA full suite in SAFE mode
+        shell: bash
+        run: |
+          echo "Running scheduled QA full suite in SAFE mode"
+          echo "CMD: TEST_ENV=QA THREADS=4 SAFE_PAUSE_SECONDS=30 SAFE_TAGS=__ALL__ npm run test:all:safe"
+          TEST_ENV=QA THREADS=4 SAFE_PAUSE_SECONDS=30 SAFE_TAGS="__ALL__" npm run test:all:safe
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-qa-scheduled
           path: .playwright-report
           include-hidden-files: true

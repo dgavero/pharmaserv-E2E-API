@@ -63,6 +63,46 @@ export const UPDATE_ADDRESS_QUERY = /* GraphQL */ `
   }
 `;
 
+export const CREATE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
+  mutation ($discountCard: DiscountCardRequest!) {
+    patient {
+      discountCard {
+        create(discountCard: $discountCard) {
+          id
+          name
+          cardType
+          cardNumber
+          photo
+        }
+      }
+    }
+  }
+`;
+
+export const GET_DISCOUNT_CARDS_QUERY = /* GraphQL */ `
+  query ($patientId: ID!) {
+    patient {
+      discountCards(patientId: $patientId) {
+        id
+        name
+        cardType
+        cardNumber
+        photo
+      }
+    }
+  }
+`;
+
+export const REMOVE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
+  mutation ($discountCardId: ID!) {
+    patient {
+      discountCard {
+        remove(discountCardId: $discountCardId)
+      }
+    }
+  }
+`;
+
 export const UPDATE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
   mutation ($discountCardId: ID!, $discountCard: DiscountCardRequest!) {
     patient {
@@ -74,6 +114,66 @@ export const UPDATE_DISCOUNT_CARD_QUERY = /* GraphQL */ `
           cardNumber
           photo
         }
+      }
+    }
+  }
+`;
+
+export const ADD_DEPENDENT_QUERY = /* GraphQL */ `
+  mutation ($patient: PatientRequest!) {
+    patient {
+      addDependent(patient: $patient) {
+        id
+        firstName
+        lastName
+        email
+      }
+    }
+  }
+`;
+
+export const GET_DEPENDENTS_QUERY = /* GraphQL */ `
+  query {
+    patient {
+      dependents {
+        id
+        firstName
+        lastName
+        email
+      }
+    }
+  }
+`;
+
+export const UPDATE_DEPENDENT_QUERY = /* GraphQL */ `
+  mutation ($dependentId: ID!, $patient: PatientRequest!) {
+    patient {
+      updateDependent(dependentId: $dependentId, patient: $patient) {
+        id
+        firstName
+        lastName
+        email
+        gender
+        height
+        weight
+        bloodType
+      }
+    }
+  }
+`;
+
+export const UPDATE_PATIENT_QUERY = /* GraphQL */ `
+  mutation ($patient: PatientRequest!) {
+    patient {
+      update(patient: $patient) {
+        id
+        firstName
+        lastName
+        email
+        gender
+        height
+        weight
+        bloodType
       }
     }
   }

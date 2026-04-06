@@ -10,24 +10,9 @@ import {
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/auth.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
+import { CREATE_DISCOUNT_CARD_QUERY } from './patient.profileQueries.js';
 
 const defaultPatientAccount = getPatientAccount('default');
-
-const CREATE_DC_CARD = /* GraphQL */ `
-  mutation ($discountCard: DiscountCardRequest!) {
-    patient {
-      discountCard {
-        create(discountCard: $discountCard) {
-          id
-          name
-          cardType
-          cardNumber
-          photo
-        }
-      }
-    }
-  }
-`;
 
 function discountCardInput() {
   const patientId = defaultPatientAccount.patientId;
@@ -50,7 +35,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
 
       const discountCardData = discountCardInput();
       const createDiscountCardRes = await safeGraphQL(api, {
-        query: CREATE_DC_CARD,
+        query: CREATE_DISCOUNT_CARD_QUERY,
         variables: { discountCard: discountCardData },
         headers: bearer(accessToken),
       });
@@ -77,7 +62,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
     async ({ api, noAuth }) => {
       const discountCardData = discountCardInput();
       const createDiscountCardNoAuthRes = await safeGraphQL(api, {
-        query: CREATE_DC_CARD,
+        query: CREATE_DISCOUNT_CARD_QUERY,
         variables: { discountCard: discountCardData },
         headers: noAuth,
       });
@@ -100,7 +85,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
     async ({ api, invalidAuth }) => {
       const discountCardData = discountCardInput();
       const createDiscountCardInvalidAuthRes = await safeGraphQL(api, {
-        query: CREATE_DC_CARD,
+        query: CREATE_DISCOUNT_CARD_QUERY,
         variables: { discountCard: discountCardData },
         headers: invalidAuth,
       });
@@ -130,7 +115,7 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
       const discountCardData = discountCardInput();
       discountCardData.name = ''; // Missing name
       const createDiscountCardRes = await safeGraphQL(api, {
-        query: CREATE_DC_CARD,
+        query: CREATE_DISCOUNT_CARD_QUERY,
         variables: { discountCard: discountCardData },
         headers: bearer(accessToken),
       });

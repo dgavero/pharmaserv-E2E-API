@@ -8,7 +8,7 @@ test.describe('GraphQL: Pharmacy Find Medicines by search', () => {
   test(
     'PHARMA-176 | Should be able to find medicines by searching a keyword',
     {
-      tag: ['@api', '@admin', '@positive', '@pharma-176', '@smoke'],
+      tag: ['@api', '@admin', '@positive', '@pharma-176'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));

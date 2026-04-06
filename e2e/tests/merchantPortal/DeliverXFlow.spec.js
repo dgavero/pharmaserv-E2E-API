@@ -2,8 +2,6 @@ import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
 import { Timeouts } from '../../Timeouts.js';
 import { markFailed } from '../../helpers/testFailure.js';
-import { safeWaitForElementHidden } from '../../helpers/uiActions.js';
-import { loadSelectors, getSelector } from '../../helpers/selectors.js';
 import { getPatientAccount, getRiderAccount } from '../../../api/helpers/roleCredentials.js';
 import { createMerchantPortalContext } from './merchantPortalContext.js';
 import {
@@ -39,7 +37,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
   test(
     'E2E-5 | DeliverX Happy Path - DeliverNow',
     {
-      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-5', '@workflow', '@hybrid'],
+      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-5', '@workflow', '@hybrid', '@smoke'],
       // Flow summary: patient creates DeliverX order -> merchant accepts/quotes in UI -> patient pays ->
       // admin confirms + assigns rider -> pharmacist sets for pickup -> rider completes delivery -> patient rates ->
       // merchant verifies COMPLETED in details and Completed tab.
@@ -441,11 +439,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
       await merchant.orderDetailsPage.closeRequoteRequestModal();
 
       // UI (merchant): re-send quote after patient requote/quantity change.
-      const sel = loadSelectors('merchant');
-      const requestPaymentLoadingButton = getSelector(sel, 'OrderDetails.RequestPaymentLoadingButton');
-      if (!(await safeWaitForElementHidden(page, requestPaymentLoadingButton))) {
-        markFailed('Request payment is still loading before re-send quote');
-      }
+      await merchant.orderDetailsPage.waitForRequestPaymentIdleBeforeResend();
       await merchant.orderDetailsPage.sendQuote();
 
       // API (patient): accept updated quote, reduce quantities (3, 4), then pay.

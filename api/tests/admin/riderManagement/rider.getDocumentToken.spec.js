@@ -2,21 +2,9 @@ import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATION
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
+import { GET_RIDER_DOCUMENT_QUERY } from './rider.riderManagementQueries.js';
 
 const defaultRiderAccount = getRiderAccount('default');
-
-const GET_DOCUMENT_TOKEN_QUERY = /* GraphQL */ `
-  query ($riderId: ID!, $type: DocumentType!) {
-    administrator {
-      rider {
-        document(riderId: $riderId, type: $type) {
-          type
-          photo
-        }
-      }
-    }
-  }
-`;
 
 test.describe('GraphQL: Get Document Token', () => {
   test(
@@ -29,7 +17,7 @@ test.describe('GraphQL: Get Document Token', () => {
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const getDocumentTokenRes = await safeGraphQL(api, {
-        query: GET_DOCUMENT_TOKEN_QUERY,
+        query: GET_RIDER_DOCUMENT_QUERY,
         variables: { riderId: defaultRiderAccount.riderId, type: `DRIVER_LICENSE` },
         headers: bearer(accessToken),
       });
@@ -52,7 +40,7 @@ test.describe('GraphQL: Get Document Token', () => {
     },
     async ({ api, noAuth }) => {
       const getDocumentTokenNoAuthRes = await safeGraphQL(api, {
-        query: GET_DOCUMENT_TOKEN_QUERY,
+        query: GET_RIDER_DOCUMENT_QUERY,
         variables: { riderId: defaultRiderAccount.riderId, type: `DRIVER_LICENSE` },
         headers: noAuth,
       });
@@ -78,7 +66,7 @@ test.describe('GraphQL: Get Document Token', () => {
     },
     async ({ api, invalidAuth }) => {
       const getDocumentTokenInvalidAuthRes = await safeGraphQL(api, {
-        query: GET_DOCUMENT_TOKEN_QUERY,
+        query: GET_RIDER_DOCUMENT_QUERY,
         variables: { riderId: defaultRiderAccount.riderId, type: `DRIVER_LICENSE` },
         headers: invalidAuth,
       });
@@ -107,7 +95,7 @@ test.describe('GraphQL: Get Document Token', () => {
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const getDocumentTokenNoBlobNameRes = await safeGraphQL(api, {
-        query: GET_DOCUMENT_TOKEN_QUERY,
+        query: GET_RIDER_DOCUMENT_QUERY,
         variables: { blobName: null },
         headers: bearer(accessToken),
       });
