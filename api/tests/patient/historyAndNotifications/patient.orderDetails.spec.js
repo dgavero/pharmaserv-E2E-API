@@ -20,6 +20,8 @@ test.describe('GraphQL: Order Details Patient', () => {
       });
 
       expect(getActiveOrderRes.ok, getActiveOrderRes.error || 'Get active orders failed').toBe(true);
+      const activeOrdersNode = getActiveOrderRes.body?.data?.patient?.activeOrders;
+      expect(Array.isArray(activeOrdersNode), 'Active orders should return an array').toBe(true);
     }
   );
 

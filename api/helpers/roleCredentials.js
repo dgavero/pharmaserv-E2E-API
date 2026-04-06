@@ -7,15 +7,27 @@ function requireCredentialValue(roleLabel, accountKey, fieldName, rawValue) {
 }
 
 function resolveAccount(roleLabel, accountKey, accountMap) {
-  const normalizedKey = String(accountKey || 'default').trim().toLowerCase();
+  const normalizedKey = String(accountKey || 'default')
+    .trim()
+    .toLowerCase();
   const accountConfig = accountMap[normalizedKey];
   if (!accountConfig) {
     throw new Error(`Unknown ${roleLabel} credential key: ${accountKey}`);
   }
 
   const resolvedAccount = {
-    username: requireCredentialValue(roleLabel, normalizedKey, accountConfig.usernameKey, process.env[accountConfig.usernameKey]),
-    password: requireCredentialValue(roleLabel, normalizedKey, accountConfig.passwordKey, process.env[accountConfig.passwordKey]),
+    username: requireCredentialValue(
+      roleLabel,
+      normalizedKey,
+      accountConfig.usernameKey,
+      process.env[accountConfig.usernameKey]
+    ),
+    password: requireCredentialValue(
+      roleLabel,
+      normalizedKey,
+      accountConfig.passwordKey,
+      process.env[accountConfig.passwordKey]
+    ),
   };
 
   if (accountConfig.patientIdKey) {

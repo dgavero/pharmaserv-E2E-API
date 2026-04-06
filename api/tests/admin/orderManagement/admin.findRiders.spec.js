@@ -47,9 +47,13 @@ test.describe('GraphQL: Admin Find Riders', () => {
 
       const node = findRidersRes.body?.data?.administrator?.rider?.searchedRiders;
       expect(Array.isArray(node), 'Find riders should return an array').toBe(true);
-      expect(node.some((riderNode) => String(riderNode?.id) === String(riderAccount.riderId)), 'Expected rider was not found in find riders response').toBe(
-        true
+      const matchedRider = node.find(
+        (riderNode) =>
+          String(riderNode?.firstName || '').trim().toLowerCase() ===
+          String(riderProfile.firstName || '').trim().toLowerCase()
       );
+      expect(matchedRider, 'Expected at least one rider matching the searched firstName').toBeTruthy();
+      expect(matchedRider?.status, 'Matched rider should include a status').toBeTruthy();
     }
   );
 

@@ -19,7 +19,9 @@ export default class MerchantOrdersPage {
       cancelled: getSelector(this.sel, 'Orders.CancelledTab'),
     };
     this.searchInput = getSelector(this.sel, 'Orders.SearchInput');
+    this.loadingOrdersMessage = getSelector(this.sel, 'Orders.LoadingOrdersMessage');
     this.noResultsFoundMessage = getSelector(this.sel, 'Orders.NoResultsFoundMessage');
+    this.anyOrderCard = getSelector(this.sel, 'Orders.AnyOrderCard');
     this.orderCardBookingReferenceIDTemplate = getSelector(this.sel, 'Orders.OrderCardBookingReferenceIDTemplate');
     this.orderStatusConfigs = {
       COMPLETED: {
@@ -76,16 +78,54 @@ export default class MerchantOrdersPage {
   }
 
   async activateOrdersTab(tabSelector, tabLabel = 'target') {
-    // Opens a specific Orders tab and waits for the tab page state to stabilize.
-    if (!(await safeWaitForElementVisible(this.page, tabSelector))) {
-      markFailed(`Unable to find ${tabLabel} orders tab`);
+    // Opens a specific Orders tab, waits for results, and returns whether any order card was observed.
+    const maxActivationAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxActivationAttempts; attempt += 1) {
+      if (!(await safeWaitForElementVisible(this.page, tabSelector))) {
+        markFailed(`Unable to find ${tabLabel} orders tab`);
+      }
+      if (!(await safeClick(this.page, tabSelector))) {
+        markFailed(`Unable to open ${tabLabel} orders tab`);
+      }
+      if (!(await safeWaitForPageLoad(this.page, [this.searchInput, tabSelector], { timeout: Timeouts.short }))) {
+        markFailed(`${tabLabel} orders tab did not stabilize`);
+      }
+      if (
+        !(await safeWaitForPageLoad(this.page, [this.anyOrderCard, this.noResultsFoundMessage, this.loadingOrdersMessage], {
+          timeout: Timeouts.standard,
+        }))
+      ) {
+        markFailed(`${tabLabel} orders tab did not finish loading results`);
+      }
+
+      const hasAnyOrderCard = await this.page
+        .locator(this.anyOrderCard)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (hasAnyOrderCard) {
+        return { hasAnyOrderCard: true };
+      }
+
+      const hasNoResults = await this.page
+        .locator(this.noResultsFoundMessage)
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (hasNoResults) {
+        return { hasAnyOrderCard: false };
+      }
+
+      if (attempt < maxActivationAttempts) {
+        await this.page.reload();
+        if (!(await safeWaitForPageLoad(this.page))) {
+          markFailed(`Orders page did not load after refresh while opening ${tabLabel} tab`);
+        }
+      }
     }
-    if (!(await safeClick(this.page, tabSelector))) {
-      markFailed(`Unable to open ${tabLabel} orders tab`);
-    }
-    if (!(await safeWaitForPageLoad(this.page, [this.searchInput, tabSelector], { timeout: Timeouts.short }))) {
-      markFailed(`${tabLabel} orders tab did not stabilize`);
-    }
+
+    return { hasAnyOrderCard: false };
   }
 
   async goToNewOrdersTab() {
