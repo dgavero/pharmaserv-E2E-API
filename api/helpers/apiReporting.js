@@ -1,4 +1,5 @@
 import { sendAPIFailure } from '../../helpers/discord/discordBot.js';
+import { formatKnownIssueMarkdown } from '../../helpers/knownIssues.js';
 
 const apiMessageQueue = [];
 let flushScheduled = false;
@@ -63,6 +64,10 @@ export function extractApiFailureSnippet(result) {
 
 export function enqueueApiFailure({ title, snippet }) {
   enqueueMessage(async () => {
-    await sendAPIFailure({ title, snippet });
+    await sendAPIFailure({
+      title,
+      snippet,
+      relatedIssueMarkdown: formatKnownIssueMarkdown(title),
+    });
   });
 }

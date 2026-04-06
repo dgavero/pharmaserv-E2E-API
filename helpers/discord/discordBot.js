@@ -277,11 +277,19 @@ export async function shutdownBot() {
  * Post a compact API failure snippet to the run thread.
  * - snippet: cleaned lines (Error / Expected / Received)
  */
-export async function sendAPIFailure({ title, where, snippet }) {
+export async function sendAPIFailure({ title, where, snippet, relatedIssueMarkdown }) {
   const meta = readRunMeta();
   if (!meta || !rest || !meta.threadId) return; // bail if no thread yet
 
-  const content = [`❌ **${title}**`, '```', (snippet || '').trim().slice(0, 1400), '```'].join('\n');
+  const content = [
+    `❌ **${title}**`,
+    relatedIssueMarkdown || '',
+    '```',
+    (snippet || '').trim().slice(0, 1400),
+    '```',
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   await rest.post(Routes.channelMessages(meta.threadId), { body: { content } });
 }
