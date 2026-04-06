@@ -8,7 +8,7 @@ test.describe('GraphQL: Patient Get Ads Locations', () => {
   test(
     'PHARMA-285 | Should be able to get ads locations',
     {
-      tag: ['@api', '@patient', '@positive', '@pharma-285', '@smoke'],
+      tag: ['@api', '@patient', '@positive', '@pharma-285'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));

@@ -19,7 +19,7 @@ test.describe('GraphQL: Submit DeliverX Order', () => {
   test(
     'PHARMA-101 | Should be able to submit a DeliverX order',
     {
-      tag: ['@api', '@patient', '@positive', '@pharma-101'],
+      tag: ['@api', '@patient', '@positive', '@pharma-101', '@smoke'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));

@@ -14,7 +14,7 @@ test.describe('GraphQL: Get Assigned Orders', () => {
   test(
     'PHARMA-422 | Should get assigned orders as Rider',
     {
-      tag: ['@api', '@rider', '@positive', '@pharma-422'],
+      tag: ['@api', '@rider', '@positive', '@pharma-422', '@smoke'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));

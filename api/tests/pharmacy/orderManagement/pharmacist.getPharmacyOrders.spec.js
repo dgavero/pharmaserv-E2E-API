@@ -8,7 +8,7 @@ test.describe('GraphQL: Pharmacy Get DeliverX Order', () => {
   test(
     'PHARMA-169 | Should be able to get DeliverX Order',
     {
-      tag: ['@api', '@pharmacist', '@positive', '@pharma-169'],
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-169', '@smoke'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));

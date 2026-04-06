@@ -37,7 +37,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
   test(
     'E2E-5 | DeliverX Happy Path - DeliverNow',
     {
-      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-5', '@workflow', '@hybrid'],
+      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-5', '@workflow', '@hybrid', '@smoke'],
       // Flow summary: patient creates DeliverX order -> merchant accepts/quotes in UI -> patient pays ->
       // admin confirms + assigns rider -> pharmacist sets for pickup -> rider completes delivery -> patient rates ->
       // merchant verifies COMPLETED in details and Completed tab.

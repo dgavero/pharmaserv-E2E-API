@@ -25,7 +25,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
   test(
     'E2E-10 | FindMyMeds Happy Path - Full Flow',
     {
-      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-10', '@workflow', '@hybrid', '@findmymeds'],
+      tag: ['@ui', '@merchant', '@positive', '@merchant-portal', '@e2e-10', '@workflow', '@hybrid', '@findmymeds', '@smoke'],
       // Flow summary: patient creates FindMyMeds order -> merchant accepts/uploads QR/updates prices/sends quote in UI ->
       // patient pays -> admin confirms payment and assigns rider -> pharmacist prepares and sets for pickup ->
       // rider completes delivery -> patient rates rider -> merchant verifies COMPLETED in details and Completed tab.
