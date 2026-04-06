@@ -23,5 +23,5 @@ export function formatKnownIssueMarkdown(title) {
   if (!issue) return '';
 
   const ticketKey = issue.url.split('/').pop() || issue.testId;
-  return `🔷 Related JIRA: [${ticketKey}](${issue.url})`;
+  return `🔷 Related Issue: [${ticketKey}](${issue.url})`;
 }
