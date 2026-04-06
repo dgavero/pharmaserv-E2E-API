@@ -4,7 +4,7 @@
     "Password": "//input[@aria-label='Enter your password' or @placeholder='Enter your password' or @name='password']",
     "Submit": "//*[@data-testid='login-btn']",
     "Logo": "//img[@alt='logo' or @aria-label='logo' or @title='logo']",
-    "ErrorMessageInvalidUserName": "//div[contains(text(),'Invalid username')]",
+    "ErrorMessageInvalidUserName": "//div[contains(normalize-space(),'Invalid username') or contains(normalize-space(),'Invalid user credentials')]",
     "ErrorMessageCredsValidation": "//p[contains(text(),'must be at least')]"
   },
   "Apps": {
