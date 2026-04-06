@@ -33,3 +33,17 @@ export const GET_PAGED_PATIENTS_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const FIND_PATIENTS_QUERY = /* GraphQL */ `
+  query ($query: String!) {
+    administrator {
+      patient {
+        searchedPatients(query: $query) {
+          id
+          firstName
+          lastName
+        }
+      }
+    }
+  }
+`;

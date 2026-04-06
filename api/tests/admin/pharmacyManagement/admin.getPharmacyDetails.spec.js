@@ -2,32 +2,7 @@ import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATION
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
-
-const GET_PAGED_PHARMACIES_QUERY = `
-  query ($filter: FilterRequest!) {
-    administrator {
-      pharmacy {
-        pagedPharmacies(filter: $filter) {
-          page { totalSize }
-          items { id name }
-        }
-      }
-    }
-  }
-`;
-
-const GET_PHARMACY_QUERY = `
-  query ($pharmacyId: ID!) {
-    administrator {
-      pharmacy {
-        detail(pharmacyId: $pharmacyId) {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
+import { GET_PAGED_PHARMACIES_QUERY, GET_PHARMACY_QUERY } from './admin.pharmacyManagementQueries.js';
 
 test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
   test(

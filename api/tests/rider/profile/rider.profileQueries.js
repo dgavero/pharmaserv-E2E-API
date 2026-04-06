@@ -57,6 +57,17 @@ export const RIDER_SET_SHIFT_END_QUERY = /* GraphQL */ `
   }
 `;
 
+export const RIDER_GET_SCHEDULE_QUERY = /* GraphQL */ `
+  query ($date: Date!) {
+    rider {
+      schedule(date: $date) {
+        startTime
+        endTime
+      }
+    }
+  }
+`;
+
 export const RIDER_GET_RATING_SUMMARY_QUERY = /* GraphQL */ `
   query {
     rider {

@@ -48,6 +48,18 @@ export const GET_LOGGER_QUERY = /* GraphQL */ `
   }
 `;
 
+export const GET_ALL_LOGGERS_QUERY = /* GraphQL */ `
+  query {
+    administrator {
+      asset {
+        allLoggers {
+          loggerNumber
+        }
+      }
+    }
+  }
+`;
+
 export const CREATE_PHONE_MUTATION = /* GraphQL */ `
   mutation ($phone: PhoneRequest!) {
     administrator {

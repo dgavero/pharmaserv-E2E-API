@@ -3,12 +3,7 @@ import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
-
-const CREATE_BRANCH_MUTATION = `
-mutation ($pharmacyId: ID!, $branch: BranchCreateRequest!) 
-{ administrator { pharmacy { branch { create(pharmacyId: $pharmacyId, branch: $branch) 
- { id code pharmacyName name lat lng } } } } }
-`;
+import { CREATE_BRANCH_MUTATION } from './admin.pharmacyManagementQueries.js';
 
 /** Helpers */
 function randomIntInclusive(min, max) {

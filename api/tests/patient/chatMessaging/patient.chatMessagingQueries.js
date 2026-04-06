@@ -104,3 +104,13 @@ export const UPDATE_CHAT_MESSAGE_MUTATION = /* GraphQL */ `
     }
   }
 `;
+
+export const SET_CHAT_THREAD_SEEN_MUTATION = /* GraphQL */ `
+  mutation ($threadId: ID!) {
+    patient {
+      chat {
+        seen(threadId: $threadId)
+      }
+    }
+  }
+`;

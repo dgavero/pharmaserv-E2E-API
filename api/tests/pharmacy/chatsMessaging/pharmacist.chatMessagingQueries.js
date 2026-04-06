@@ -128,3 +128,13 @@ export const PHARMACIST_SET_THREAD_SEEN_QUERY = /* GraphQL */ `
     }
   }
 `;
+
+export const PHARMACIST_GET_CHAT_UNSEEN_COUNT_QUERY = /* GraphQL */ `
+  query {
+    pharmacy {
+      chat {
+        unseenCount
+      }
+    }
+  }
+`;
