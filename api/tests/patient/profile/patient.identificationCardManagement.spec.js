@@ -1,5 +1,4 @@
 import { test, expect } from '../../../globalConfig.api.js';
-import path from 'node:path';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { getPatientAccount } from '../../../helpers/roleCredentials.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
@@ -12,95 +11,39 @@ import {
 } from '../../../helpers/auth.js';
 import {
   CREATE_IDENTIFICATION_CARD_QUERY,
-  GET_IDENTIFICATION_CARD_UPLOAD_URL_QUERY,
   GET_IDENTIFICATION_CARDS_QUERY,
   UPDATE_IDENTIFICATION_CARD_QUERY,
   REMOVE_IDENTIFICATION_CARD_QUERY,
 } from './patient.profileQueries.js';
-import { uploadImageToSignedUrl } from '../../e2e/shared/steps/patient.steps.js';
 
 const defaultPatientAccount = getPatientAccount('default');
-const IDENTIFICATION_CARD_FRONT_IMAGE_PATH = path.resolve('upload/api-images/gumgum.png');
-const IDENTIFICATION_CARD_BACK_IMAGE_PATH = path.resolve('upload/api-images/rekt.jpg');
 
-async function getIdentificationCardUploadUrlAsPatient(api, { patientAccessToken, ext }) {
-  const getIdentificationCardUploadUrlRes = await safeGraphQL(api, {
-    query: GET_IDENTIFICATION_CARD_UPLOAD_URL_QUERY,
-    variables: { ext },
-    headers: bearer(patientAccessToken),
-  });
-
-  expect(
-    getIdentificationCardUploadUrlRes.ok,
-    getIdentificationCardUploadUrlRes.error || 'Get identification card upload URL failed'
-  ).toBe(true);
-
-  const node = getIdentificationCardUploadUrlRes.body?.data?.patient?.identificationCardUploadURL;
-  expect(node?.url, 'Missing identification card upload URL').toBeTruthy();
-  expect(node?.blobName, 'Missing identification card blobName').toBeTruthy();
-
-  return {
-    identificationCardUploadUrl: node.url,
-    identificationCardBlobName: node.blobName,
-  };
-}
-
-async function uploadIdentificationCardPhotosAsPatient(api, { patientAccessToken }) {
-  const { identificationCardUploadUrl: frontPhotoUploadUrl, identificationCardBlobName: frontPhotoBlobName } =
-    await getIdentificationCardUploadUrlAsPatient(api, {
-      patientAccessToken,
-      ext: 'png',
-    });
-  await uploadImageToSignedUrl(api, {
-    uploadUrl: frontPhotoUploadUrl,
-    imagePath: IDENTIFICATION_CARD_FRONT_IMAGE_PATH,
-  });
-
-  const { identificationCardUploadUrl: backPhotoUploadUrl, identificationCardBlobName: backPhotoBlobName } =
-    await getIdentificationCardUploadUrlAsPatient(api, {
-      patientAccessToken,
-      ext: 'jpg',
-    });
-  await uploadImageToSignedUrl(api, {
-    uploadUrl: backPhotoUploadUrl,
-    imagePath: IDENTIFICATION_CARD_BACK_IMAGE_PATH,
-  });
-
-  return { frontPhotoBlobName, backPhotoBlobName };
-}
-
-async function buildCreateIdentificationCardInput(api, accessToken) {
+function buildCreateIdentificationCardInput() {
   const suffix = randomAlphanumeric(8);
-  const { frontPhotoBlobName, backPhotoBlobName } = await uploadIdentificationCardPhotosAsPatient(api, {
-    patientAccessToken: accessToken,
-  });
   return {
     patientId: defaultPatientAccount.patientId,
-    cardType: 'Philhealth Card',
-    name: `Philhealth-${suffix}`,
+    cardType: 'QA-Automation Card',
+    name: `Auto-${suffix}`,
     cardId: `ID-${suffix}`,
-    frontPhoto: frontPhotoBlobName,
-    backPhoto: backPhotoBlobName,
+    frontPhoto: `id-front-${suffix}.png`,
+    backPhoto: `id-back-${suffix}.png`,
   };
 }
 
-async function buildUpdateIdentificationCardInput(api, accessToken) {
+function buildUpdateIdentificationCardInput() {
   const suffix = randomAlphanumeric(8);
-  const { frontPhotoBlobName, backPhotoBlobName } = await uploadIdentificationCardPhotosAsPatient(api, {
-    patientAccessToken: accessToken,
-  });
   return {
     patientId: defaultPatientAccount.patientId,
     cardType: 'Discount Card',
     name: `Discount-${suffix}`,
     cardId: `UPD-${suffix}`,
-    frontPhoto: frontPhotoBlobName,
-    backPhoto: backPhotoBlobName,
+    frontPhoto: `id-updated-front-${suffix}.png`,
+    backPhoto: `id-updated-back-${suffix}.png`,
   };
 }
 
 async function createIdentificationCardAsPatient(api, accessToken) {
-  const identificationCard = await buildCreateIdentificationCardInput(api, accessToken);
+  const identificationCard = buildCreateIdentificationCardInput();
   const createIdentificationCardRes = await safeGraphQL(api, {
     query: CREATE_IDENTIFICATION_CARD_QUERY,
     variables: { identificationCard },
@@ -145,16 +88,7 @@ test.describe('GraphQL: Patient Identification Card Management', () => {
     async ({ api, noAuth }) => {
       const createIdentificationCardRes = await safeGraphQL(api, {
         query: CREATE_IDENTIFICATION_CARD_QUERY,
-        variables: {
-          identificationCard: {
-            patientId: defaultPatientAccount.patientId,
-            cardType: 'Philhealth Card',
-            name: `Philhealth-${randomAlphanumeric(8)}`,
-            cardId: `ID-${randomAlphanumeric(8)}`,
-            frontPhoto: 'gumgum.png',
-            backPhoto: 'rekt.jpg',
-          },
-        },
+        variables: { identificationCard: buildCreateIdentificationCardInput() },
         headers: noAuth,
       });
 
@@ -175,16 +109,7 @@ test.describe('GraphQL: Patient Identification Card Management', () => {
     async ({ api, invalidAuth }) => {
       const createIdentificationCardRes = await safeGraphQL(api, {
         query: CREATE_IDENTIFICATION_CARD_QUERY,
-        variables: {
-          identificationCard: {
-            patientId: defaultPatientAccount.patientId,
-            cardType: 'Philhealth Card',
-            name: `Philhealth-${randomAlphanumeric(8)}`,
-            cardId: `ID-${randomAlphanumeric(8)}`,
-            frontPhoto: 'gumgum.png',
-            backPhoto: 'rekt.jpg',
-          },
-        },
+        variables: { identificationCard: buildCreateIdentificationCardInput() },
         headers: invalidAuth,
       });
 
@@ -273,7 +198,7 @@ test.describe('GraphQL: Patient Identification Card Management', () => {
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
       const { identificationCardNode } = await createIdentificationCardAsPatient(api, accessToken);
-      const updatedIdentificationCard = await buildUpdateIdentificationCardInput(api, accessToken);
+      const updatedIdentificationCard = buildUpdateIdentificationCardInput();
       const updateIdentificationCardRes = await safeGraphQL(api, {
         query: UPDATE_IDENTIFICATION_CARD_QUERY,
         variables: {
@@ -307,14 +232,7 @@ test.describe('GraphQL: Patient Identification Card Management', () => {
         query: UPDATE_IDENTIFICATION_CARD_QUERY,
         variables: {
           identificationCardId: '1',
-          identificationCard: {
-            patientId: defaultPatientAccount.patientId,
-            cardType: 'Discount Card',
-            name: `Discount-${randomAlphanumeric(8)}`,
-            cardId: `UPD-${randomAlphanumeric(8)}`,
-            frontPhoto: 'gumgum.png',
-            backPhoto: 'rekt.jpg',
-          },
+          identificationCard: buildUpdateIdentificationCardInput(),
         },
         headers: noAuth,
       });
@@ -338,14 +256,7 @@ test.describe('GraphQL: Patient Identification Card Management', () => {
         query: UPDATE_IDENTIFICATION_CARD_QUERY,
         variables: {
           identificationCardId: '1',
-          identificationCard: {
-            patientId: defaultPatientAccount.patientId,
-            cardType: 'Discount Card',
-            name: `Discount-${randomAlphanumeric(8)}`,
-            cardId: `UPD-${randomAlphanumeric(8)}`,
-            frontPhoto: 'gumgum.png',
-            backPhoto: 'rekt.jpg',
-          },
+          identificationCard: buildUpdateIdentificationCardInput(),
         },
         headers: invalidAuth,
       });
