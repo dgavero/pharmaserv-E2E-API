@@ -3,6 +3,7 @@ const TEST_ID_PATTERN = /\b(?:PHARMA|E2E)-\d+\b/;
 export const knownIssueMap = {
   'PHARMA-2': 'https://topappsph.atlassian.net/browse/PHARMA-1039',
   'E2E-6': 'https://topappsph.atlassian.net/browse/PHARMA-1040',
+  'E2E-2': 'https://topappsph.atlassian.net/browse/PHARMA-1056',
 };
 
 export function extractPrimaryTestId(title) {

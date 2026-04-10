@@ -21,16 +21,16 @@ export function buildUpdatedBranchName(pharmacyName) {
   return `${QA_UPDATED_PHARMACY_PREFIX}${String(pharmacyName || '').trim()}`;
 }
 
-export async function getPagedAllBranchesAsAdmin(api, { adminAccessToken, filter = buildPagedAllBranchesFilter() } = {}) {
+export async function getPagedAllBranchesAsAdmin(
+  api,
+  { adminAccessToken, filter = buildPagedAllBranchesFilter() } = {}
+) {
   const getPagedAllBranchesRes = await safeGraphQL(api, {
     query: GET_PAGED_ALL_BRANCHES_QUERY,
     variables: { filter },
     headers: bearer(adminAccessToken),
   });
-  expect(
-    getPagedAllBranchesRes.ok,
-    getPagedAllBranchesRes.error || 'Get paged all branches setup failed'
-  ).toBe(true);
+  expect(getPagedAllBranchesRes.ok, getPagedAllBranchesRes.error || 'Get paged all branches setup failed').toBe(true);
 
   const pagedBranchesNode = getPagedAllBranchesRes.body?.data?.administrator?.branch?.pagedBranches;
   expect(pagedBranchesNode, 'Missing data.administrator.branch.pagedBranches').toBeTruthy();
@@ -40,7 +40,9 @@ export async function getPagedAllBranchesAsAdmin(api, { adminAccessToken, filter
 export async function resolveQaBranchFromPagedAllBranches(api, { adminAccessToken } = {}) {
   const { pagedBranchesNode } = await getPagedAllBranchesAsAdmin(api, { adminAccessToken });
   const branchItems = pagedBranchesNode?.items ?? [];
-  const qaBranch = branchItems.find((branchNode) => String(branchNode?.pharmacyName || '').startsWith(QA_PHARMACY_PREFIX));
+  const qaBranch = branchItems.find((branchNode) =>
+    String(branchNode?.pharmacyName || '').startsWith(QA_PHARMACY_PREFIX)
+  );
   expect(qaBranch, `Expected at least one branch whose pharmacyName starts with "${QA_PHARMACY_PREFIX}"`).toBeTruthy();
   return qaBranch;
 }
