@@ -17,6 +17,7 @@ import {
   loginAsAdminForHybrid,
 } from './actions/adminActions.js';
 import {
+  completeDeliveryAsRiderForHybrid,
   startPickupAndArriveAtPharmacyAsRiderForHybrid,
 } from './actions/riderActions.js';
 import { uploadImageToSignedUrl } from '../../../api/tests/e2e/shared/steps/patient.steps.js';
@@ -97,7 +98,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
 
       // UI (merchant): prepare then set for pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
-      await merchant.orderDetailsPage.setOrderReadyForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPickup({ dismissQR: false });
 
       // API (rider): complete fulfillment.
       await completeDeliveryAsRiderForHybrid(api, {
@@ -190,7 +191,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
 
       // UI (merchant): prepare then set for pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
-      await merchant.orderDetailsPage.setOrderReadyForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPickup({ dismissQR: false });
 
       // API (rider): complete fulfillment.
       const { pickupProofUploadUrl, pickupProofBlobName } = await getPickupProofUploadUrlAsRider(api, {

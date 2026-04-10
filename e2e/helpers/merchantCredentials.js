@@ -14,6 +14,11 @@ function requireAccountNumber(accountKey, fieldName, rawValue) {
   return value;
 }
 
+function resolveOptionalAccountNumber(rawValue) {
+  const value = Number(rawValue);
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
 export function getMerchantPortalAccount(accountKey = 'e2e-reg01') {
   const normalizedKey = String(accountKey || 'e2e-reg01')
     .trim()
@@ -28,6 +33,12 @@ export function getMerchantPortalAccount(accountKey = 'e2e-reg01') {
       usernameKey: 'MERCHANT_USERNAME_PSE',
       passwordKey: 'MERCHANT_PASSWORD_PSE',
       assignedBranchIdKey: 'PHARMACIST_BRANCHID_PSE01',
+    },
+    'e2e-planetadmin': {
+      usernameKey: 'MERCHANT_PLANET_USERNAME',
+      passwordKey: 'MERCHANT_PLANET_PASSWORD',
+      assignedBranchIdKey: 'MERCHANT_PLANET_MAIN_BRANCHID',
+      pickupBranchIdKey: 'MERCHANT_PLANET_PICKUP_BRANCHID',
     },
   };
 
@@ -44,6 +55,9 @@ export function getMerchantPortalAccount(accountKey = 'e2e-reg01') {
       normalizedKey,
       accountConfig.assignedBranchIdKey,
       process.env[accountConfig.assignedBranchIdKey]
+    ),
+    pickupBranchId: resolveOptionalAccountNumber(
+      accountConfig.pickupBranchIdKey ? process.env[accountConfig.pickupBranchIdKey] : null
     ),
   };
 }

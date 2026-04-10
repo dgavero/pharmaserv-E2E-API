@@ -201,7 +201,7 @@ test.describe('Merchant Portal | DeliverX Full Flow', () => {
 
       // UI (merchant): prepare, set for pickup, and confirm patient pickup.
       await merchant.orderDetailsPage.prepareOrderForPickup();
-      await merchant.orderDetailsPage.setOrderReadyForPatientPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPatientPickup({ dismissQR: false });
       await merchant.orderDetailsPage.confirmPatientPickupCompleted();
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.

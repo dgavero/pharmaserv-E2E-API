@@ -45,6 +45,9 @@ export default class MerchantOrderDetailsPage {
       requoteRequestModalMessage: getSelector(this.sel, 'OrderDetails.RequoteRequestModalMessage'),
       requoteRequestModalCloseButton: getSelector(this.sel, 'OrderDetails.RequoteRequestModalCloseButton'),
       pickupReadyButton: getSelector(this.sel, 'OrderDetails.PickupReadyButton'),
+      printQROverlay: getSelector(this.sel, 'OrderDetails.PrintQROverlay'),
+      printQROverlayCloseButton: getSelector(this.sel, 'OrderDetails.PrintQROverlayCloseButton'),
+      printQROverlayPrintButton: getSelector(this.sel, 'OrderDetails.PrintQROverlayPrintButton'),
       pickListPrintButton: getSelector(this.sel, 'OrderDetails.PickListPrintButton'),
       statusPreparing: getSelector(this.sel, 'OrderDetails.StatusPreparing'),
       statusWaitingForRider: getSelector(this.sel, 'OrderDetails.StatusWaitingForRider'),
@@ -146,7 +149,9 @@ export default class MerchantOrderDetailsPage {
 
   async selectAssignBranchResult(keyword) {
     // Selects either the keyword-matched branch row or the first available result.
-    const keywordForMatch = String(keyword || '').trim().toLowerCase();
+    const keywordForMatch = String(keyword || '')
+      .trim()
+      .toLowerCase();
     const assignBranchResultByKeyword = this.s.assignBranchResultByKeywordTemplate.replace(
       '{keyword}',
       keywordForMatch
@@ -269,8 +274,7 @@ export default class MerchantOrderDetailsPage {
           }
         )
         .toBe(true);
-    } catch {
-    }
+    } catch {}
 
     return editButtonCount;
   }
@@ -425,9 +429,12 @@ export default class MerchantOrderDetailsPage {
     });
   }
 
-  async setOrderReadyForPickup() {
+  async setOrderReadyForPickup({ dismissQR = true } = {}) {
     // Marks the prepared order as ready for pickup and verifies the order advances to WAITING FOR RIDER.
     await this.clickPickupReadyButton('Ready for Pick Up');
+    if (dismissQR) {
+      await this.dismissPrintQROverlayIfPresent();
+    }
     await this.waitForPickupState({
       expectedStatusSelector: this.s.statusWaitingForRider,
       expectedActionLabel: 'Order Picked Up',
@@ -435,9 +442,12 @@ export default class MerchantOrderDetailsPage {
     });
   }
 
-  async setOrderReadyForPatientPickup() {
+  async setOrderReadyForPatientPickup({ dismissQR = true } = {}) {
     // Marks the prepared pickup order as ready and verifies the patient-pickup state exposes the final pickup CTA.
     await this.clickPickupReadyButton('Ready for Pick Up');
+    if (dismissQR) {
+      await this.dismissPrintQROverlayIfPresent();
+    }
     await this.waitForPickupState({
       expectedStatusSelector: this.s.statusWaitingForPatient,
       expectedActionLabel: 'Order Picked Up',
@@ -463,7 +473,9 @@ export default class MerchantOrderDetailsPage {
     const pickupReadyButton = this.page.locator(this.s.pickupReadyButton).first();
     const currentLabel = await pickupReadyButton.innerText().catch(() => '');
     if (!String(currentLabel || '').includes(expectedLabel)) {
-      markFailed(`Expected pickup action "${expectedLabel}" but found "${String(currentLabel || '').trim() || 'unknown'}"`);
+      markFailed(
+        `Expected pickup action "${expectedLabel}" but found "${String(currentLabel || '').trim() || 'unknown'}"`
+      );
     }
 
     if (!(await safeClick(this.page, this.s.pickupReadyButton))) {
@@ -472,47 +484,34 @@ export default class MerchantOrderDetailsPage {
   }
 
   async dismissPickListOverlayIfPresent() {
-    // Dismisses the pick-list preview overlay once it appears so the next pickup action becomes clickable.
-    try {
-      await expect
-        .poll(
-          async () => {
-            const overlayVisible = await this.page
-              .locator(this.s.pickListPrintButton)
-              .first()
-              .isVisible()
-              .catch(() => false);
-            if (overlayVisible) {
-              await this.page.keyboard.press('Escape').catch(() => {});
+    // After generating pick list, expect Print Pick List overlay and close it via shared dialog close button.
+    if (!(await safeWaitForElementVisible(this.page, this.s.pickListPrintButton))) {
+      markFailed('Print Pick List overlay did not appear after generating pick list');
+    }
+    if (!(await safeClick(this.page, this.s.printQROverlayCloseButton))) {
+      markFailed('Unable to close Print Pick List overlay');
+    }
+    const pickListHidden = await safeWaitForElementHidden(this.page, this.s.pickListPrintButton, {
+      timeout: Timeouts.short,
+    });
+    if (!pickListHidden) {
+      markFailed('Print Pick List overlay did not close after clicking close button');
+    }
+  }
 
-              const overlayHidden = await safeWaitForElementHidden(this.page, this.s.pickListPrintButton, {
-                timeout: Timeouts.short,
-              });
-              if (!overlayHidden) {
-                markFailed('Pick-list overlay did not close after generating pick list');
-              }
-              return true;
-            }
-
-            const pickupButtonVisible = await this.page
-              .locator(this.s.pickupReadyButton)
-              .first()
-              .isVisible()
-              .catch(() => false);
-            if (!pickupButtonVisible) {
-              return false;
-            }
-
-            const currentLabel = await this.page.locator(this.s.pickupReadyButton).first().innerText().catch(() => '');
-            return String(currentLabel || '').includes('Ready for Pick Up');
-          },
-          {
-            timeout: Timeouts.short,
-            intervals: [200],
-          }
-        )
-        .toBe(true);
-    } catch {
+  async dismissPrintQROverlayIfPresent() {
+    // After setting ready for pickup, expect Print QR overlay and close it via shared dialog close button.
+    if (!(await safeWaitForElementVisible(this.page, this.s.printQROverlayPrintButton))) {
+      markFailed('Print QR overlay did not appear after setting order ready for pickup');
+    }
+    if (!(await safeClick(this.page, this.s.printQROverlayCloseButton))) {
+      markFailed('Unable to close Print QR overlay');
+    }
+    const printQRHidden = await safeWaitForElementHidden(this.page, this.s.printQROverlayPrintButton, {
+      timeout: Timeouts.short,
+    });
+    if (!printQRHidden) {
+      markFailed('Print QR overlay did not close after clicking close button');
     }
   }
 
