@@ -704,4 +704,49 @@ export default class MerchantOrderDetailsPage {
       markFailed(`Cancelled status reason was not updated with "${normalizedReason}"`);
     }
   }
+
+  async verifyMedicinePromoBadge({ medicineName, freeQty }) {
+    // Verifies promo badge is shown within the target medicine item block on quotation stage.
+    const normalizedMedicineName = String(medicineName || '')
+      .trim()
+      .toLowerCase();
+    const normalizedFreeQty = Number(freeQty);
+    if (!normalizedMedicineName) {
+      markFailed('verifyMedicinePromoBadge requires a non-empty medicineName');
+    }
+    if (!Number.isFinite(normalizedFreeQty) || normalizedFreeQty <= 0) {
+      markFailed('verifyMedicinePromoBadge requires a positive freeQty');
+    }
+
+    try {
+      await expect
+        .poll(
+          async () => {
+            const mainText = await this.page
+              .locator('main')
+              .first()
+              .innerText()
+              .catch(() => '');
+            const normalizedMainText = String(mainText || '')
+              .toLowerCase()
+              .replace(/\s+/g, ' ')
+              .trim();
+            return (
+              normalizedMainText.includes(normalizedMedicineName) &&
+              normalizedMainText.includes('patient access program') &&
+              normalizedMainText.includes('free') &&
+              normalizedMainText.includes('qty:') &&
+              normalizedMainText.includes(String(normalizedFreeQty))
+            );
+          },
+          {
+            timeout: Timeouts.standard,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
+      markFailed(`Promo badge FREE Qty:${normalizedFreeQty} was not found for medicine "${medicineName}"`);
+    }
+  }
 }
