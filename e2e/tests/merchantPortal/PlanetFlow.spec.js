@@ -121,4 +121,82 @@ test.describe('Merchant Portal | Planet DeliverX Full Flow', () => {
       await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
     }
   );
+
+  test(
+    'E2E-15 | DeliverX for Planet Pharmacy Pickup Fulfillment',
+    {
+      tag: [
+        '@ui',
+        '@merchant',
+        '@positive',
+        '@merchant-portal',
+        '@e2e-15',
+        '@workflow',
+        '@hybrid',
+        '@deliverx',
+        '@planet',
+        '@pickup',
+      ],
+      // Flow summary: patient creates DeliverX pickup order for Planet pickup branch -> merchant accepts in UI ->
+      // merchant uploads QR/updates prices/sends quote in UI -> patient pays in pickup mode -> admin confirms payment ->
+      // pharmacist prepares/sets for pickup and confirms Order Picked Up in UI with pickup-success modal ->
+      // merchant verifies COMPLETED in details and Completed tab.
+    },
+    async ({ page, api }) => {
+      const patientProofPaymentImagePath = path.resolve('upload/images/proof1.png');
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-planetadmin' });
+      const pickupBranchId = Number(merchant.account.pickupBranchId);
+      expect(pickupBranchId, 'Missing Planet pickupBranchId for pickup fulfillment flow').toBeTruthy();
+
+      // API (patient): create DeliverX order bound to active Planet pickup branch.
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildDeliverXHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          branchId: pickupBranchId,
+          additionalDiscountsEnabled: true,
+        }),
+      });
+
+      // UI (merchant): login and accept order.
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
+
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+
+      // UI (merchant): upload QR, update prices, and send quote.
+      await merchant.orderDetailsPage.uploadQRCode(path.resolve('upload/images/qr1.png'));
+      await merchant.orderDetailsPage.updatePriceItems(buildBasePriceItems());
+      await merchant.orderDetailsPage.sendQuote();
+
+      // API (patient): accept quote and pay using pickup mode.
+      const { acceptQuoteNode } = await acceptQuoteAsPatientWhenReady(api, { patientAccessToken, orderId });
+      const patientPaymentQRCodeId = acceptQuoteNode?.paymentQRCodeId;
+      expect(patientPaymentQRCodeId, 'Missing paymentQRCodeId after patient accept quote').toBeTruthy();
+      await ensurePatientPaymentQRCodeAccessible(api, {
+        patientAccessToken,
+        paymentQRCodeId: patientPaymentQRCodeId,
+      });
+      await payOrderAsPatientWithProof(api, {
+        patientAccessToken,
+        orderId,
+        proofImagePath: patientProofPaymentImagePath,
+        mode: PatientPayModes.PICKUP,
+      });
+
+      // API (admin): confirm payment.
+      const { adminAccessToken } = await loginAsAdminForHybrid(api);
+      await confirmPaymentAsAdminForHybrid(api, { adminAccessToken, orderId });
+
+      // UI (merchant): prepare, set for pickup, confirm picked up, and assert pickup-success modal.
+      await merchant.orderDetailsPage.prepareOrderForPickup();
+      await merchant.orderDetailsPage.setOrderReadyForPatientPickup({ dismissQR: false });
+      await merchant.orderDetailsPage.confirmPatientPickupCompleted({ expectPickupSuccessfulModal: true });
+
+      // UI (merchant): verify Completed in details + Orders > Completed tab.
+      await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+    }
+  );
 });

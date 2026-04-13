@@ -42,6 +42,8 @@ export default class MerchantOrderDetailsPage {
       addItemConfirmButton: getSelector(this.sel, 'OrderDetails.AddItemConfirmButton'),
       quantityChangeModalMessage: getSelector(this.sel, 'OrderDetails.QuantityChangeModalMessage'),
       quantityChangeModalCloseButton: getSelector(this.sel, 'OrderDetails.QuantityChangeModalCloseButton'),
+      pickupSuccessfulModalMessage: getSelector(this.sel, 'OrderDetails.PickupSuccessfulModalMessage'),
+      pickupSuccessfulModalCloseButton: getSelector(this.sel, 'OrderDetails.PickupSuccessfulModalCloseButton'),
       requoteRequestModalMessage: getSelector(this.sel, 'OrderDetails.RequoteRequestModalMessage'),
       requoteRequestModalCloseButton: getSelector(this.sel, 'OrderDetails.RequoteRequestModalCloseButton'),
       pickupReadyButton: getSelector(this.sel, 'OrderDetails.PickupReadyButton'),
@@ -53,6 +55,15 @@ export default class MerchantOrderDetailsPage {
       statusWaitingForRider: getSelector(this.sel, 'OrderDetails.StatusWaitingForRider'),
       statusWaitingForPatient: getSelector(this.sel, 'OrderDetails.StatusWaitingForPatient'),
       statusCompleted: getSelector(this.sel, 'OrderDetails.StatusCompleted'),
+      declineButton: getSelector(this.sel, 'OrderDetails.DeclineButton'),
+      declineConfirmModal: getSelector(this.sel, 'OrderDetails.DeclineConfirmModal'),
+      declineReasonDropdown: getSelector(this.sel, 'OrderDetails.DeclineReasonDropdown'),
+      declineReasonOptionByLabelTemplate: getSelector(this.sel, 'OrderDetails.DeclineReasonOptionByLabelTemplate'),
+      declineReasonInput: getSelector(this.sel, 'OrderDetails.DeclineReasonInput'),
+      declineConfirmButton: getSelector(this.sel, 'OrderDetails.DeclineConfirmButton'),
+      declineResultModal: getSelector(this.sel, 'OrderDetails.DeclineResultModal'),
+      declineResultModalCloseXButton: getSelector(this.sel, 'OrderDetails.DeclineResultModalCloseXButton'),
+      cancelledStatusReasonContainsTemplate: getSelector(this.sel, 'OrderDetails.CancelledStatusReasonContainsTemplate'),
     };
   }
 
@@ -455,12 +466,38 @@ export default class MerchantOrderDetailsPage {
     });
   }
 
-  async confirmPatientPickupCompleted() {
+  async confirmPatientPickupCompleted({ expectPickupSuccessfulModal = false } = {}) {
     // Finalizes pickup-mode orders from the merchant UI and waits for Completed status on the details page.
     await this.clickPickupReadyButton('Order Picked Up');
+    if (expectPickupSuccessfulModal) {
+      await this.verifyPickupSuccessfulModalAppeared();
+    }
     await this.waitForPickupState({
       expectedStatusSelector: this.s.statusCompleted,
       failureContext: 'COMPLETED after confirming patient pickup',
+    });
+  }
+
+  async verifyPickupSuccessfulModalAppeared() {
+    // Verifies the pickup-success confirmation appears after clicking Order Picked Up.
+    if (!(await safeWaitForElementVisible(this.page, this.s.pickupSuccessfulModalMessage))) {
+      markFailed('Expected pickup-success modal/toast was not shown after confirming order pickup');
+    }
+
+    const closeVisible = await this.page
+      .locator(this.s.pickupSuccessfulModalCloseButton)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    if (!closeVisible) {
+      return;
+    }
+
+    if (!(await safeClick(this.page, this.s.pickupSuccessfulModalCloseButton))) {
+      markFailed('Unable to close pickup-success modal');
+    }
+    await safeWaitForElementHidden(this.page, this.s.pickupSuccessfulModalMessage, {
+      timeout: Timeouts.short,
     });
   }
 
@@ -598,6 +635,73 @@ export default class MerchantOrderDetailsPage {
     if (!isModalVisible) return;
     if (!(await safeClick(this.page, this.s.requoteRequestModalCloseButton))) {
       markFailed('Unable to close re-quote request modal');
+    }
+  }
+
+  async declineOrderWithOthersReason(reasonText) {
+    // Declines an order via UI using "Others" reason and verifies updated cancelled reason badge.
+    const normalizedReason = String(reasonText || '').trim();
+    if (!normalizedReason) {
+      markFailed('declineOrderWithOthersReason requires a non-empty reason');
+    }
+
+    if (!(await safeWaitForElementVisible(this.page, this.s.declineButton, { timeout: Timeouts.standard }))) {
+      markFailed('Decline button is not visible on order details');
+    }
+    if (!(await safeClick(this.page, this.s.declineButton))) {
+      markFailed('Unable to click decline button');
+    }
+
+    if (!(await safeWaitForElementVisible(this.page, this.s.declineConfirmModal))) {
+      markFailed('Decline confirmation modal did not appear');
+    }
+    if (!(await safeClick(this.page, this.s.declineReasonDropdown))) {
+      markFailed('Unable to open decline reason dropdown');
+    }
+
+    const othersOption = this.s.declineReasonOptionByLabelTemplate.replace('{label}', 'Others');
+    if (!(await safeWaitForElementVisible(this.page, othersOption))) {
+      markFailed('Decline reason option "Others" is not visible');
+    }
+    if (!(await safeClick(this.page, othersOption))) {
+      markFailed('Unable to select decline reason option "Others"');
+    }
+
+    if (!(await safeInput(this.page, this.s.declineReasonInput, normalizedReason))) {
+      markFailed('Unable to fill decline reason input');
+    }
+    if (!(await safeClick(this.page, this.s.declineConfirmButton))) {
+      markFailed('Unable to confirm decline action');
+    }
+
+    if (!(await safeWaitForElementVisible(this.page, this.s.declineResultModal))) {
+      markFailed('Order cancelled result modal did not appear after decline confirmation');
+    }
+    if (!(await safeClick(this.page, this.s.declineResultModalCloseXButton))) {
+      markFailed('Unable to close order cancelled result modal using close (x) button');
+    }
+    if (!(await safeWaitForElementHidden(this.page, this.s.declineResultModal))) {
+      markFailed('Order cancelled result modal did not close');
+    }
+
+    const escapedReason = normalizedReason.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try {
+      await expect
+        .poll(
+          async () =>
+            this.page
+              .getByText(new RegExp(escapedReason, 'i'))
+              .first()
+              .isVisible()
+              .catch(() => false),
+          {
+            timeout: Timeouts.standard,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
+      markFailed(`Cancelled status reason was not updated with "${normalizedReason}"`);
     }
   }
 }
