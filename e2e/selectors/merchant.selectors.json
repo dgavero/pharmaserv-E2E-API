@@ -11,6 +11,11 @@
     "SidebarHomeLink": "//a[@href='/' and (.//*[normalize-space()='Home'] or normalize-space()='Home')]",
     "SidebarOrdersLink": "//a[@href='/orders/new' or @href='/orders' or .//*[normalize-space()='Orders'] or normalize-space()='Orders']"
   },
+  "Home": {
+    "HeaderInfoContainer": "//header//div[contains(concat(' ', normalize-space(@class), ' '), ' h-12 ') and contains(concat(' ', normalize-space(@class), ' '), ' flex-1 ') and contains(concat(' ', normalize-space(@class), ' '), ' gap-4 ')]",
+    "HeaderPharmacyName": "(//header//div[contains(concat(' ', normalize-space(@class), ' '), ' h-12 ') and contains(concat(' ', normalize-space(@class), ' '), ' flex-1 ') and contains(concat(' ', normalize-space(@class), ' '), ' gap-4 ')]//h2)[1]",
+    "HeaderBranchName": "(//header//div[contains(concat(' ', normalize-space(@class), ' '), ' h-12 ') and contains(concat(' ', normalize-space(@class), ' '), ' flex-1 ') and contains(concat(' ', normalize-space(@class), ' '), ' gap-4 ')]//p)[1]"
+  },
   "Orders": {
     "PageRoot": "//h1[normalize-space()='Orders']",
     "NewTab": "//button[@role='tab' and normalize-space()='New']",
