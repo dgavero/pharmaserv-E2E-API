@@ -87,7 +87,10 @@
     "DeclineConfirmButton": "(//div[@role='dialog' and @data-state='open'][.//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'are you sure')] and (.//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'declin')] or .//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'cancel')])]//*[@data-testid='confirm-decline-order-btn' or self::button[normalize-space()='Confirm']])[1]",
     "DeclineResultModal": "//div[@role='dialog' and @data-state='open'][.//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'order cancelled')]]",
     "DeclineResultModalCloseXButton": "(//div[@role='dialog' and @data-state='open'][.//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'order cancelled')]]//*[@data-slot='dialog-close'])[1]",
-    "CancelledStatusReasonContainsTemplate": "//main//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'cancelled') and contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'{reason}')]"
+    "CancelledStatusReasonContainsTemplate": "//main//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'cancelled') and contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'{reason}')]",
+    "ChatMessageInput": "//textarea[@placeholder='Reply...']",
+    "ChatSendButton": "//textarea[@placeholder='Reply...']/following-sibling::button[@type='submit'][1]",
+    "ChatBubbleByMessageTemplate": "//main//*[normalize-space()='{message}']"
   },
   "Common": {
     "SuccessToast": "//*[@role='alert' or contains(@class,'toast')][contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'success') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'updated') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'sent')]"

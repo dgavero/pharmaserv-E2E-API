@@ -77,6 +77,9 @@ export default class MerchantOrderDetailsPage {
       declineResultModal: getSelector(this.sel, 'OrderDetails.DeclineResultModal'),
       declineResultModalCloseXButton: getSelector(this.sel, 'OrderDetails.DeclineResultModalCloseXButton'),
       cancelledStatusReasonContainsTemplate: getSelector(this.sel, 'OrderDetails.CancelledStatusReasonContainsTemplate'),
+      chatMessageInput: getSelector(this.sel, 'OrderDetails.ChatMessageInput'),
+      chatSendButton: getSelector(this.sel, 'OrderDetails.ChatSendButton'),
+      chatBubbleByMessageTemplate: getSelector(this.sel, 'OrderDetails.ChatBubbleByMessageTemplate'),
     };
   }
 
@@ -950,6 +953,54 @@ export default class MerchantOrderDetailsPage {
     if (!isModalVisible) return;
     if (!(await safeClick(this.page, this.s.requoteRequestModalCloseButton))) {
       markFailed('Unable to close re-quote request modal');
+    }
+  }
+
+  async sendChatMessageToPatient(message) {
+    // Sends a merchant chat message from the inline composer and verifies it appears in the chat thread.
+    const normalizedMessage = String(message || '').trim();
+    if (!normalizedMessage) {
+      markFailed('sendChatMessageToPatient requires a non-empty message');
+    }
+
+    if (!(await safeWaitForElementVisible(this.page, this.s.chatMessageInput))) {
+      markFailed('Merchant chat message input is not visible');
+    }
+    if (!(await safeFill(this.page, this.s.chatMessageInput, normalizedMessage))) {
+      markFailed('Unable to type merchant chat message');
+    }
+    if (!(await safeClick(this.page, this.s.chatSendButton))) {
+      markFailed('Unable to click merchant chat send button');
+    }
+
+    await this.verifyChatMessageVisible(normalizedMessage);
+  }
+
+  async verifyChatMessageVisible(message, { timeout = Timeouts.standard } = {}) {
+    // Verifies chat bubble with exact message text is visible in merchant chat panel.
+    const normalizedMessage = String(message || '').trim();
+    if (!normalizedMessage) {
+      markFailed('verifyChatMessageVisible requires a non-empty message');
+    }
+
+    const escapedMessage = normalizedMessage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try {
+      await expect
+        .poll(
+          async () =>
+            this.page
+              .getByText(new RegExp(`^${escapedMessage}$`, 'i'))
+              .first()
+              .isVisible()
+              .catch(() => false),
+          {
+            timeout,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
+      markFailed(`Expected chat bubble message was not visible: "${normalizedMessage}"`);
     }
   }
 

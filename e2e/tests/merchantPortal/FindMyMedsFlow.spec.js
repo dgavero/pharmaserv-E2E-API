@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
+import { Timeouts } from '../../Timeouts.js';
 import { getPatientAccount, getRiderAccount } from '../../../api/helpers/roleCredentials.js';
 import { createMerchantPortalContext } from './merchantPortalContext.js';
 import { buildBasePriceItems, buildBasePrescriptionItems, buildFindMyMedsHybridOrderInput } from './generic.orderData.js';
@@ -8,8 +9,11 @@ import {
   acceptQuoteAsPatientWhenReady,
   createHybridOrder,
   ensurePatientPaymentQRCodeAccessible,
+  getChatThreadByOrderIdAsPatientForHybrid,
+  getOrderMessagesAsPatientForHybrid,
   payOrderAsPatientWithProof,
   rateRiderAsPatientForHybrid,
+  sendThreadMessageAsPatientForHybrid,
 } from './actions/patientActions.js';
 import {
   assignRiderToOrderAsAdminForHybrid,
@@ -300,6 +304,93 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
       });
 
       // UI (merchant): verify order appears in Orders > Declined/Cancelled tab based on merchant cancel routing.
+      await merchant.ordersPage.verifyBookingRefPresentInDeclinedOrCancelledTab(bookingRef);
+    }
+  );
+
+  test(
+    'E2E-21 | FindMyMeds Chat With User',
+    {
+      tag: [
+        '@ui',
+        '@merchant',
+        '@positive',
+        '@merchant-portal',
+        '@e2e-21',
+        '@workflow',
+        '@hybrid',
+        '@findmymeds',
+        '@chat',
+      ],
+      // Flow summary: patient creates FindMyMeds order with one medicine item -> merchant accepts order and sends chat message in UI ->
+      // patient verifies merchant message by orderId via API -> patient replies by threadId via API ->
+      // merchant verifies patient message in UI -> merchant cancels order in UI -> verifies Declined/Cancelled tab.
+    },
+    async ({ page, api }) => {
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
+      const declineReason = 'cancelled for automated test E2E-21';
+      const singleMedicineId = buildBasePrescriptionItems()[0]?.medicineId;
+      expect(singleMedicineId, 'Missing default FindMyMeds base medicineId for E2E-21').toBeTruthy();
+
+      // API (patient): create FindMyMeds order with exactly one medicine item.
+      const { patientAccessToken, orderId, bookingRef } = await createHybridOrder(api, {
+        order: buildFindMyMedsHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          allowMissingBranchId: true,
+          prescriptionItems: [
+            {
+              medicineId: singleMedicineId,
+              quantity: 1,
+              source: 'SEARCH',
+              specialInstructions: 'E2E-21 chat flow single item',
+            },
+          ],
+        }),
+      });
+
+      const merchantMessage = `This is a sample main test message after accepting the booking ${bookingRef}`;
+      const patientReplyMessage = `this is a sample reply test message after merchant accepted booking ${bookingRef}`;
+
+      // UI (merchant): login, open order, and accept.
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
+
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+
+      // UI (merchant): send message to patient.
+      await merchant.orderDetailsPage.sendChatMessageToPatient(merchantMessage);
+
+      // API (patient): fetch order messages and verify merchant message is received.
+      await getOrderMessagesAsPatientForHybrid(api, {
+        patientAccessToken,
+        orderId,
+        expectedMessage: merchantMessage,
+        timeout: Timeouts.standard,
+      });
+
+      // API (patient): get thread by orderId then reply by threadId.
+      const { threadId } = await getChatThreadByOrderIdAsPatientForHybrid(api, {
+        patientAccessToken,
+        orderId,
+      });
+      await sendThreadMessageAsPatientForHybrid(api, {
+        patientAccessToken,
+        threadId,
+        message: patientReplyMessage,
+      });
+
+      // UI (merchant): verify patient message appears in chat panel.
+      await merchant.orderDetailsPage.verifyChatMessageVisible(patientReplyMessage, {
+        timeout: Timeouts.standard,
+      });
+
+      // UI (merchant): cancel order and verify it is listed in Declined/Cancelled tab.
+      await merchant.orderDetailsPage.declineOrderWithOthersReason(declineReason, {
+        verifyReasonInDetails: false,
+      });
       await merchant.ordersPage.verifyBookingRefPresentInDeclinedOrCancelledTab(bookingRef);
     }
   );

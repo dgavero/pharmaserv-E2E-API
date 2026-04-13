@@ -9,6 +9,11 @@ import {
   PATIENT_REQUEST_REQUOTE_QUERY,
 } from '../../../../api/tests/e2e/shared/queries/patient.queries.js';
 import {
+  PATIENT_GET_CHAT_MESSAGES_BY_ORDER_ID_QUERY,
+  PATIENT_GET_CHAT_THREAD_BY_ORDER_ID_QUERY,
+  PATIENT_SEND_CHAT_MESSAGE_BY_THREAD_ID_MUTATION,
+} from '../merchantPortal.queries.js';
+import {
   loginPatient,
   submitOrderAsPatient,
   getPaymentQRCodeAsPatient,
@@ -283,4 +288,94 @@ export function buildReducedQuantitiesFromAcceptQuote(acceptQuoteNode, reducedQu
     prescriptionItemId: Number(item?.id),
     quantity: Number(reducedQuantity),
   }));
+}
+
+export async function getOrderMessagesAsPatientForHybrid(
+  api,
+  { patientAccessToken, orderId, expectedMessage, timeout = Timeouts.standard }
+) {
+  try {
+    let orderMessages = [];
+    await expect
+      .poll(
+        async () => {
+          const getOrderMessagesRes = await safeGraphQL(api, {
+            query: PATIENT_GET_CHAT_MESSAGES_BY_ORDER_ID_QUERY,
+            variables: { orderId },
+            headers: bearer(patientAccessToken),
+          });
+          if (!getOrderMessagesRes.ok) {
+            return false;
+          }
+
+          orderMessages = getOrderMessagesRes.body?.data?.patient?.chat?.orderMessages || [];
+          if (!expectedMessage) {
+            return Array.isArray(orderMessages);
+          }
+
+          const normalizedExpectedMessage = String(expectedMessage).trim();
+          return orderMessages.some((chat) => String(chat?.message || '').trim() === normalizedExpectedMessage);
+        },
+        {
+          timeout,
+          intervals: [300],
+        }
+      )
+      .toBe(true);
+
+    return { orderMessages };
+  } catch (error) {
+    failAction('getOrderMessagesAsPatientForHybrid', error);
+  }
+}
+
+export async function getChatThreadByOrderIdAsPatientForHybrid(
+  api,
+  { patientAccessToken, orderId, partiesType = 'PATIENT_PHARMACY' }
+) {
+  try {
+    const getChatThreadRes = await safeGraphQL(api, {
+      query: PATIENT_GET_CHAT_THREAD_BY_ORDER_ID_QUERY,
+      variables: { orderId, type: partiesType },
+      headers: bearer(patientAccessToken),
+    });
+    expect(getChatThreadRes.ok, getChatThreadRes.error || 'Patient get chat thread by orderId failed').toBe(true);
+
+    const threadNode = getChatThreadRes.body?.data?.patient?.chat?.thread;
+    const threadId = Number(threadNode?.id);
+    if (!threadId) {
+      markFailed(`Missing threadId from patient chat thread for orderId=${orderId}`);
+    }
+
+    return { threadId };
+  } catch (error) {
+    failAction('getChatThreadByOrderIdAsPatientForHybrid', error);
+  }
+}
+
+export async function sendThreadMessageAsPatientForHybrid(api, { patientAccessToken, threadId, message }) {
+  try {
+    const normalizedMessage = String(message || '').trim();
+    if (!normalizedMessage) {
+      markFailed('sendThreadMessageAsPatientForHybrid requires a non-empty message');
+    }
+
+    const sendThreadMessageRes = await safeGraphQL(api, {
+      query: PATIENT_SEND_CHAT_MESSAGE_BY_THREAD_ID_MUTATION,
+      variables: {
+        threadId,
+        chat: {
+          sender: 'PATIENT',
+          message: normalizedMessage,
+        },
+      },
+      headers: bearer(patientAccessToken),
+    });
+    expect(sendThreadMessageRes.ok, sendThreadMessageRes.error || 'Patient send thread message failed').toBe(true);
+
+    const sendThreadMessageNode = sendThreadMessageRes.body?.data?.patient?.chat?.sendThreadMessage;
+    expect(sendThreadMessageNode?.message, 'Missing message from sendThreadMessage response').toBe(normalizedMessage);
+  } catch (error) {
+    failAction('sendThreadMessageAsPatientForHybrid', error);
+  }
 }
