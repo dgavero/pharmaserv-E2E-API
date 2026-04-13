@@ -469,6 +469,8 @@ export default class MerchantOrdersPage {
       markFailed('verifyBookingRefPresentInCancelledTab requires a booking reference');
     }
 
+    await this.open();
+
     if (!(await safeWaitForElementVisible(this.page, this.tabs.cancelled))) {
       markFailed('Cancelled tab is not visible');
     }
@@ -513,6 +515,8 @@ export default class MerchantOrdersPage {
       markFailed('verifyBookingRefPresentInDeclinedTab requires a booking reference');
     }
 
+    await this.open();
+
     if (!(await safeWaitForElementVisible(this.page, this.tabs.declined))) {
       markFailed('Declined tab is not visible');
     }
@@ -548,5 +552,15 @@ export default class MerchantOrdersPage {
     } catch {
       markFailed(`Order ${searchTerm} is not present in Declined tab after decline`);
     }
+  }
+
+  async verifyBookingRefPresentInDeclinedOrCancelledTab(bookingRef) {
+    // Some merchant cancel paths route to Declined while others route to Cancelled.
+    try {
+      await this.verifyBookingRefPresentInDeclinedTab(bookingRef);
+      return;
+    } catch {}
+
+    await this.verifyBookingRefPresentInCancelledTab(bookingRef);
   }
 }

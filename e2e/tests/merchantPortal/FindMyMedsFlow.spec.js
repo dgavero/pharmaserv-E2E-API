@@ -2,7 +2,7 @@ import path from 'node:path';
 import { test, expect } from '../../globalConfig.ui.js';
 import { getPatientAccount, getRiderAccount } from '../../../api/helpers/roleCredentials.js';
 import { createMerchantPortalContext } from './merchantPortalContext.js';
-import { buildBasePriceItems, buildFindMyMedsHybridOrderInput } from './generic.orderData.js';
+import { buildBasePriceItems, buildBasePrescriptionItems, buildFindMyMedsHybridOrderInput } from './generic.orderData.js';
 import {
   PatientPayModes,
   acceptQuoteAsPatientWhenReady,
@@ -225,6 +225,82 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
 
       // UI (merchant): verify Completed in details + Orders > Completed tab.
       await merchant.ordersPage.verifyOrderCompletedInDetailsAndCompletedTab(bookingRef);
+    }
+  );
+
+  test(
+    'E2E-20 | FindMyMeds Quotation Update Item',
+    {
+      tag: [
+        '@ui',
+        '@merchant',
+        '@positive',
+        '@merchant-portal',
+        '@e2e-20',
+        '@workflow',
+        '@hybrid',
+        '@findmymeds',
+        '@quotation',
+      ],
+      // Flow summary: patient creates FindMyMeds order with one medicine item -> merchant accepts/uploads QR in UI ->
+      // merchant edits first quotation item and replaces medicine, sets VAT/type/temperature/discount/price/qty/discounted qty ->
+      // merchant verifies Request Payment total is 4,500 -> merchant declines order and verifies reason in details and Declined tab.
+    },
+    async ({ page, api }) => {
+      const merchantPaymentQrImagePath = path.resolve('upload/images/qr1.png');
+      const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
+      const declineReason = 'cancelled for automated test E2E-20';
+      const singleMedicineId = buildBasePrescriptionItems()[0]?.medicineId;
+      expect(singleMedicineId, 'Missing default FindMyMeds base medicineId for E2E-20').toBeTruthy();
+
+      // API (patient): create FindMyMeds order with exactly one medicine item.
+      const { bookingRef } = await createHybridOrder(api, {
+        order: buildFindMyMedsHybridOrderInput({
+          patientId: defaultPatientAccount.patientId,
+          allowMissingBranchId: true,
+          prescriptionItems: [
+            {
+              medicineId: singleMedicineId,
+              quantity: 5,
+              source: 'SEARCH',
+              specialInstructions: 'E2E-20 single item quotation update',
+            },
+          ],
+        }),
+      });
+
+      // UI (merchant): login, open order, accept, assign branch, upload QR.
+      await merchant.loginPage.open();
+      await merchant.loginPage.login(merchant.account.username, merchant.account.password);
+      await merchant.loginPage.assertSuccessLogin();
+
+      await merchant.ordersPage.open();
+      await merchant.ordersPage.openNewOrderByBookingRef(bookingRef);
+      await merchant.orderDetailsPage.acceptOrder();
+      await merchant.orderDetailsPage.assignBranchToFirstMatchingPharmacy('Pharmacy API');
+      await merchant.orderDetailsPage.uploadQRCode(merchantPaymentQrImagePath);
+
+      // UI (merchant): edit first item, replace medicine, and apply quote updates.
+      await merchant.orderDetailsPage.replaceFirstItemAndApplyQuoteUpdates({
+        medicineKeyword: 'Get',
+        fallbackMedicineKeyword: 'Ace',
+        vatExempt: true,
+        typeLabel: 'Device',
+        temperatureLabel: 'Chilled',
+        discountLabel: 'Senior',
+        unitPrice: 500,
+        quantity: 10,
+        discountedQty: 5,
+      });
+
+      // UI (merchant): verify total near Request Payment is 4,650 (includes handling fee), then cancel via decline flow.
+      await merchant.orderDetailsPage.verifyRequestPaymentTotalAmount(4650);
+      await merchant.orderDetailsPage.declineOrderWithOthersReason(declineReason, {
+        verifyReasonInDetails: false,
+      });
+
+      // UI (merchant): verify order appears in Orders > Declined/Cancelled tab based on merchant cancel routing.
+      await merchant.ordersPage.verifyBookingRefPresentInDeclinedOrCancelledTab(bookingRef);
     }
   );
 

@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import {
   safeClick,
+  safeFill,
   safeInput,
   safeUploadFile,
   safeWaitForElementHidden,
@@ -25,6 +26,18 @@ export default class MerchantOrderDetailsPage {
       editItemButtons: getSelector(this.sel, 'OrderDetails.EditItemButtons'),
       priceInput: getSelector(this.sel, 'OrderDetails.PriceInput'),
       updateItemButton: getSelector(this.sel, 'OrderDetails.UpdateItemButton'),
+      editItemModal: getSelector(this.sel, 'OrderDetails.EditItemModal'),
+      editItemReplaceRadio: getSelector(this.sel, 'OrderDetails.EditItemReplaceRadio'),
+      editItemSearchInput: getSelector(this.sel, 'OrderDetails.EditItemSearchInput'),
+      editItemSearchOptions: getSelector(this.sel, 'OrderDetails.EditItemSearchOptions'),
+      editItemTypeDropdown: getSelector(this.sel, 'OrderDetails.EditItemTypeDropdown'),
+      editItemTemperatureDropdown: getSelector(this.sel, 'OrderDetails.EditItemTemperatureDropdown'),
+      editItemDiscountDropdown: getSelector(this.sel, 'OrderDetails.EditItemDiscountDropdown'),
+      editItemDropdownOptionByLabelTemplate: getSelector(this.sel, 'OrderDetails.EditItemDropdownOptionByLabelTemplate'),
+      editItemVATExemptCheckbox: getSelector(this.sel, 'OrderDetails.EditItemVATExemptCheckbox'),
+      editItemDiscountedQtyInput: getSelector(this.sel, 'OrderDetails.EditItemDiscountedQtyInput'),
+      editItemQtyInput: getSelector(this.sel, 'OrderDetails.EditItemQtyInput'),
+      requestPaymentTotalText: getSelector(this.sel, 'OrderDetails.RequestPaymentTotalText'),
       assignBranchSearchInput: getSelector(this.sel, 'OrderDetails.AssignBranchSearchInput'),
       assignBranchResultByKeywordTemplate: getSelector(this.sel, 'OrderDetails.AssignBranchResultByKeywordTemplate'),
       assignBranchFirstResult: getSelector(this.sel, 'OrderDetails.AssignBranchFirstResult'),
@@ -305,6 +318,308 @@ export default class MerchantOrderDetailsPage {
     // Sets the price value inside the current edit-item dialog.
     if (!(await safeInput(this.page, this.s.priceInput, String(price)))) {
       markFailed(`Unable to set unit price for item index ${index + 1}`);
+    }
+  }
+
+  async replaceFirstItemAndApplyQuoteUpdates({
+    medicineKeyword,
+    fallbackMedicineKeyword,
+    vatExempt = false,
+    typeLabel,
+    temperatureLabel,
+    discountLabel,
+    unitPrice,
+    quantity,
+    discountedQty,
+  }) {
+    // Updates first quotation row via replace flow and applies optional pricing/metadata fields.
+    await this.openEditItemByIndex(0);
+    if (!(await safeWaitForElementVisible(this.page, this.s.editItemModal))) {
+      markFailed('Edit item modal is not visible');
+    }
+
+    await this.selectReplaceModeForEditItem();
+    await this.searchAndSelectReplacementMedicine(medicineKeyword, {
+      fallbackKeyword: fallbackMedicineKeyword,
+    });
+    await this.enableVATExempt(vatExempt);
+
+    if (typeLabel) {
+      await this.selectEditItemType(typeLabel);
+    }
+    if (temperatureLabel) {
+      await this.selectEditItemTemperature(temperatureLabel);
+    }
+    if (discountLabel) {
+      await this.selectEditItemDiscount(discountLabel);
+    }
+    if (unitPrice != null) {
+      await this.setEditItemPrice(unitPrice);
+    }
+    if (quantity != null) {
+      await this.setEditItemQuantity(quantity);
+    }
+    if (discountedQty != null) {
+      await this.setEditItemDiscountedQuantity(discountedQty);
+    }
+
+    await this.submitItemUpdate(0);
+  }
+
+  async selectReplaceModeForEditItem() {
+    // Switches the edit flow to replace mode so medicine search can change to a different item.
+    if (!(await safeWaitForElementVisible(this.page, this.s.editItemReplaceRadio))) {
+      markFailed('Replace option is not visible in edit item modal');
+    }
+    const replaceRadio = this.page.locator(this.s.editItemReplaceRadio).first();
+    const alreadyChecked = (await replaceRadio.getAttribute('aria-checked').catch(() => '')) === 'true';
+    if (alreadyChecked) {
+      return;
+    }
+    if (!(await safeClick(this.page, this.s.editItemReplaceRadio))) {
+      markFailed('Unable to select replace mode in edit item modal');
+    }
+  }
+
+  async searchAndSelectReplacementMedicine(medicineKeyword, { fallbackKeyword } = {}) {
+    // Searches medicine in replace mode and chooses the regular medicine result (preferred second result when present).
+    const keyword = String(medicineKeyword || '').trim();
+    if (!keyword) {
+      markFailed('searchAndSelectReplacementMedicine requires a non-empty medicine keyword');
+    }
+
+    const trySelect = async (searchKeyword) => {
+      const normalizedKeyword = String(searchKeyword || '').trim();
+      if (!normalizedKeyword) {
+        return false;
+      }
+
+      if (!(await safeWaitForElementVisible(this.page, this.s.editItemSearchInput))) {
+        markFailed('Replace medicine search input is not visible');
+      }
+
+      const searchInput = this.page.locator(this.s.editItemSearchInput).first();
+      const focused = await searchInput
+        .click()
+        .then(() => true)
+        .catch(() => false);
+      if (!focused) {
+        markFailed(`Unable to focus replacement medicine input for keyword "${normalizedKeyword}"`);
+      }
+      const selectAllShortcut = process.platform === 'darwin' ? 'Meta+A' : 'Control+A';
+      await this.page.keyboard.press(selectAllShortcut).catch(() => {});
+      await this.page.keyboard.press('Backspace').catch(() => {});
+      await this.page.keyboard.type(normalizedKeyword, { delay: 25 }).catch(() => {});
+
+      const options = this.page.locator(this.s.editItemSearchOptions);
+      let optionCount = 0;
+      let candidateIndex = -1;
+      try {
+        await expect
+          .poll(
+            async () => {
+              optionCount = await options.count().catch(() => 0);
+              candidateIndex = -1;
+              for (let index = 0; index < optionCount; index += 1) {
+                const optionText = await options
+                  .nth(index)
+                  .innerText()
+                  .catch(() => '');
+                const normalizedOptionText = String(optionText || '')
+                  .trim()
+                  .toLowerCase();
+                if (!normalizedOptionText) continue;
+                if (normalizedOptionText.includes('add as custom')) continue;
+                if (!normalizedOptionText.includes(normalizedKeyword.toLowerCase()) && normalizedOptionText.length < 8) {
+                  continue;
+                }
+                candidateIndex = index;
+                break;
+              }
+              return candidateIndex >= 0;
+            },
+            {
+              timeout: Timeouts.standard,
+              intervals: [300],
+            }
+          )
+          .toBe(true);
+      } catch {
+        optionCount = await options.count().catch(() => 0);
+      }
+
+      if (optionCount > 0 && candidateIndex >= 0) {
+        await options
+          .nth(candidateIndex)
+          .click()
+          .catch(() => {});
+        const selectedValue = await searchInput.inputValue().catch(() => normalizedKeyword);
+        return String(selectedValue || '').trim().toLowerCase() !== normalizedKeyword.toLowerCase();
+      }
+      return false;
+    };
+
+    const primarySelected = await trySelect(keyword);
+    if (primarySelected) {
+      return;
+    }
+
+    const fallback = String(fallbackKeyword || '').trim();
+    if (fallback) {
+      const fallbackSelected = await trySelect(fallback);
+      if (fallbackSelected) {
+        return;
+      }
+    }
+
+    markFailed(`Unable to select replacement medicine for keyword "${keyword}"`);
+  }
+
+  async enableVATExempt(enabled = false) {
+    // Toggles VAT Exempt to the expected state; no-op when already in the target state.
+    const targetEnabled = Boolean(enabled);
+    if (!(await safeWaitForElementVisible(this.page, this.s.editItemVATExemptCheckbox))) {
+      markFailed('VAT Exempt checkbox is not visible in edit item modal');
+    }
+
+    const vatCheckbox = this.page.locator(this.s.editItemVATExemptCheckbox).first();
+    const isEnabled = (await vatCheckbox.getAttribute('aria-checked').catch(() => 'false')) === 'true';
+    if (isEnabled === targetEnabled) {
+      return;
+    }
+
+    if (!(await safeClick(this.page, this.s.editItemVATExemptCheckbox))) {
+      markFailed(`Unable to set VAT Exempt checkbox to ${targetEnabled}`);
+    }
+
+    const finalState = (await vatCheckbox.getAttribute('aria-checked').catch(() => 'false')) === 'true';
+    if (finalState !== targetEnabled) {
+      markFailed(`VAT Exempt checkbox did not update to expected state ${targetEnabled}`);
+    }
+  }
+
+  async selectEditItemType(typeLabel) {
+    // Sets item type dropdown value in edit modal.
+    await this.selectEditItemDropdownValue({
+      dropdownSelector: this.s.editItemTypeDropdown,
+      label: typeLabel,
+      fieldName: 'Type',
+    });
+  }
+
+  async selectEditItemTemperature(temperatureLabel) {
+    // Sets item temperature dropdown value in edit modal.
+    await this.selectEditItemDropdownValue({
+      dropdownSelector: this.s.editItemTemperatureDropdown,
+      label: temperatureLabel,
+      fieldName: 'Temperature',
+    });
+  }
+
+  async selectEditItemDiscount(discountLabel) {
+    // Sets item discount dropdown value in edit modal.
+    await this.selectEditItemDropdownValue({
+      dropdownSelector: this.s.editItemDiscountDropdown,
+      label: discountLabel,
+      fieldName: 'Discount',
+    });
+  }
+
+  async selectEditItemDropdownValue({ dropdownSelector, label, fieldName }) {
+    // Reusable dropdown setter for edit-item modal select controls.
+    const normalizedLabel = String(label || '').trim();
+    if (!normalizedLabel) {
+      markFailed(`${fieldName} dropdown requires a non-empty label`);
+    }
+    if (!(await safeWaitForElementVisible(this.page, dropdownSelector))) {
+      markFailed(`${fieldName} dropdown is not visible in edit item modal`);
+    }
+
+    const dropdown = this.page.locator(dropdownSelector).first();
+    const currentValue = String((await dropdown.innerText().catch(() => '')).trim());
+    if (currentValue === normalizedLabel) {
+      return;
+    }
+
+    const opened = await dropdown
+      .click()
+      .then(() => true)
+      .catch(() => false);
+    if (!opened) {
+      markFailed(`Unable to open ${fieldName} dropdown`);
+    }
+
+    const optionSelector = this.s.editItemDropdownOptionByLabelTemplate.replace('{label}', normalizedLabel);
+    if (!(await safeWaitForElementVisible(this.page, optionSelector))) {
+      markFailed(`Option "${normalizedLabel}" is not visible in ${fieldName} dropdown`);
+    }
+    if (!(await safeClick(this.page, optionSelector))) {
+      markFailed(`Unable to select ${fieldName} option "${normalizedLabel}"`);
+    }
+  }
+
+  async setEditItemPrice(price) {
+    // Sets edit-item price with full replacement semantics.
+    if (!(await safeFill(this.page, this.s.priceInput, String(price)))) {
+      markFailed(`Unable to set edit item price to ${price}`);
+    }
+  }
+
+  async setEditItemQuantity(quantity) {
+    // Sets edit-item quantity value under the Qty field.
+    if (!(await safeFill(this.page, this.s.editItemQtyInput, String(quantity)))) {
+      markFailed(`Unable to set edit item quantity to ${quantity}`);
+    }
+  }
+
+  async setEditItemDiscountedQuantity(discountedQty) {
+    // Sets edit-item discounted quantity value under the Discounted Qty field.
+    if (!(await safeFill(this.page, this.s.editItemDiscountedQtyInput, String(discountedQty)))) {
+      markFailed(`Unable to set edit item discounted quantity to ${discountedQty}`);
+    }
+  }
+
+  async verifyRequestPaymentTotalAmount(expectedAmount) {
+    // Verifies quotation total near Request Payment matches expected amount after item updates.
+    const expected = Number(expectedAmount);
+    if (!Number.isFinite(expected)) {
+      markFailed(`verifyRequestPaymentTotalAmount requires numeric expectedAmount, got: ${expectedAmount}`);
+    }
+
+    if (!(await safeWaitForElementVisible(this.page, this.s.requestPaymentTotalText))) {
+      markFailed('Request payment total text is not visible');
+    }
+
+    const parseAmount = (text) => {
+      const amountText = String(text || '').replace(/[^\d.]/g, '');
+      const parsed = Number(amountText);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    };
+
+    try {
+      await expect
+        .poll(
+          async () => {
+            const totalText = await this.page
+              .locator(this.s.requestPaymentTotalText)
+              .first()
+              .innerText()
+              .catch(() => '');
+            return parseAmount(totalText);
+          },
+          {
+            timeout: Timeouts.standard,
+            intervals: [300],
+          }
+        )
+        .toBe(expected);
+    } catch {
+      const actualText = await this.page
+        .locator(this.s.requestPaymentTotalText)
+        .first()
+        .innerText()
+        .catch(() => 'N/A');
+      markFailed(`Expected request-payment total ${expected} but found "${String(actualText).trim()}"`);
     }
   }
 
@@ -638,8 +953,8 @@ export default class MerchantOrderDetailsPage {
     }
   }
 
-  async declineOrderWithOthersReason(reasonText) {
-    // Declines an order via UI using "Others" reason and verifies updated cancelled reason badge.
+  async declineOrderWithOthersReason(reasonText, { verifyReasonInDetails = true } = {}) {
+    // Declines/cancels an order via UI using "Others" reason and optionally verifies updated cancelled reason text.
     const normalizedReason = String(reasonText || '').trim();
     if (!normalizedReason) {
       markFailed('declineOrderWithOthersReason requires a non-empty reason');
@@ -684,24 +999,26 @@ export default class MerchantOrderDetailsPage {
       markFailed('Order cancelled result modal did not close');
     }
 
-    const escapedReason = normalizedReason.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    try {
-      await expect
-        .poll(
-          async () =>
-            this.page
-              .getByText(new RegExp(escapedReason, 'i'))
-              .first()
-              .isVisible()
-              .catch(() => false),
-          {
-            timeout: Timeouts.standard,
-            intervals: [300],
-          }
-        )
-        .toBe(true);
-    } catch {
-      markFailed(`Cancelled status reason was not updated with "${normalizedReason}"`);
+    if (verifyReasonInDetails) {
+      const escapedReason = normalizedReason.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      try {
+        await expect
+          .poll(
+            async () =>
+              this.page
+                .getByText(new RegExp(escapedReason, 'i'))
+                .first()
+                .isVisible()
+                .catch(() => false),
+            {
+              timeout: Timeouts.standard,
+              intervals: [300],
+            }
+          )
+          .toBe(true);
+      } catch {
+        markFailed(`Cancelled status reason was not updated with "${normalizedReason}"`);
+      }
     }
   }
 
