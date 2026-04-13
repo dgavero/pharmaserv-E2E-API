@@ -18,6 +18,7 @@ export default class MerchantOrdersPage {
       ongoing: getSelector(this.sel, 'Orders.OngoingTab'),
       completed: getSelector(this.sel, 'Orders.CompletedTab'),
       cancelled: getSelector(this.sel, 'Orders.CancelledTab'),
+      declined: getSelector(this.sel, 'Orders.DeclinedTab'),
     };
     this.searchInput = getSelector(this.sel, 'Orders.SearchInput');
     this.loadingOrdersMessage = getSelector(this.sel, 'Orders.LoadingOrdersMessage');
@@ -66,6 +67,11 @@ export default class MerchantOrdersPage {
   async hasCancelledOrderByBookingRef(bookingRef) {
     // Returns whether a booking reference is visible in Cancelled tab results.
     return this.hasBookingRefInTab(this.tabs.cancelled, bookingRef, 'Cancelled');
+  }
+
+  async hasDeclinedOrderByBookingRef(bookingRef) {
+    // Returns whether a booking reference is visible in Declined tab results.
+    return this.hasBookingRefInTab(this.tabs.declined, bookingRef, 'Declined');
   }
 
   buildOrderCardBookingReferenceID(bookingRef) {
@@ -147,6 +153,11 @@ export default class MerchantOrdersPage {
   async goToCancelledOrdersTab() {
     // Opens the Cancelled Orders tab.
     await this.activateOrdersTab(this.tabs.cancelled, 'Cancelled');
+  }
+
+  async goToDeclinedOrdersTab() {
+    // Opens the Declined Orders tab.
+    await this.activateOrdersTab(this.tabs.declined, 'Declined');
   }
 
   async focusSearchInput(tabLabel = 'current') {
@@ -449,5 +460,107 @@ export default class MerchantOrdersPage {
   async verifyOrderCancelledInDetailsAndCancelledTab(bookingRef) {
     // Convenience wrapper for cancelled-status flows.
     await this.verifyOrderInDetailsAndTab(bookingRef, 'CANCELLED');
+  }
+
+  async verifyBookingRefPresentInCancelledTab(bookingRef) {
+    // Lightweight cancelled-tab verifier used for decline flows where tab stabilization can lag.
+    const searchTerm = String(bookingRef || '').trim();
+    if (!searchTerm) {
+      markFailed('verifyBookingRefPresentInCancelledTab requires a booking reference');
+    }
+
+    await this.open();
+
+    if (!(await safeWaitForElementVisible(this.page, this.tabs.cancelled))) {
+      markFailed('Cancelled tab is not visible');
+    }
+    if (!(await safeClick(this.page, this.tabs.cancelled))) {
+      markFailed('Unable to open Cancelled tab');
+    }
+
+    const searchInput = await this.getVisibleSearchInput('Cancelled');
+    const typed = await searchInput
+      .fill(searchTerm)
+      .then(() => true)
+      .catch(() => false);
+    if (!typed) {
+      markFailed(`Unable to search booking ref ${searchTerm} in Cancelled tab`);
+    }
+
+    const bookingRefCard = this.buildOrderCardBookingReferenceID(searchTerm);
+    try {
+      await expect
+        .poll(
+          async () =>
+            this.page
+              .locator(bookingRefCard)
+              .first()
+              .isVisible()
+              .catch(() => false),
+          {
+            timeout: Timeouts.standard,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
+      markFailed(`Order ${searchTerm} is not present in Cancelled tab after decline`);
+    }
+  }
+
+  async verifyBookingRefPresentInDeclinedTab(bookingRef) {
+    // Lightweight declined-tab verifier for merchant-side order decline/cancel actions.
+    const searchTerm = String(bookingRef || '').trim();
+    if (!searchTerm) {
+      markFailed('verifyBookingRefPresentInDeclinedTab requires a booking reference');
+    }
+
+    await this.open();
+
+    if (!(await safeWaitForElementVisible(this.page, this.tabs.declined))) {
+      markFailed('Declined tab is not visible');
+    }
+    if (!(await safeClick(this.page, this.tabs.declined))) {
+      markFailed('Unable to open Declined tab');
+    }
+
+    const searchInput = await this.getVisibleSearchInput('Declined');
+    const typed = await searchInput
+      .fill(searchTerm)
+      .then(() => true)
+      .catch(() => false);
+    if (!typed) {
+      markFailed(`Unable to search booking ref ${searchTerm} in Declined tab`);
+    }
+
+    const bookingRefCard = this.buildOrderCardBookingReferenceID(searchTerm);
+    try {
+      await expect
+        .poll(
+          async () =>
+            this.page
+              .locator(bookingRefCard)
+              .first()
+              .isVisible()
+              .catch(() => false),
+          {
+            timeout: Timeouts.standard,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
+      markFailed(`Order ${searchTerm} is not present in Declined tab after decline`);
+    }
+  }
+
+  async verifyBookingRefPresentInDeclinedOrCancelledTab(bookingRef) {
+    // Some merchant cancel paths route to Declined while others route to Cancelled.
+    try {
+      await this.verifyBookingRefPresentInDeclinedTab(bookingRef);
+      return;
+    } catch {}
+
+    await this.verifyBookingRefPresentInCancelledTab(bookingRef);
   }
 }

@@ -114,6 +114,11 @@ export function getPharmacistAccount(accountKey = 'reg01') {
       usernameKey: 'PHARMACIST_USERNAME_ADMIN',
       passwordKey: 'PHARMACIST_PASSWORD_ADMIN',
     },
+    planetadmin: {
+      usernameKey: 'MERCHANT_PLANET_USERNAME',
+      passwordKey: 'MERCHANT_PLANET_PASSWORD',
+      branchIdKey: 'MERCHANT_PLANET_MAIN_BRANCHID',
+    },
   });
 }
 
