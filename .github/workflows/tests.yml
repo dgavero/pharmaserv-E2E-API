@@ -188,6 +188,7 @@ jobs:
               -e REPORT_PUBLISH \
               -e TEST_ENV="${{ steps.selector.outputs.test_env }}" \
               -e THREADS="${{ steps.selector.outputs.threads }}" \
+              -e HEADLESS=true \
               -e SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
               -e SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" \
               -e TAGS="${{ steps.selector.outputs.run_tags }}" \
@@ -208,6 +209,7 @@ jobs:
                 -e REPORT_PUBLISH \
                 -e TEST_ENV="${{ steps.selector.outputs.test_env }}" \
                 -e THREADS="${{ steps.selector.outputs.threads }}" \
+              -e HEADLESS=true \
                 -e SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
                 -e SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" \
                 -e TAGS="${{ steps.selector.outputs.run_tags }}" \
@@ -227,6 +229,7 @@ jobs:
                 -e REPORT_PUBLISH \
                 -e TEST_ENV="${{ steps.selector.outputs.test_env }}" \
                 -e THREADS="${{ steps.selector.outputs.threads }}" \
+              -e HEADLESS=true \
                 -e SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
                 -e SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" \
                 -e TAGS="${{ steps.selector.outputs.run_tags }}" \
@@ -246,6 +249,7 @@ jobs:
                 -e REPORT_PUBLISH \
                 -e TEST_ENV="${{ steps.selector.outputs.test_env }}" \
                 -e THREADS="${{ steps.selector.outputs.threads }}" \
+              -e HEADLESS=true \
                 -e SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
                 -e SAFE_TAGS="${SAFE_TAGS:-}" \
                 -e TAGS="${{ steps.selector.outputs.run_tags }}" \
@@ -265,6 +269,7 @@ jobs:
                 -e REPORT_PUBLISH \
                 -e TEST_ENV="${{ steps.selector.outputs.test_env }}" \
                 -e THREADS="${{ steps.selector.outputs.threads }}" \
+              -e HEADLESS=true \
                 -e SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
                 -e SAFE_TAGS="__ALL__" \
                 -e TAGS="${TAGS:-}" \
@@ -286,6 +291,7 @@ jobs:
                 -e REPORT_PUBLISH \
                 -e TEST_ENV="${{ steps.selector.outputs.test_env }}" \
                 -e THREADS="${{ steps.selector.outputs.threads }}" \
+              -e HEADLESS=true \
                 -e SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
                 -e SAFE_TAGS="${SAFE_TAGS:-}" \
                 -e TAGS="${{ steps.selector.outputs.run_tags }}" \
@@ -305,6 +311,7 @@ jobs:
                 -e REPORT_PUBLISH \
                 -e TEST_ENV="${{ steps.selector.outputs.test_env }}" \
                 -e THREADS="${{ steps.selector.outputs.threads }}" \
+              -e HEADLESS=true \
                 -e SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
                 -e SAFE_TAGS="${SAFE_TAGS:-}" \
                 -e TAGS="smoke" \
