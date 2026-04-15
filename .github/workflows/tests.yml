@@ -133,7 +133,7 @@ jobs:
             exit 1
           fi
 
-          TEST_ENV="${{ steps.selector.outputs.test_env }}" node scripts/secrets/load-secrets.js --env "${{ steps.selector.outputs.test_env }}" --github-env --env-file .ci-secrets.env --required
+          TEST_ENV="${{ steps.selector.outputs.test_env }}" node scripts/secrets/load-secrets.js --env "${{ steps.selector.outputs.test_env }}" --github-env -- --env-file .ci-secrets.env --required
 
       - name: Set report routing by branch
         shell: bash
