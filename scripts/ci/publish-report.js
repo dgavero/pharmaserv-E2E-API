@@ -1,4 +1,4 @@
-// scripts/publish-report.js
+// scripts/ci/publish-report.js
 const ghpages = require('gh-pages');
 const path = require('path');
 const fs = require('fs');

@@ -84,7 +84,7 @@ Treat these files and areas as approval-required:
 - `e2e/selectors/merchant.selectors.json`
 - `e2e/pages/merchantPortal/`
 - `e2e/tests/merchantPortal/actions/`
-- `scripts/run-all.sh`
+- `scripts/ci/run-all.sh`
 - `.github/workflows/tests.yml`
 - `helpers/discord/`
 - `scripts/secrets/`

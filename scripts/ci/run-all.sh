@@ -156,7 +156,7 @@ case "${MODE}" in
     ;;
   *)
     log "Unknown mode: ${MODE}"
-    log "Usage: bash scripts/run-all.sh [safe|stress]"
+    log "Usage: bash scripts/ci/run-all.sh [safe|stress]"
     exit 1
     ;;
 esac

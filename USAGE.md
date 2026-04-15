@@ -160,7 +160,7 @@ If no failures exist, summary shows: `Yay. No failures!`
 
 ## Report Publishing
 
-- Publisher script: `scripts/publish-report.js`
+- Publisher script: `scripts/ci/publish-report.js`
 - Default: publish is enabled
 - Disable publishing with:
 

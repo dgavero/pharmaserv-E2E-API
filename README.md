@@ -155,7 +155,7 @@ pharmaserv-E2E-API/
 │   ├── pages/
 │   └── tests/
 ├── helpers/discord/
-├── scripts/publish-report.js
+├── scripts/ci/publish-report.js
 ├── playwright.config.js
 ├── globalSetup.js
 └── AGENTS.md

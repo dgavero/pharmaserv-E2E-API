@@ -21,4 +21,4 @@ RUN_TAGS="${RUN_TAGS}" \
 DOCKER_IMAGE="${DOCKER_IMAGE:-pharmaserv-tests}" \
 ENV_FILE="${ENV_FILE:-}" \
 HEADLESS="${HEADLESS:-true}" \
-./scripts/run-tests-in-docker.sh
+./scripts/ci/run-tests-in-docker.sh
