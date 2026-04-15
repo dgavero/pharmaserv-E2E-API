@@ -1,18 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "🚀 Running tests with:"
+MODE="${MODE:-basic}"
+RUN_TAGS="${RUN_TAGS:-${TAGS:-}}"
+
+echo "🚀 Running tests with shared Docker runner:"
+echo "MODE=${MODE}"
 echo "TEST_ENV=${TEST_ENV:-DEV}"
 echo "HEADLESS=${HEADLESS:-true}"
 echo "THREADS=${THREADS:-4}"
-echo "TAGS=${TAGS:-@smoke}"
+echo "RUN_TAGS=${RUN_TAGS}"
 echo "-----------------------------------"
 
-docker run --rm \
--v "$(pwd):/app" \
--w /app \
--e TEST_ENV="${TEST_ENV:-DEV}" \
--e HEADLESS="${HEADLESS:-true}" \
--e THREADS="${THREADS:-4}" \
--e TAGS="${TAGS:-@smoke}" \
-pharmaserv-tests \
-npx playwright test
+MODE="${MODE}" \
+EVENT_NAME="${EVENT_NAME:-workflow_dispatch}" \
+TEST_ENV="${TEST_ENV:-DEV}" \
+THREADS="${THREADS:-4}" \
+SAFE_PAUSE_SECONDS="${SAFE_PAUSE_SECONDS:-30}" \
+RUN_TAGS="${RUN_TAGS}" \
+DOCKER_IMAGE="${DOCKER_IMAGE:-pharmaserv-tests}" \
+ENV_FILE="${ENV_FILE:-}" \
+HEADLESS="${HEADLESS:-true}" \
+./scripts/run-tests-in-docker.sh
