@@ -79,6 +79,7 @@ function normalizeFlatObject(input) {
 function appendGithubEnv(filePath, vars) {
   let chunk = '';
   for (const [key, value] of Object.entries(vars)) {
+    process.stdout.write(`::add-mask::${value}\n`);
     const marker = `__SECRETS_${key}__`;
     chunk += `${key}<<${marker}\n${value}\n${marker}\n`;
   }
@@ -130,4 +131,3 @@ try {
   process.stderr.write(`[secrets-load] ${error.message}\n`);
   process.exit(1);
 }
-

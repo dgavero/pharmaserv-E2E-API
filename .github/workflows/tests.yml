@@ -186,6 +186,10 @@ jobs:
               -e BASE_URL_DEV \
               -e BASE_URL_QA \
               -e BASE_URL_PROD \
+              -e API_BASE_URL \
+              -e API_BASE_URL_DEV \
+              -e API_BASE_URL_QA \
+              -e API_BASE_URL_PROD \
               -e ADMIN_USERNAME \
               -e ADMIN_PASSWORD \
               -e PATIENT_USER_USERNAME \
@@ -216,6 +220,10 @@ jobs:
                 -e BASE_URL_DEV \
                 -e BASE_URL_QA \
                 -e BASE_URL_PROD \
+                -e API_BASE_URL \
+                -e API_BASE_URL_DEV \
+                -e API_BASE_URL_QA \
+                -e API_BASE_URL_PROD \
                 -e ADMIN_USERNAME \
                 -e ADMIN_PASSWORD \
                 -e PATIENT_USER_USERNAME \
@@ -245,6 +253,10 @@ jobs:
                 -e BASE_URL_DEV \
                 -e BASE_URL_QA \
                 -e BASE_URL_PROD \
+                -e API_BASE_URL \
+                -e API_BASE_URL_DEV \
+                -e API_BASE_URL_QA \
+                -e API_BASE_URL_PROD \
                 -e ADMIN_USERNAME \
                 -e ADMIN_PASSWORD \
                 -e PATIENT_USER_USERNAME \
@@ -274,6 +286,10 @@ jobs:
                 -e BASE_URL_DEV \
                 -e BASE_URL_QA \
                 -e BASE_URL_PROD \
+                -e API_BASE_URL \
+                -e API_BASE_URL_DEV \
+                -e API_BASE_URL_QA \
+                -e API_BASE_URL_PROD \
                 -e ADMIN_USERNAME \
                 -e ADMIN_PASSWORD \
                 -e PATIENT_USER_USERNAME \
@@ -303,6 +319,10 @@ jobs:
                 -e BASE_URL_DEV \
                 -e BASE_URL_QA \
                 -e BASE_URL_PROD \
+                -e API_BASE_URL \
+                -e API_BASE_URL_DEV \
+                -e API_BASE_URL_QA \
+                -e API_BASE_URL_PROD \
                 -e ADMIN_USERNAME \
                 -e ADMIN_PASSWORD \
                 -e PATIENT_USER_USERNAME \
@@ -334,6 +354,10 @@ jobs:
                 -e BASE_URL_DEV \
                 -e BASE_URL_QA \
                 -e BASE_URL_PROD \
+                -e API_BASE_URL \
+                -e API_BASE_URL_DEV \
+                -e API_BASE_URL_QA \
+                -e API_BASE_URL_PROD \
                 -e ADMIN_USERNAME \
                 -e ADMIN_PASSWORD \
                 -e PATIENT_USER_USERNAME \
@@ -363,6 +387,10 @@ jobs:
                 -e BASE_URL_DEV \
                 -e BASE_URL_QA \
                 -e BASE_URL_PROD \
+                -e API_BASE_URL \
+                -e API_BASE_URL_DEV \
+                -e API_BASE_URL_QA \
+                -e API_BASE_URL_PROD \
                 -e ADMIN_USERNAME \
                 -e ADMIN_PASSWORD \
                 -e PATIENT_USER_USERNAME \
