@@ -167,6 +167,7 @@ jobs:
       - name: Prepare artifact output directories
         shell: bash
         run: |
+          rm -rf .playwright-report test-results screenshots .blob-report
           mkdir -p .playwright-report test-results screenshots .blob-report
 
       - name: Run tests in Docker
@@ -323,6 +324,13 @@ jobs:
             screenshots
             .blob-report
           include-hidden-files: true
+
+      - name: Cleanup CI secret and blob files
+        if: always()
+        shell: bash
+        run: |
+          rm -f .ci-secrets.env
+          rm -rf .blob-report
 
   qa-scheduled-full:
     if: github.event_name == 'schedule'
