@@ -4,3 +4,8 @@ test-results
 playwright-report
 .git
 .ci-secrets.env
+.blob-report
+blob-report
+screenshots
+reports
+.discord-run.json

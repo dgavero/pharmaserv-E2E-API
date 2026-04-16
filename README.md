@@ -110,7 +110,7 @@ Details: [secrets/README.md](./secrets/README.md)
 ## CI Behavior
 
 - `push` to `main`: runs `safe + smoke` (batched).
-- `schedule`: runs `safe + full` (batched).
+- `schedule`: runs full QA safe coverage in `qa-scheduled-full`.
 
 ## CI Manual Run Inputs
 

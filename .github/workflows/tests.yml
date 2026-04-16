@@ -62,209 +62,41 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
-  test-suite:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - name: Resolve run selector
-        id: selector
-        shell: bash
-        run: |
-          MODE="safe"
-          EVENT_NAME="${{ github.event_name }}"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            MODE="${{ inputs.run_mode }}"
-          fi
+  test-manual:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: ${{ inputs.run_mode || 'basic' }}
+      event_name: workflow_dispatch
+      test_env: ${{ inputs.test_env || 'DEV' }}
+      threads: ${{ inputs.threads || '4' }}
+      safe_pause_seconds: ${{ inputs.safe_pause_seconds || '30' }}
+      run_tags: ${{ inputs.tags || '' }}
+      artifact_name: playwright-report
+    secrets: inherit
 
-          RUN_THREADS="${THREADS:-4}"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.threads }}" ]]; then
-            RUN_THREADS="${{ inputs.threads }}"
-          fi
-
-          RUN_TEST_ENV="${TEST_ENV:-DEV}"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.test_env }}" ]]; then
-            RUN_TEST_ENV="${{ inputs.test_env }}"
-          fi
-
-          SAFE_PAUSE="30"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.safe_pause_seconds }}" ]]; then
-            SAFE_PAUSE="${{ inputs.safe_pause_seconds }}"
-          fi
-
-          RUN_TAGS=""
-          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
-            RUN_TAGS="${{ inputs.tags }}"
-          elif [[ "${EVENT_NAME}" == "push" ]]; then
-            RUN_TAGS="smoke"
-          elif [[ "${EVENT_NAME}" == "schedule" ]]; then
-            RUN_TAGS="smoke"
-          fi
-
-          if [[ "${MODE}" == "stress" ]]; then
-            RUN_TAGS=""
-            SAFE_PAUSE="0"
-          fi
-
-          echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
-          echo "threads=${RUN_THREADS}" >> "$GITHUB_OUTPUT"
-          echo "test_env=${RUN_TEST_ENV}" >> "$GITHUB_OUTPUT"
-          echo "safe_pause=${SAFE_PAUSE}" >> "$GITHUB_OUTPUT"
-          echo "run_tags=${RUN_TAGS}" >> "$GITHUB_OUTPUT"
-
-      - name: Install sops
-        shell: bash
-        run: |
-          bash scripts/secrets/install-sops.sh
-
-      - name: Load encrypted secrets
-        shell: bash
-        run: |
-          if [[ -z "${SOPS_AGE_KEY:-}" ]]; then
-            echo "Missing SOPS_AGE_KEY secret"
-            exit 1
-          fi
-
-          TEST_ENV="${{ steps.selector.outputs.test_env }}" node scripts/secrets/load-secrets.js --env "${{ steps.selector.outputs.test_env }}" -- --env-file .ci-secrets.env --required
-
-      - name: Set report routing by branch
-        shell: bash
-        run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
-            echo "CI routing: main branch -> env test channels"
-          else
-            echo "REPORT_PUBLISH=0" >> "$GITHUB_ENV"
-            echo "CI routing: non-main branch -> LOCAL_RUNS_CHANNELID"
-          fi
-
-      - name: Validate required credentials
-        shell: bash
-        run: |
-          bash scripts/secrets/validate-env-file.sh \
-            .ci-secrets.env \
-            ADMIN_USERNAME \
-            ADMIN_PASSWORD \
-            PATIENT_USER_USERNAME \
-            PATIENT_USER_PASSWORD \
-            RIDER_USERNAME \
-            RIDER_PASSWORD
-
-      - name: Build CI test image
-        run: docker build -t pharmaserv-tests-ci .
-
-      - name: Run tests in Docker
-        shell: bash
-        run: |
-          MODE="${{ steps.selector.outputs.mode }}" \
-          EVENT_NAME="${{ github.event_name }}" \
-          TEST_ENV="${{ steps.selector.outputs.test_env }}" \
-          THREADS="${{ steps.selector.outputs.threads }}" \
-          SAFE_PAUSE_SECONDS="${{ steps.selector.outputs.safe_pause }}" \
-          RUN_TAGS="${{ steps.selector.outputs.run_tags }}" \
-          DOCKER_IMAGE="pharmaserv-tests-ci" \
-          ENV_FILE=".ci-secrets.env" \
-          ./scripts/ci/run-tests-in-docker.sh
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: |
-            .playwright-report
-            test-results
-            screenshots
-            .blob-report
-          include-hidden-files: true
-
-      - name: Cleanup CI secret and blob files
-        if: always()
-        shell: bash
-        run: |
-          rm -f .ci-secrets.env
-          rm -rf .blob-report
+  test-merge:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: safe
+      event_name: push
+      test_env: DEV
+      threads: '4'
+      safe_pause_seconds: '30'
+      run_tags: smoke
+      artifact_name: playwright-report-merge
+    secrets: inherit
 
   qa-scheduled-full:
     if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - name: Install sops
-        shell: bash
-        run: |
-          bash scripts/secrets/install-sops.sh
-      - name: Load encrypted secrets
-        shell: bash
-        run: |
-          if [[ -z "${SOPS_AGE_KEY:-}" ]]; then
-            echo "Missing SOPS_AGE_KEY secret"
-            exit 1
-          fi
-
-          TEST_ENV=QA node scripts/secrets/load-secrets.js --env QA -- --env-file .ci-secrets.env --required
-      - name: Set report routing by branch
-        shell: bash
-        run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
-            echo "CI routing: main branch -> env test channels"
-          else
-            echo "REPORT_PUBLISH=0" >> "$GITHUB_ENV"
-            echo "CI routing: non-main branch -> LOCAL_RUNS_CHANNELID"
-          fi
-      - name: Validate required credentials
-        shell: bash
-        run: |
-          bash scripts/secrets/validate-env-file.sh \
-            .ci-secrets.env \
-            ADMIN_USERNAME \
-            ADMIN_PASSWORD \
-            PATIENT_USER_USERNAME \
-            PATIENT_USER_PASSWORD \
-            RIDER_USERNAME \
-            RIDER_PASSWORD
-      - name: Build CI test image
-        run: docker build -t pharmaserv-tests-ci .
-      - name: Run QA full suite in SAFE mode
-        shell: bash
-        run: |
-          MODE="safe" \
-          EVENT_NAME="workflow_dispatch" \
-          TEST_ENV="QA" \
-          THREADS="4" \
-          SAFE_PAUSE_SECONDS="30" \
-          RUN_TAGS="" \
-          DOCKER_IMAGE="pharmaserv-tests-ci" \
-          ENV_FILE=".ci-secrets.env" \
-          ./scripts/ci/run-tests-in-docker.sh
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-qa-scheduled
-          path: |
-            .playwright-report
-            test-results
-            screenshots
-            .blob-report
-          include-hidden-files: true
-      - name: Cleanup CI secret and blob files
-        if: always()
-        shell: bash
-        run: |
-          rm -f .ci-secrets.env
-          rm -rf .blob-report
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: safe
+      event_name: workflow_dispatch
+      test_env: QA
+      threads: '4'
+      safe_pause_seconds: '30'
+      run_tags: ''
+      artifact_name: playwright-report-qa-scheduled
+    secrets: inherit

@@ -106,7 +106,8 @@ function writeEnvFile(filePath, vars) {
     }
     chunk += `${key}=${value}\n`;
   }
-  fs.writeFileSync(filePath, chunk, 'utf8');
+  fs.writeFileSync(filePath, chunk, { encoding: 'utf8', mode: 0o600 });
+  fs.chmodSync(filePath, 0o600);
 }
 
 function main() {
