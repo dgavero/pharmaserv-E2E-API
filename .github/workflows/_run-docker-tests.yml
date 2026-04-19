@@ -121,4 +121,4 @@ jobs:
         run: |
           rm -f .ci-secrets.env
           rm -f .discord-run.json
-          rm -rf .blob-report
+          rm -rf .blob-report || docker run --rm -v "$PWD:/w" alpine sh -lc 'rm -rf /w/.blob-report'

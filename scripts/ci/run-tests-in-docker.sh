@@ -18,6 +18,7 @@ mkdir -p .playwright-report test-results screenshots .blob-report
 
 BASE_ARGS=(
   docker run --rm
+  --user "$(id -u):$(id -g)"
   -v "$PWD/.playwright-report:/app/.playwright-report"
   -v "$PWD/test-results:/app/test-results"
   -v "$PWD/screenshots:/app/screenshots"
@@ -31,6 +32,7 @@ fi
 BASE_ARGS+=(
   -e CI=true
   -e HEADLESS="${HEADLESS}"
+  -e HOME=/tmp
   -e GITHUB_TOKEN
   -e REPORT_PUBLISH
   -e TEST_ENV="${TEST_ENV}"
