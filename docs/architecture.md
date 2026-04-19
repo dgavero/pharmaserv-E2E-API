@@ -84,7 +84,7 @@ Global setup in `globalSetup.js`:
 
 Safe full-run orchestration outside raw Playwright:
 
-- `scripts/run-all.sh` runs:
+- `scripts/ci/run-all.sh` runs:
   - API standalone batch
   - API workflow batch
   - UI/hybrid batch
@@ -359,7 +359,7 @@ These are architecture-critical and should not be changed casually:
 - `e2e/tests/merchantPortal/actions/`
 - `api/tests/e2e/shared/steps/`
 - `api/tests/e2e/shared/queries/`
-- `scripts/run-all.sh`
+- `scripts/ci/run-all.sh`
 - `.github/workflows/tests.yml`
 - `helpers/discord/`
 - `scripts/secrets/`

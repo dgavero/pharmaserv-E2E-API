@@ -5,8 +5,20 @@ import discordSetup from './helpers/discord/discordSetup.js';
 
 function cleanDir(relPath) {
   const dir = path.join(process.cwd(), relPath);
-  if (fs.existsSync(dir)) {
+  if (!fs.existsSync(dir)) return;
+
+  try {
     fs.rmSync(dir, { recursive: true, force: true });
+    return;
+  } catch (error) {
+    // Mounted dirs on CI can be busy; clear contents instead of deleting mountpoint.
+    if (!error || !['EBUSY', 'EPERM'].includes(error.code)) {
+      throw error;
+    }
+  }
+
+  for (const entry of fs.readdirSync(dir)) {
+    fs.rmSync(path.join(dir, entry), { recursive: true, force: true });
   }
 }
 

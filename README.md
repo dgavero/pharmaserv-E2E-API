@@ -110,7 +110,7 @@ Details: [secrets/README.md](./secrets/README.md)
 ## CI Behavior
 
 - `push` to `main`: runs `safe + smoke` (batched).
-- `schedule`: runs `safe + full` (batched).
+- `schedule`: runs full QA safe coverage in `qa-scheduled-full`.
 
 ## CI Manual Run Inputs
 
@@ -155,7 +155,7 @@ pharmaserv-E2E-API/
 │   ├── pages/
 │   └── tests/
 ├── helpers/discord/
-├── scripts/publish-report.js
+├── scripts/ci/publish-report.js
 ├── playwright.config.js
 ├── globalSetup.js
 └── AGENTS.md

@@ -202,7 +202,7 @@ class DiscordReporter {
 
      if (shouldPublish) {
        try {
-         const res = spawnSync(process.execPath, ['scripts/publish-report.js'], { encoding: 'utf-8' });
+         const res = spawnSync(process.execPath, ['scripts/ci/publish-report.js'], { encoding: 'utf-8' });
          const out = sanitizePublishLogs((res.stdout || '') + (res.stderr || ''));
          const m = out.match(/REPORT_URL=(\S+)/);
          if (m) reportUrl = m[1];

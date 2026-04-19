@@ -9,6 +9,7 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm ci
+COPY . .
 
 # Default command (can be overridden)
 CMD ["bash"]

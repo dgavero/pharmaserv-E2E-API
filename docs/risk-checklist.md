@@ -91,7 +91,7 @@ Use this checklist before and after implementing risky changes.
   - `playwright.config.js`
   - `globalSetup.js`
   - `helpers/discord/`
-  - `scripts/run-all.sh`
+  - `scripts/ci/run-all.sh`
   - `.github/workflows/tests.yml`
   - `scripts/secrets/`
 - If yes, is the blast radius understood and approved?
@@ -160,7 +160,7 @@ Use this checklist before and after implementing risky changes.
 - `e2e/tests/merchantPortal/actions/`
 - `api/tests/e2e/shared/steps/`
 - `api/tests/e2e/shared/queries/`
-- `scripts/run-all.sh`
+- `scripts/ci/run-all.sh`
 - `.github/workflows/tests.yml`
 - `helpers/discord/`
 - `scripts/secrets/`

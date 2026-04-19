@@ -13,6 +13,7 @@ secrets/*.dec.json
 secrets/*.plain.json
 secrets/*age-key*
 .tools/
+.ci-secrets.env
 
 # Playwright Outputs
 test-results/

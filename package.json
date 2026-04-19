@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:all": "bash scripts/run-all.sh safe",
-    "test:all:safe": "bash scripts/run-all.sh safe",
-    "test:all:stress": "bash scripts/run-all.sh stress",
-    "report:publish": "node scripts/publish-report.js",
+    "test:all": "bash scripts/ci/run-all.sh safe",
+    "test:all:safe": "bash scripts/ci/run-all.sh safe",
+    "test:all:stress": "bash scripts/ci/run-all.sh stress",
+    "report:publish": "node scripts/ci/publish-report.js",
     "secrets:encrypt": "node scripts/secrets/build-encrypted-files.js --all",
     "secrets:load": "node scripts/secrets/load-secrets.js --shell --required"
   },

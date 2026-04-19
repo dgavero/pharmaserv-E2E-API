@@ -18,6 +18,7 @@ function parseArgs(argv) {
   const args = {
     env: String(process.env.TEST_ENV || 'DEV').toUpperCase(),
     mode: 'shell',
+    envFile: null,
     required: false,
   };
 
@@ -30,6 +31,9 @@ function parseArgs(argv) {
       args.mode = 'github';
     } else if (arg === '--shell') {
       args.mode = 'shell';
+    } else if (arg === '--env-file' && argv[i + 1]) {
+      args.envFile = String(argv[i + 1]);
+      i += 1;
     } else if (arg === '--required') {
       args.required = true;
     }
@@ -79,6 +83,7 @@ function normalizeFlatObject(input) {
 function appendGithubEnv(filePath, vars) {
   let chunk = '';
   for (const [key, value] of Object.entries(vars)) {
+    process.stdout.write(`::add-mask::${value}\n`);
     const marker = `__SECRETS_${key}__`;
     chunk += `${key}<<${marker}\n${value}\n${marker}\n`;
   }
@@ -91,6 +96,18 @@ function printShellExports(vars) {
     const escaped = value.replace(/'/g, "'\"'\"'");
     process.stdout.write(`export ${key}='${escaped}'\n`);
   }
+}
+
+function writeEnvFile(filePath, vars) {
+  let chunk = '';
+  for (const [key, value] of Object.entries(vars)) {
+    if (value.includes('\n')) {
+      throw new Error(`Cannot write multiline value for ${key} to Docker env file`);
+    }
+    chunk += `${key}=${value}\n`;
+  }
+  fs.writeFileSync(filePath, chunk, { encoding: 'utf8', mode: 0o600 });
+  fs.chmodSync(filePath, 0o600);
 }
 
 function main() {
@@ -111,6 +128,12 @@ function main() {
   const decrypted = decryptJson(filePath);
   const vars = normalizeFlatObject(decrypted);
 
+  if (args.envFile) {
+    const envFilePath = path.resolve(args.envFile);
+    writeEnvFile(envFilePath, vars);
+    process.stdout.write(`Wrote ${Object.keys(vars).length} vars to env file ${envFilePath}\n`);
+  }
+
   if (args.mode === 'github') {
     const githubEnvPath = process.env.GITHUB_ENV;
     if (!githubEnvPath) {
@@ -130,4 +153,3 @@ try {
   process.stderr.write(`[secrets-load] ${error.message}\n`);
   process.exit(1);
 }
-

@@ -12,6 +12,22 @@ log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
 }
 
+clear_dir() {
+  local dir="$1"
+  if [[ ! -e "${dir}" ]]; then
+    return 0
+  fi
+
+  # Works for normal dirs; may fail on mounted directories in CI.
+  if rm -rf "${dir}" 2>/dev/null; then
+    return 0
+  fi
+
+  # Fallback: keep mountpoint, clear contents only.
+  mkdir -p "${dir}"
+  find "${dir}" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+}
+
 run_step() {
   local label="$1"
   shift
@@ -92,7 +108,7 @@ run_stress() {
   log "Running mode: STRESS MODE (single full-suite invocation)"
   log "Config: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags}"
   rm -f .discord-run.json .discord-cumulative.json
-  rm -rf .blob-report
+  clear_dir .blob-report
   if [[ "${DRY_RUN}" == "1" ]]; then
     log "[DRY_RUN] TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags} PROJECT= DISCORD_REUSE_RUN=${DISCORD_REUSE_RUN} npx playwright test"
     return 0
@@ -106,7 +122,7 @@ run_safe() {
   log "Running by default - SAFE MODE"
   log "Config: TEST_ENV=${TEST_ENV} THREADS=${THREADS} SAFE_PAUSE_SECONDS=${SAFE_PAUSE_SECONDS} DRY_RUN=${DRY_RUN}"
   rm -f .discord-run.json .discord-cumulative.json
-  rm -rf .blob-report
+  clear_dir .blob-report
 
   failed=0
   if ! run_step "Batch 1/3: API Standalone" run_api_standalone; then
@@ -140,7 +156,7 @@ case "${MODE}" in
     ;;
   *)
     log "Unknown mode: ${MODE}"
-    log "Usage: bash scripts/run-all.sh [safe|stress]"
+    log "Usage: bash scripts/ci/run-all.sh [safe|stress]"
     exit 1
     ;;
 esac

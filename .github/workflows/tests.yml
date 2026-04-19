@@ -1,4 +1,4 @@
-name: Tests
+name: Automated Tests
 
 on:
   push:
@@ -62,215 +62,41 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
-  api-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Resolve run selector
-        id: selector
-        shell: bash
-        run: |
-          MODE="safe"
-          EVENT_NAME="${{ github.event_name }}"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            MODE="${{ inputs.run_mode }}"
-          fi
+  test-manual:
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: ${{ inputs.run_mode || 'basic' }}
+      event_name: workflow_dispatch
+      test_env: ${{ inputs.test_env || 'DEV' }}
+      threads: ${{ inputs.threads || '4' }}
+      safe_pause_seconds: ${{ inputs.safe_pause_seconds || '30' }}
+      run_tags: ${{ inputs.tags || '' }}
+      artifact_name: playwright-report
+    secrets: inherit
 
-          RUN_THREADS="${THREADS:-4}"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.threads }}" ]]; then
-            RUN_THREADS="${{ inputs.threads }}"
-          fi
-
-          RUN_TEST_ENV="${TEST_ENV:-DEV}"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.test_env }}" ]]; then
-            RUN_TEST_ENV="${{ inputs.test_env }}"
-          fi
-
-          SAFE_PAUSE="30"
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.safe_pause_seconds }}" ]]; then
-            SAFE_PAUSE="${{ inputs.safe_pause_seconds }}"
-          fi
-
-          RUN_TAGS=""
-          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
-            RUN_TAGS="${{ inputs.tags }}"
-          elif [[ "${EVENT_NAME}" == "push" ]]; then
-            RUN_TAGS="smoke"
-          elif [[ "${EVENT_NAME}" == "schedule" ]]; then
-            RUN_TAGS="smoke"
-          fi
-
-          if [[ "${MODE}" == "stress" ]]; then
-            RUN_TAGS=""
-            SAFE_PAUSE="0"
-          fi
-
-          echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
-          echo "threads=${RUN_THREADS}" >> "$GITHUB_OUTPUT"
-          echo "test_env=${RUN_TEST_ENV}" >> "$GITHUB_OUTPUT"
-          echo "safe_pause=${SAFE_PAUSE}" >> "$GITHUB_OUTPUT"
-          echo "run_tags=${RUN_TAGS}" >> "$GITHUB_OUTPUT"
-
-      - name: Install sops
-        shell: bash
-        run: |
-          bash scripts/secrets/install-sops.sh
-
-      - name: Load encrypted secrets
-        shell: bash
-        run: |
-          if [[ -z "${SOPS_AGE_KEY:-}" ]]; then
-            echo "Missing SOPS_AGE_KEY secret"
-            exit 1
-          fi
-
-          TEST_ENV="${{ steps.selector.outputs.test_env }}" node scripts/secrets/load-secrets.js --env "${{ steps.selector.outputs.test_env }}" --github-env --required
-
-      - name: Set report routing by branch
-        shell: bash
-        run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
-            echo "CI routing: main branch -> env test channels"
-          else
-            echo "REPORT_PUBLISH=0" >> "$GITHUB_ENV"
-            echo "CI routing: non-main branch -> LOCAL_RUNS_CHANNELID"
-          fi
-
-      - name: Validate required credentials
-        shell: bash
-        run: |
-          missing=0
-          for key in ADMIN_USERNAME ADMIN_PASSWORD PATIENT_USER_USERNAME PATIENT_USER_PASSWORD RIDER_USERNAME RIDER_PASSWORD; do
-            if [[ -z "${!key:-}" ]]; then
-              echo "Missing required credential variable: ${key}"
-              missing=1
-            fi
-          done
-          if [[ "${missing}" -ne 0 ]]; then
-            echo "Required credential vars are missing in decrypted secrets for TEST_ENV=${{ steps.selector.outputs.test_env }}."
-            exit 1
-          fi
-
-      - name: Run tests
-        shell: bash
-        run: |
-          echo "Resolved selector: mode=${{ steps.selector.outputs.mode }} test_env=${{ steps.selector.outputs.test_env }} threads=${{ steps.selector.outputs.threads }} safe_pause=${{ steps.selector.outputs.safe_pause }} run_tags=${{ steps.selector.outputs.run_tags }}"
-
-          if [[ "${{ steps.selector.outputs.mode }}" == "stress" ]]; then
-            echo "Running full suite in STRESS mode"
-            echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress"
-            TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} npm run test:all:stress
-          elif [[ "${{ steps.selector.outputs.mode }}" == "safe" ]]; then
-            if [[ "${{ github.event_name }}" == "push" ]]; then
-              echo "Running SAFE mode smoke batches (push)"
-              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=${{ steps.selector.outputs.run_tags }} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" DISCORD_GREP_LABEL=smoke npm run test:all:safe
-            elif [[ "${{ github.event_name }}" == "schedule" ]]; then
-              echo "Running SAFE mode smoke batches (schedule DEV)"
-              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=${{ steps.selector.outputs.run_tags }} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="${{ steps.selector.outputs.run_tags }}" DISCORD_GREP_LABEL=smoke npm run test:all:safe
-            elif [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
-              echo "Running SAFE mode with specific TAGS in a single pass"
-              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=${{ steps.selector.outputs.run_tags }} PROJECT=e2e,api npx playwright test"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
-            else
-              echo "Running full suite in SAFE mode"
-              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS=__ALL__ npm run test:all:safe"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} SAFE_PAUSE_SECONDS=${{ steps.selector.outputs.safe_pause }} SAFE_TAGS="__ALL__" npm run test:all:safe
-            fi
-          else
-            if [[ -n "${{ steps.selector.outputs.run_tags }}" ]]; then
-              echo "Running BASIC mode with specific TAGS"
-              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=${{ steps.selector.outputs.run_tags }} PROJECT=e2e,api npx playwright test"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="${{ steps.selector.outputs.run_tags }}" PROJECT=e2e,api npx playwright test
-            else
-              echo "Running smoke suite in BASIC mode"
-              echo "CMD: TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS=smoke DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test"
-              TEST_ENV=${{ steps.selector.outputs.test_env }} THREADS=${{ steps.selector.outputs.threads }} TAGS="smoke" DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test
-            fi
-          fi
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report
-          path: .playwright-report
-          include-hidden-files: true
+  test-merge:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: safe
+      event_name: push
+      test_env: DEV
+      threads: '4'
+      safe_pause_seconds: '30'
+      run_tags: smoke
+      artifact_name: playwright-report-merge
+    secrets: inherit
 
   qa-scheduled-full:
     if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Configure git identity for report publish
-        run: |
-          git config --global user.name "${GIT_COMMITTER_NAME}"
-          git config --global user.email "${GIT_COMMITTER_EMAIL}"
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      - name: Install sops
-        shell: bash
-        run: |
-          bash scripts/secrets/install-sops.sh
-      - name: Load encrypted secrets
-        shell: bash
-        run: |
-          if [[ -z "${SOPS_AGE_KEY:-}" ]]; then
-            echo "Missing SOPS_AGE_KEY secret"
-            exit 1
-          fi
-
-          TEST_ENV=QA node scripts/secrets/load-secrets.js --env QA --github-env --required
-      - name: Set report routing by branch
-        shell: bash
-        run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "REPORT_PUBLISH=1" >> "$GITHUB_ENV"
-            echo "CI routing: main branch -> env test channels"
-          else
-            echo "REPORT_PUBLISH=0" >> "$GITHUB_ENV"
-            echo "CI routing: non-main branch -> LOCAL_RUNS_CHANNELID"
-          fi
-      - name: Validate required credentials
-        shell: bash
-        run: |
-          missing=0
-          for key in ADMIN_USERNAME ADMIN_PASSWORD PATIENT_USER_USERNAME PATIENT_USER_PASSWORD RIDER_USERNAME RIDER_PASSWORD; do
-            if [[ -z "${!key:-}" ]]; then
-              echo "Missing required credential variable: ${key}"
-              missing=1
-            fi
-          done
-          if [[ "${missing}" -ne 0 ]]; then
-            echo "Required credential vars are missing in decrypted secrets for TEST_ENV=QA."
-            exit 1
-          fi
-      - name: Run QA full suite in SAFE mode
-        shell: bash
-        run: |
-          echo "Running scheduled QA full suite in SAFE mode"
-          echo "CMD: TEST_ENV=QA THREADS=4 SAFE_PAUSE_SECONDS=30 SAFE_TAGS=__ALL__ npm run test:all:safe"
-          TEST_ENV=QA THREADS=4 SAFE_PAUSE_SECONDS=30 SAFE_TAGS="__ALL__" npm run test:all:safe
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: playwright-report-qa-scheduled
-          path: .playwright-report
-          include-hidden-files: true
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: safe
+      event_name: workflow_dispatch
+      test_env: QA
+      threads: '4'
+      safe_pause_seconds: '30'
+      run_tags: ''
+      artifact_name: playwright-report-qa-scheduled
+    secrets: inherit

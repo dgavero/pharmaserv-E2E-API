@@ -105,7 +105,7 @@ API tests resolve base URL in this order:
 ## CI/CD Mode Behavior
 
 - `push` to `main` runs one CI job in `safe + smoke` mode by default.
-- `schedule` runs one CI job in `safe + full` mode by default.
+- `schedule` runs full QA safe coverage in `qa-scheduled-full`.
 - `workflow_dispatch` can choose:
 
 1. `run_mode` (`basic`, `safe`, `stress`)
@@ -160,7 +160,7 @@ If no failures exist, summary shows: `Yay. No failures!`
 
 ## Report Publishing
 
-- Publisher script: `scripts/publish-report.js`
+- Publisher script: `scripts/ci/publish-report.js`
 - Default: publish is enabled
 - Disable publishing with:
 
