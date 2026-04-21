@@ -59,7 +59,7 @@ test.describe('GraphQL: Patient SMS Verification Workflow', () => {
   test(
     'PHARMA-428 | Patient Registration - Should receive SMS verification',
     {
-      tag: ['@sms-verification'],
+      tag: ['@api', '@patient', '@positive', '@sms-verification'],
     },
     async ({ api, noAuth }) => {
       const requestSignup = await requestSignupOTPWithFallback({ api, noAuth });
