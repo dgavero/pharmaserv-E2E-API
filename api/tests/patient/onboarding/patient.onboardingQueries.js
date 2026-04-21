@@ -9,6 +9,18 @@ export const REQUEST_SIGNUP_OTP_QUERY = /* GraphQL */ `
   }
 `;
 
+export const VERIFY_SIGNUP_OTP_QUERY = /* GraphQL */ `
+  mutation ($otp: OtpRequest!) {
+    patient {
+      verifySignupOTP(otp: $otp) {
+        id
+        username
+        phoneNumber
+      }
+    }
+  }
+`;
+
 export const GET_ADS_LOCATIONS_QUERY = /* GraphQL */ `
   query {
     patient {
