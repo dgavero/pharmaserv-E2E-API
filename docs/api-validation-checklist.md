@@ -41,6 +41,7 @@ Default placement for these validations:
 ### 4) Error Handling
 
 - Unauthorized and invalid-auth behavior covers transport and GraphQL error shapes.
+- Role-based authorization matrix is validated for privileged endpoints (non-owner roles must be rejected).
 - Invalid input fails with meaningful error payload.
 - Error response structure and classification/code/message are consistent.
 
