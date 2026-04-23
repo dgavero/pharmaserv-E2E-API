@@ -90,4 +90,35 @@ test.describe('GraphQL: Admin Create Pharmacy', () => {
       expect(createPharmacyBadAuth.httpStatus).toBe(401);
     }
   );
+
+  test(
+    'PHARMA-469 | Create pharmacy should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-469'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const pharmacyInput = buildPharmacyInput();
+      const createPharmacyRes = await safeGraphQL(api, {
+        query: CREATE_PHARMACY_MUTATION,
+        variables: { pharmacy: pharmacyInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(createPharmacyRes.httpStatus).toBe(200);
+      expect(createPharmacyRes.httpOk).toBe(true);
+      expect(createPharmacyRes.ok, createPharmacyRes.error || 'administrator.pharmacy.create failed').toBe(true);
+
+      const pharmacyNode = createPharmacyRes.body?.data?.administrator?.pharmacy?.create;
+      expect(pharmacyNode, 'Missing data.administrator.pharmacy.create').toBeTruthy();
+      expect.soft(typeof pharmacyNode.id).toBe('string');
+      expect.soft(typeof pharmacyNode.code).toBe('string');
+      expect.soft(typeof pharmacyNode.name).toBe('string');
+      expect.soft(pharmacyNode.name).toBe(pharmacyInput.name);
+      expect.soft(pharmacyNode.code).toBe(pharmacyInput.code);
+      expect.soft(Object.keys(pharmacyNode).sort()).toEqual(['code', 'id', 'name']);
+    }
+  );
 });

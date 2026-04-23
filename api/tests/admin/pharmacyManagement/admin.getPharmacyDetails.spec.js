@@ -188,4 +188,40 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       expect(invalidAuthRes.httpStatus).toBe(401);
     }
   );
+
+  test(
+    'PHARMA-473 | Pharmacy detail should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-473'],
+    },
+    async ({ api }) => {
+      const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
+      const pharmacyByEnv = {
+        DEV: { id: '1' },
+        QA: { id: '59' },
+        PROD: { id: '3' },
+      };
+      const targetPharmacy = pharmacyByEnv[env] ?? pharmacyByEnv.DEV;
+
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const pharmacyRes = await safeGraphQL(api, {
+        query: GET_PHARMACY_QUERY,
+        variables: { pharmacyId: targetPharmacy.id },
+        headers: bearer(accessToken),
+      });
+
+      expect(pharmacyRes.httpStatus).toBe(200);
+      expect(pharmacyRes.httpOk).toBe(true);
+      expect(pharmacyRes.ok, pharmacyRes.error || 'administrator.pharmacy.detail query failed').toBe(true);
+
+      const pharmacyNode = pharmacyRes.body?.data?.administrator?.pharmacy?.detail;
+      expect(pharmacyNode, 'Missing data.administrator.pharmacy.detail').toBeTruthy();
+      expect.soft(typeof pharmacyNode?.id).toBe('string');
+      expect.soft(typeof pharmacyNode?.name).toBe('string');
+      expect.soft(pharmacyNode.id).toBe(targetPharmacy.id);
+      expect.soft(pharmacyNode.name.length).toBeGreaterThan(0);
+    }
+  );
 });

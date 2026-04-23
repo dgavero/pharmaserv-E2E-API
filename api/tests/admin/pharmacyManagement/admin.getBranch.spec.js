@@ -7,7 +7,7 @@ import {
 } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { GET_BRANCH_QUERY } from './admin.pharmacyManagementQueries.js';
 import { resolveQaBranchFromPagedAllBranches } from './admin.pharmacyManagementUtils.js';
 
@@ -78,6 +78,36 @@ test.describe('GraphQL: Admin Get Branch', () => {
       expect(getBranchInvalidAuthRes.ok).toBe(false);
       expect(getBranchInvalidAuthRes.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(getBranchInvalidAuthRes.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-470 | Get branch should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-470'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const targetBranchId = getPharmacistAccount('reg01').branchId;
+      const getBranchRes = await safeGraphQL(api, {
+        query: GET_BRANCH_QUERY,
+        variables: { branchId: targetBranchId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getBranchRes.httpStatus).toBe(200);
+      expect(getBranchRes.httpOk).toBe(true);
+      expect(getBranchRes.ok, getBranchRes.error || 'Get branch endpoint failed').toBe(true);
+
+      const branchNode = getBranchRes.body?.data?.administrator?.branch?.detail;
+      expect(branchNode, 'Missing data.administrator.branch.detail').toBeTruthy();
+      expect.soft(typeof branchNode.id).toBe('string');
+      expect.soft(typeof branchNode.pharmacyName).toBe('string');
+      expect.soft(typeof branchNode.name).toBe('string');
+      expect.soft(typeof branchNode.status).toBe('string');
+      expect.soft(branchNode.id).toBe(String(targetBranchId));
     }
   );
 });
