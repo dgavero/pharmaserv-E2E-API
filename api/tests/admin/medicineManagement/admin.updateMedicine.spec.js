@@ -96,4 +96,39 @@ test.describe('GraphQL: Admin Update Medicine', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(updateMedicineInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-453 | Update medicine should satisfy response contract and preserve medicine reference',
+    {
+      tag: ['@api', '@admin', '@positive', '@update', '@pharma-453'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const { medicineNode } = await createMedicineAsAdmin(api, { adminAccessToken: accessToken });
+      const medicineInput = buildUpdateMedicineInput();
+
+      const updateMedicineRes = await safeGraphQL(api, {
+        query: UPDATE_MEDICINE_MUTATION,
+        variables: { medicineId: Number(medicineNode.id), medicine: medicineInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(updateMedicineRes.httpStatus).toBe(200);
+      expect(updateMedicineRes.httpOk).toBe(true);
+      expect(updateMedicineRes.ok, updateMedicineRes.error || 'Update medicine endpoint failed').toBe(true);
+
+      const node = updateMedicineRes.body?.data?.medicine?.update;
+      expect(node, 'Missing data.medicine.update').toBeTruthy();
+      expect.soft(node.id).toBe(medicineNode.id);
+      expect.soft(typeof node.brand).toBe('string');
+      expect.soft(typeof node.genericName).toBe('string');
+      expect.soft(typeof node.manufacturer).toBe('string');
+      expect.soft(node.brand).toBe(medicineInput.brand);
+      expect.soft(node.genericName).toBe(medicineInput.genericName);
+      expect.soft(node.manufacturer).toBe(medicineInput.manufacturer);
+      expect.soft(Object.keys(node).sort()).toEqual(['brand', 'genericName', 'id', 'manufacturer']);
+    }
+  );
 });

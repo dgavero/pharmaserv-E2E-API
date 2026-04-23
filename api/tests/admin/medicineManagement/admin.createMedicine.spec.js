@@ -8,6 +8,7 @@ import {
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_MEDICINE_MUTATION } from './admin.medicineManagementQueries.js';
 import { buildCreateMedicineInput, createMedicineAsAdmin } from './admin.medicineManagementUtils.js';
 
@@ -77,6 +78,77 @@ test.describe('GraphQL: Admin Create Medicine', () => {
       expect(createMedicineInvalidAuthRes.ok).toBe(false);
       expect(createMedicineInvalidAuthRes.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(createMedicineInvalidAuthRes.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-452 | Create medicine should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-452'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const medicineInput = buildCreateMedicineInput();
+      const createMedicineRes = await safeGraphQL(api, {
+        query: CREATE_MEDICINE_MUTATION,
+        variables: { medicine: medicineInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(createMedicineRes.httpStatus).toBe(200);
+      expect(createMedicineRes.httpOk).toBe(true);
+      expect(createMedicineRes.ok, createMedicineRes.error || 'Create medicine endpoint failed').toBe(true);
+
+      const node = createMedicineRes.body?.data?.administrator?.medicine?.create;
+      expect(node, 'Missing data.administrator.medicine.create').toBeTruthy();
+      expect.soft(typeof node.id).toBe('string');
+      expect.soft(typeof node.brand).toBe('string');
+      expect.soft(typeof node.genericName).toBe('string');
+      expect.soft(typeof node.manufacturer).toBe('string');
+      expect.soft(node.brand).toBe(medicineInput.brand);
+      expect.soft(node.genericName).toBe(medicineInput.genericName);
+      expect.soft(node.manufacturer).toBe(medicineInput.manufacturer);
+      expect.soft(Object.keys(node).sort()).toEqual(['brand', 'genericName', 'id', 'manufacturer']);
+    }
+  );
+
+  test(
+    'PHARMA-456 | Should reuse existing medicine when Idempotency-Key is reused',
+    {
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-456'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const medicineInput = buildCreateMedicineInput();
+      const firstIdempotencyKey = `medicine-${randomAlphanumeric(16)}`;
+
+      const firstCreateMedicineRes = await safeGraphQL(api, {
+        query: CREATE_MEDICINE_MUTATION,
+        variables: { medicine: medicineInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(firstCreateMedicineRes.ok, firstCreateMedicineRes.error || 'First create medicine call failed').toBe(true);
+
+      const firstNode = firstCreateMedicineRes.body?.data?.administrator?.medicine?.create;
+      expect(firstNode, 'Missing first create medicine node').toBeTruthy();
+      expect.soft(typeof firstNode.id).toBe('string');
+
+      const secondCreateMedicineRes = await safeGraphQL(api, {
+        query: CREATE_MEDICINE_MUTATION,
+        variables: { medicine: medicineInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(secondCreateMedicineRes.ok, secondCreateMedicineRes.error || 'Second create medicine call with same key failed').toBe(
+        true
+      );
+
+      const secondNode = secondCreateMedicineRes.body?.data?.administrator?.medicine?.create;
+      expect(secondNode, 'Missing second create medicine node').toBeTruthy();
+      expect(secondNode.id).toBe(firstNode.id);
     }
   );
 });

@@ -127,4 +127,47 @@ test.describe('GraphQL: Admin Get Medicine Photos', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getMedicinePhotosInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-455 | Get medicine photos should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-455'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const { medicineNode } = await createMedicineAsAdmin(api, { adminAccessToken: accessToken });
+      const { medicineUploadUrl, medicineBlobName } = await getMedicineUploadUrlAsAdmin(api, {
+        adminAccessToken: accessToken,
+      });
+      await uploadImageToSignedUrl(api, { uploadUrl: medicineUploadUrl, imagePath: WOOSH_IMAGE_PATH });
+      await addMedicinePhotoAsAdmin(api, {
+        adminAccessToken: accessToken,
+        medicineId: medicineNode.id,
+        photo: medicineBlobName,
+      });
+
+      const getMedicinePhotosRes = await safeGraphQL(api, {
+        query: GET_MEDICINE_PHOTOS_QUERY,
+        variables: { medicineId: Number(medicineNode.id) },
+        headers: bearer(accessToken),
+      });
+
+      expect(getMedicinePhotosRes.httpStatus).toBe(200);
+      expect(getMedicinePhotosRes.httpOk).toBe(true);
+      expect(getMedicinePhotosRes.ok, getMedicinePhotosRes.error || 'Get medicine photos endpoint failed').toBe(true);
+
+      const node = getMedicinePhotosRes.body?.data?.administrator?.medicine?.medicinePhotos;
+      expect(Array.isArray(node), 'Medicine photos should be an array').toBe(true);
+      expect(node.length, 'Medicine photos should contain at least one item').toBeGreaterThan(0);
+      expect(node.some((photoNode) => photoNode?.photo === medicineBlobName), 'Uploaded medicine photo was not returned').toBe(
+        true
+      );
+      for (const photoNode of node) {
+        expect.soft(typeof photoNode?.photo).toBe('string');
+        expect.soft(Object.keys(photoNode || {}).sort()).toEqual(['photo']);
+      }
+    }
+  );
 });

@@ -14,11 +14,11 @@ const CREATE_MEDICINE_RETRY_PATTERN = /Did not observe any item or terminal sign
 
 export function buildCreateMedicineInput() {
   return {
-    brand: `DEV MED INIT ${randomNum(8)}`,
-    genericName: 'Paracetamol',
+    brand: `AUTO MED INIT ${randomNum(8)}`,
+    genericName: 'Auto',
     strength: '500 mg',
     form: 'Tablet',
-    manufacturer: 'Unilab',
+    manufacturer: 'Unilab Yarn',
     rxRequired: false,
     coldStorageRequired: false,
     vatExempt: false,
