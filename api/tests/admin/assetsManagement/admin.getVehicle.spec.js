@@ -69,4 +69,34 @@ test.describe('GraphQL: Admin Get Vehicle', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getVehicleInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-436 | Get vehicle should return contract-valid structure and types',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-436'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getVehicleRes = await safeGraphQL(api, {
+        query: GET_VEHICLE_QUERY,
+        variables: { assetReferenceId: 1 },
+        headers: bearer(accessToken),
+      });
+
+      expect(getVehicleRes.httpStatus).toBe(200);
+      expect(getVehicleRes.httpOk).toBe(true);
+      expect(getVehicleRes.ok, getVehicleRes.error || 'Get vehicle endpoint failed').toBe(true);
+
+      const node = getVehicleRes.body?.data?.administrator?.asset?.vehicle;
+      expect(node, 'Missing data.administrator.asset.vehicle').toBeTruthy();
+      expect.soft(typeof node.vehicleType).toBe('string');
+      expect.soft(typeof node.model).toBe('string');
+      expect.soft(typeof node.plateNumber).toBe('string');
+      expect.soft(node.vehicleType.length).toBeGreaterThan(0);
+      expect.soft(node.model.length).toBeGreaterThan(0);
+      expect.soft(node.plateNumber.length).toBeGreaterThan(0);
+    }
+  );
 });

@@ -69,4 +69,34 @@ test.describe('GraphQL: Admin Get Phone', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getPhoneInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-435 | Get phone should return contract-valid structure and types',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-435'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getPhoneRes = await safeGraphQL(api, {
+        query: GET_PHONE_QUERY,
+        variables: { assetReferenceId: 4 },
+        headers: bearer(accessToken),
+      });
+
+      expect(getPhoneRes.httpStatus).toBe(200);
+      expect(getPhoneRes.httpOk).toBe(true);
+      expect(getPhoneRes.ok, getPhoneRes.error || 'Get phone endpoint failed').toBe(true);
+
+      const node = getPhoneRes.body?.data?.administrator?.asset?.phone;
+      expect(node, 'Missing data.administrator.asset.phone').toBeTruthy();
+      expect.soft(typeof node.deviceType).toBe('string');
+      expect.soft(typeof node.model).toBe('string');
+      expect.soft(typeof node.imei).toBe('string');
+      expect.soft(typeof node.imei2).toBe('string');
+      expect.soft(node.deviceType.length).toBeGreaterThan(0);
+      expect.soft(node.model.length).toBeGreaterThan(0);
+    }
+  );
 });

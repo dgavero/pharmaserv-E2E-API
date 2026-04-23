@@ -92,4 +92,73 @@ test.describe('GraphQL: Admin Create Box', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(createBoxInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-429 | Should fail create box when status enum is invalid',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-429'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const invalidBoxInput = {
+        ...buildBoxInput(),
+        status: 'INVALID_STATUS',
+      };
+
+      const createBoxInvalidInputRes = await safeGraphQL(api, {
+        query: CREATE_BOX_MUTATION,
+        variables: { box: invalidBoxInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(createBoxInvalidInputRes.ok).toBe(false);
+      if (createBoxInvalidInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(createBoxInvalidInputRes);
+        expect(message, 'Expected GraphQL validation message for invalid status').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL validation code/classification').toBeTruthy();
+      } else {
+        expect.soft(createBoxInvalidInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
+    'PHARMA-441 | Should reuse existing box when Idempotency-Key is reused',
+    {
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-441'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const boxInput = buildBoxInput();
+      const firstIdempotencyKey = `box-${randomAlphanumeric(16)}`;
+
+      const firstCreateRes = await safeGraphQL(api, {
+        query: CREATE_BOX_MUTATION,
+        variables: { box: boxInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(firstCreateRes.ok, firstCreateRes.error || 'First create box call failed').toBe(true);
+
+      const firstNode = firstCreateRes.body?.data?.administrator?.asset?.createBox;
+      expect(firstNode, 'Missing first create box node').toBeTruthy();
+      expect.soft(typeof firstNode.id).toBe('string');
+
+      const secondCreateSameKeyRes = await safeGraphQL(api, {
+        query: CREATE_BOX_MUTATION,
+        variables: { box: boxInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(secondCreateSameKeyRes.ok, secondCreateSameKeyRes.error || 'Second create box call with same key failed').toBe(
+        true
+      );
+
+      const secondSameKeyNode = secondCreateSameKeyRes.body?.data?.administrator?.asset?.createBox;
+      expect(secondSameKeyNode, 'Missing second create box node (same key)').toBeTruthy();
+      expect(secondSameKeyNode.id).toBe(firstNode.id);
+    }
+  );
 });

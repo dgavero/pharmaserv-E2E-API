@@ -77,4 +77,38 @@ test.describe('GraphQL: Admin Update Asset', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(updateAssetInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-438 | Should fail update asset when status enum is invalid',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-438'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const invalidUpdateAssetInput = {
+        assetId: UPDATE_ASSET_INPUT.assetId,
+        asset: {
+          ...UPDATE_ASSET_INPUT.asset,
+          status: 'INVALID_STATUS',
+        },
+      };
+
+      const updateAssetInvalidInputRes = await safeGraphQL(api, {
+        query: UPDATE_ASSET_MUTATION,
+        variables: invalidUpdateAssetInput,
+        headers: bearer(accessToken),
+      });
+
+      expect(updateAssetInvalidInputRes.ok).toBe(false);
+      if (updateAssetInvalidInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(updateAssetInvalidInputRes);
+        expect(message, 'Expected GraphQL validation message for invalid status').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL validation code/classification').toBeTruthy();
+      } else {
+        expect.soft(updateAssetInvalidInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

@@ -72,4 +72,35 @@ test.describe('GraphQL: Admin Get Asset Maintenance History', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getAssetMaintenanceHistoryInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-439 | Get asset maintenance history should return contract-valid item schema',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-439'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getAssetMaintenanceHistoryRes = await safeGraphQL(api, {
+        query: GET_ASSET_MAINTENANCE_HISTORY_QUERY,
+        variables: { assetId: 1 },
+        headers: bearer(accessToken),
+      });
+
+      expect(getAssetMaintenanceHistoryRes.httpStatus).toBe(200);
+      expect(getAssetMaintenanceHistoryRes.httpOk).toBe(true);
+      expect(
+        getAssetMaintenanceHistoryRes.ok,
+        getAssetMaintenanceHistoryRes.error || 'Get asset maintenance history endpoint failed'
+      ).toBe(true);
+
+      const historyNode = getAssetMaintenanceHistoryRes.body?.data?.administrator?.asset?.statusHistory;
+      expect(Array.isArray(historyNode), 'Expected statusHistory to be an array').toBe(true);
+      for (const historyItem of historyNode) {
+        expect.soft(typeof historyItem?.action).toBe('string');
+        expect.soft(typeof historyItem?.createdAt).toBe('string');
+      }
+    }
+  );
 });

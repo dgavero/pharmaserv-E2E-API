@@ -2,7 +2,7 @@ import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATION
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
-import { randomNum } from '../../../../helpers/globalTestUtils.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_PHONE_MUTATION } from './admin.assetsManagementQueries.js';
 
 function buildPhoneInput() {
@@ -95,6 +95,75 @@ test.describe('GraphQL: Admin Create Phone', () => {
       expect(createPhoneInvalidAuthRes.ok).toBe(false);
       expect(createPhoneInvalidAuthRes.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(createPhoneInvalidAuthRes.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-431 | Should fail create phone when deviceType enum is invalid',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-431'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const invalidPhoneInput = {
+        ...buildPhoneInput(),
+        deviceType: 'INVALID_DEVICE_TYPE',
+      };
+
+      const createPhoneInvalidInputRes = await safeGraphQL(api, {
+        query: CREATE_PHONE_MUTATION,
+        variables: { phone: invalidPhoneInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(createPhoneInvalidInputRes.ok).toBe(false);
+      if (createPhoneInvalidInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(createPhoneInvalidInputRes);
+        expect(message, 'Expected GraphQL validation message for invalid deviceType').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL validation code/classification').toBeTruthy();
+      } else {
+        expect.soft(createPhoneInvalidInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
+    'PHARMA-443 | Should reuse existing phone when Idempotency-Key is reused',
+    {
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-443'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const phoneInput = buildPhoneInput();
+      const firstIdempotencyKey = `phone-${randomAlphanumeric(16)}`;
+
+      const firstCreateRes = await safeGraphQL(api, {
+        query: CREATE_PHONE_MUTATION,
+        variables: { phone: phoneInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(firstCreateRes.ok, firstCreateRes.error || 'First create phone call failed').toBe(true);
+
+      const firstNode = firstCreateRes.body?.data?.administrator?.asset?.createPhone;
+      expect(firstNode, 'Missing first create phone node').toBeTruthy();
+      expect.soft(typeof firstNode.id).toBe('string');
+
+      const secondCreateSameKeyRes = await safeGraphQL(api, {
+        query: CREATE_PHONE_MUTATION,
+        variables: { phone: phoneInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(secondCreateSameKeyRes.ok, secondCreateSameKeyRes.error || 'Second create phone call with same key failed').toBe(
+        true
+      );
+
+      const secondSameKeyNode = secondCreateSameKeyRes.body?.data?.administrator?.asset?.createPhone;
+      expect(secondSameKeyNode, 'Missing second create phone node (same key)').toBeTruthy();
+      expect(secondSameKeyNode.id).toBe(firstNode.id);
     }
   );
 });
