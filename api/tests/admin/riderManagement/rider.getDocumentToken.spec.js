@@ -112,4 +112,31 @@ test.describe('GraphQL: Get Document Token', () => {
       expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-478 | Rider document query should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-478'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getDocumentTokenRes = await safeGraphQL(api, {
+        query: GET_RIDER_DOCUMENT_QUERY,
+        variables: { riderId: defaultRiderAccount.riderId, type: 'DRIVER_LICENSE' },
+        headers: bearer(accessToken),
+      });
+
+      expect(getDocumentTokenRes.httpStatus).toBe(200);
+      expect(getDocumentTokenRes.httpOk).toBe(true);
+      expect(getDocumentTokenRes.ok, getDocumentTokenRes.error || 'Get rider document failed').toBe(true);
+
+      const node = getDocumentTokenRes.body?.data?.administrator?.rider?.document;
+      expect(node, 'Missing data.administrator.rider.document').toBeTruthy();
+      expect.soft(typeof node?.type).toBe('string');
+      expect.soft(typeof node?.photo).toBe('string');
+      expect.soft(node?.type).toBe('DRIVER_LICENSE');
+    }
+  );
 });

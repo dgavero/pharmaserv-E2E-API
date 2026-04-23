@@ -1,7 +1,16 @@
-import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import {
+  loginAsAdminAndGetTokens,
+  loginAsPatientAndGetTokens,
+  loginAsRiderAndGetTokens,
+  loginAsPharmacistAndGetTokens,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_HTTP_STATUSES,
+} from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getPatientAccount, getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { SET_RIDER_DOCUMENT_QUERY } from './rider.riderManagementQueries.js';
 
 function buildRiderDocument() {
@@ -138,6 +147,61 @@ test.describe('GraphQL: Set Rider Document', () => {
       const { message, classification } = getGQLError(setRiderDocumentMissingPhotoRes);
       expect(message).toMatch(NOAUTH_MESSAGE_PATTERN);
       expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
+    }
+  );
+
+  test(
+    'PHARMA-482 | Should reject set rider document for non-admin roles',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-482'],
+    },
+    async ({ api }) => {
+      const roleCases = [
+        {
+          role: 'patient',
+          login: () => loginAsPatientAndGetTokens(api, getPatientAccount('default')),
+        },
+        {
+          role: 'rider',
+          login: () => loginAsRiderAndGetTokens(api, getRiderAccount('default')),
+        },
+        {
+          role: 'pharmacist',
+          login: () => loginAsPharmacistAndGetTokens(api, getPharmacistAccount('reg01')),
+        },
+      ];
+
+      for (const roleCase of roleCases) {
+        const { accessToken, raw: loginRes } = await roleCase.login();
+        expect(loginRes.ok, `${roleCase.role} login failed`).toBe(true);
+
+        const setRiderDocumentRes = await safeGraphQL(api, {
+          query: SET_RIDER_DOCUMENT_QUERY,
+          variables: {
+            riderId: riderDocument.riderId,
+            document: {
+              type: riderDocument.type,
+              photo: riderDocument.photo,
+            },
+          },
+          headers: bearer(accessToken),
+        });
+
+        expect(setRiderDocumentRes.ok, `${roleCase.role} should not be authorized to set rider document`).toBe(
+          false
+        );
+        if (!setRiderDocumentRes.httpOk) {
+          expect(
+            NOAUTH_HTTP_STATUSES,
+            `${roleCase.role} expected unauthorized transport status`
+          ).toContain(setRiderDocumentRes.httpStatus);
+        } else {
+          const { message, code, classification } = getGQLError(setRiderDocumentRes);
+          expect(message, `${roleCase.role} expected GraphQL auth/permission message`).toMatch(NOAUTH_MESSAGE_PATTERN);
+          expect.soft(NOAUTH_CODES, `${roleCase.role} expected auth/permission code`).toContain(code);
+          expect.soft(NOAUTH_CLASSIFICATIONS, `${roleCase.role} expected auth classification`).toContain(classification);
+        }
+      }
     }
   );
 });

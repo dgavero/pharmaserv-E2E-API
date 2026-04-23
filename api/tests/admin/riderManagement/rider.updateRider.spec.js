@@ -169,4 +169,43 @@ test.describe('GraphQL: Update Rider', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(updateRiderInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-480 | Update rider should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-480'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const riderUpdateInput = buildRiderUpdateInput();
+      const riderId = await registerRiderForUpdate(api, accessToken);
+
+      const updateRiderRes = await safeGraphQL(api, {
+        query: UPDATE_RIDER_MUTATION,
+        variables: {
+          riderId,
+          rider: riderUpdateInput,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(updateRiderRes.httpStatus).toBe(200);
+      expect(updateRiderRes.httpOk).toBe(true);
+      expect(updateRiderRes.ok, updateRiderRes.error || 'Update rider detail failed').toBe(true);
+
+      const node = updateRiderRes.body?.data?.administrator?.rider?.update;
+      expect(node, 'Missing data.administrator.rider.update').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.uuid).toBe('string');
+      expect.soft(typeof node?.firstName).toBe('string');
+      expect.soft(typeof node?.lastName).toBe('string');
+      expect.soft(typeof node?.username).toBe('string');
+      expect.soft(node.id).toBe(String(riderId));
+      expect.soft(node.firstName).toBe(riderUpdateInput.firstName);
+      expect.soft(node.lastName).toBe(riderUpdateInput.lastName);
+      expect.soft(node.username).toBe(riderUpdateInput.username);
+    }
+  );
 });

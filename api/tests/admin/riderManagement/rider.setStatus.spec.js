@@ -1,7 +1,16 @@
-import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES } from '../../../helpers/auth.js';
+import {
+  loginAsAdminAndGetTokens,
+  loginAsPatientAndGetTokens,
+  loginAsRiderAndGetTokens,
+  loginAsPharmacistAndGetTokens,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_HTTP_STATUSES,
+} from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials, getRiderAccount } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getPatientAccount, getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { SET_RIDER_AVAILABLE_MUTATION, SET_RIDER_UNAVAILABLE_MUTATION } from './rider.riderManagementQueries.js';
 
 const riderId = getRiderAccount('default').riderId;
@@ -150,6 +159,57 @@ test.describe('GraphQL: Admin Set Rider Unavailable', () => {
       expect(setRiderUnavailableInvalidBearerRes.ok).toBe(false);
       expect(setRiderUnavailableInvalidBearerRes.httpOk).toBe(false);
       expect(setRiderUnavailableInvalidBearerRes.httpStatus).toBe(401);
+    }
+  );
+});
+
+test.describe('GraphQL: Admin Set Rider Status - Validation', () => {
+  test(
+    'PHARMA-479 | Should reject set rider available for non-admin roles',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-479'],
+    },
+    async ({ api }) => {
+      const roleCases = [
+        {
+          role: 'patient',
+          login: () => loginAsPatientAndGetTokens(api, getPatientAccount('default')),
+        },
+        {
+          role: 'rider',
+          login: () => loginAsRiderAndGetTokens(api, getRiderAccount('default')),
+        },
+        {
+          role: 'pharmacist',
+          login: () => loginAsPharmacistAndGetTokens(api, getPharmacistAccount('reg01')),
+        },
+      ];
+
+      for (const roleCase of roleCases) {
+        const { accessToken, raw: loginRes } = await roleCase.login();
+        expect(loginRes.ok, `${roleCase.role} login failed`).toBe(true);
+
+        const setRiderAvailableRes = await safeGraphQL(api, {
+          query: SET_RIDER_AVAILABLE_MUTATION,
+          variables: { riderId },
+          headers: bearer(accessToken),
+        });
+
+        expect(setRiderAvailableRes.ok, `${roleCase.role} should not be authorized to set rider available`).toBe(
+          false
+        );
+        if (!setRiderAvailableRes.httpOk) {
+          expect(
+            NOAUTH_HTTP_STATUSES,
+            `${roleCase.role} expected unauthorized transport status`
+          ).toContain(setRiderAvailableRes.httpStatus);
+        } else {
+          const { message, code, classification } = getGQLError(setRiderAvailableRes);
+          expect(message, `${roleCase.role} expected GraphQL auth/permission message`).toMatch(NOAUTH_MESSAGE_PATTERN);
+          expect.soft(NOAUTH_CODES, `${roleCase.role} expected auth/permission code`).toContain(code);
+          expect.soft(NOAUTH_CLASSIFICATIONS, `${roleCase.role} expected auth classification`).toContain(classification);
+        }
+      }
     }
   );
 });
