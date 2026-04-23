@@ -226,6 +226,7 @@ Credential resolution:
 - Keep negative auth assertions precise enough to distinguish:
   - transport 401/403/404 style failures
   - GraphQL resolver errors with `errors[]`
+- For incremental contract/schema/business/error hardening, follow `docs/api-validation-checklist.md`.
 
 ### UI / Hybrid
 
