@@ -104,4 +104,36 @@ test.describe('GraphQL: Admin Searched Riders', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(searchedRidersInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-462 | Searched riders should return reusable rider with expected schema',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-462'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const riderProfile = await resolveRiderSearchProfile(api, accessToken);
+      const searchedRidersRes = await safeGraphQL(api, {
+        query: SEARCHED_RIDERS_QUERY,
+        variables: { query: riderProfile.firstName },
+        headers: bearer(accessToken),
+      });
+
+      expect(searchedRidersRes.httpStatus).toBe(200);
+      expect(searchedRidersRes.httpOk).toBe(true);
+      expect(searchedRidersRes.ok, searchedRidersRes.error || 'Searched riders endpoint failed').toBe(true);
+
+      const node = searchedRidersRes.body?.data?.administrator?.rider?.searchedRiders;
+      expect(Array.isArray(node), 'Searched riders should return an array').toBe(true);
+      expect(node.length, 'Searched riders should contain at least one item').toBeGreaterThan(0);
+
+      const matchedRider = node.find((riderNode) => String(riderNode?.id) === String(riderProfile.id));
+      expect(matchedRider, 'Expected reusable rider was not found in searched riders result').toBeTruthy();
+      expect.soft(typeof matchedRider?.username).toBe('string');
+      expect.soft(typeof matchedRider?.email).toBe('string');
+      expect.soft(typeof matchedRider?.status).toBe('string');
+    }
+  );
 });

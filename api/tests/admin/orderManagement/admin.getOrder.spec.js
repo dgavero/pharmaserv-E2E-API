@@ -72,4 +72,35 @@ test.describe('GraphQL: Admin Get Order', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getOrderInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-457 | Get order should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-457'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getOrderRes = await safeGraphQL(api, {
+        query: GET_ORDER_QUERY,
+        variables: { orderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderRes.httpStatus).toBe(200);
+      expect(getOrderRes.httpOk).toBe(true);
+      expect(getOrderRes.ok, getOrderRes.error || 'Get order endpoint failed').toBe(true);
+
+      const node = getOrderRes.body?.data?.administrator?.order?.detail;
+      expect(node, 'Missing data.administrator.order.detail').toBeTruthy();
+      expect.soft(typeof node.id === 'string' || typeof node.id === 'number').toBe(true);
+      expect.soft(typeof node.status).toBe('string');
+      expect.soft(typeof node.deliveryType).toBe('string');
+      expect.soft(Array.isArray(node.legs)).toBe(true);
+      expect.soft(typeof node.patient).toBe('object');
+      expect.soft(typeof node.patient?.firstName).toBe('string');
+      expect.soft(typeof node.patient?.lastName).toBe('string');
+    }
+  );
 });

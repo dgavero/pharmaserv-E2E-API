@@ -90,4 +90,38 @@ test.describe('GraphQL: Admin Get Order Status History', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getOrderStatusHistoryInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-459 | Get order status history should satisfy item contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-459'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getOrderStatusHistoryRes = await safeGraphQL(api, {
+        query: GET_ORDER_STATUS_HISTORY_QUERY,
+        variables: { orderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderStatusHistoryRes.httpStatus).toBe(200);
+      expect(getOrderStatusHistoryRes.httpOk).toBe(true);
+      expect(getOrderStatusHistoryRes.ok, getOrderStatusHistoryRes.error || 'Get order status history endpoint failed').toBe(
+        true
+      );
+
+      const node = getOrderStatusHistoryRes.body?.data?.administrator?.order?.statusHistory;
+      expect(Array.isArray(node), 'Order status history should be an array').toBe(true);
+      expect(node.length, 'Order status history should contain at least one item').toBeGreaterThan(0);
+
+      for (const historyNode of node) {
+        expect.soft(typeof historyNode?.status).toBe('string');
+        expect.soft(typeof historyNode?.userType).toBe('string');
+        expect.soft(typeof historyNode?.updatedAt).toBe('string');
+        expect.soft(historyNode?.name === null || typeof historyNode?.name === 'string').toBe(true);
+      }
+    }
+  );
 });

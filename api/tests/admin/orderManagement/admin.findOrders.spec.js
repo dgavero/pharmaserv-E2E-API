@@ -98,4 +98,36 @@ test.describe('GraphQL: Admin Find Orders', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(findOrdersInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-460 | Find orders should return searchable order with valid item shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-460'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const orderSearchQuery = await resolveReusableOrderSearchQuery(api, accessToken);
+      const findOrdersRes = await safeGraphQL(api, {
+        query: FIND_ORDERS_QUERY,
+        variables: { query: orderSearchQuery },
+        headers: bearer(accessToken),
+      });
+
+      expect(findOrdersRes.httpStatus).toBe(200);
+      expect(findOrdersRes.httpOk).toBe(true);
+      expect(findOrdersRes.ok, findOrdersRes.error || 'Find orders endpoint failed').toBe(true);
+
+      const node = findOrdersRes.body?.data?.administrator?.order?.searchedOrders;
+      expect(Array.isArray(node), 'Find orders should return an array').toBe(true);
+      expect(node.length, 'Find orders should contain at least one item').toBeGreaterThan(0);
+
+      const matchedOrder = node.find((orderNode) => String(orderNode?.id) === String(orderId));
+      expect(matchedOrder, 'Expected reusable order was not found in searched orders').toBeTruthy();
+      expect.soft(typeof matchedOrder?.status).toBe('string');
+      expect.soft(typeof matchedOrder?.trackingCode === 'string' || matchedOrder?.trackingCode === null).toBe(true);
+      expect.soft(typeof matchedOrder?.patient).toBe('object');
+    }
+  );
 });
