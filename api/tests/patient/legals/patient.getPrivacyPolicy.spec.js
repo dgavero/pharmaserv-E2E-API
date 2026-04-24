@@ -31,4 +31,27 @@ test.describe('GraphQL: Get Privacy Policy', () => {
       expect.soft(typeof node.content).toBe('string');
     }
   );
+
+  test(
+    'PHARMA-495 | Privacy policy should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-495', '@legals'],
+    },
+    async ({ api, noAuth }) => {
+      const getPrivacyPolicyRes = await safeGraphQL(api, {
+        query: GET_PATIENT_PRIVACY_POLICY_QUERY,
+        headers: noAuth,
+      });
+
+      expect(getPrivacyPolicyRes.httpStatus).toBe(200);
+      expect(getPrivacyPolicyRes.httpOk).toBe(true);
+      expect(getPrivacyPolicyRes.ok, getPrivacyPolicyRes.error || 'Get Privacy Policy failed').toBe(true);
+
+      const node = getPrivacyPolicyRes.body?.data?.patient?.legals?.privacyPolicy;
+      expect(node, 'Missing data.patient.legals.privacyPolicy').toBeTruthy();
+      expect.soft(typeof node?.title).toBe('string');
+      expect.soft(typeof node?.content).toBe('string');
+      expect.soft(node?.title?.length > 0).toBe(true);
+    }
+  );
 });

@@ -73,4 +73,42 @@ test.describe('GraphQL: Patient Get Chat Messages By Thread Id', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getChatMessagesInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-487 | Chat messages by thread id should satisfy list-item contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-487'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getChatMessagesRes = await safeGraphQL(api, {
+        query: GET_CHAT_MESSAGES_BY_THREAD_ID_QUERY,
+        variables: { threadId: CHAT_THREAD_ID },
+        headers: bearer(accessToken),
+      });
+
+      expect(getChatMessagesRes.httpStatus).toBe(200);
+      expect(getChatMessagesRes.httpOk).toBe(true);
+      expect(
+        getChatMessagesRes.ok,
+        getChatMessagesRes.error || 'Get chat messages by thread id endpoint failed'
+      ).toBe(true);
+
+      const node = getChatMessagesRes.body?.data?.patient?.chat?.threadMessages;
+      expect(Array.isArray(node), 'threadMessages should be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.sender).toBe('string');
+        expect.soft(typeof node[0]?.recipient).toBe('string');
+        if (node[0]?.message !== null) {
+          expect.soft(typeof node[0]?.message).toBe('string');
+        }
+        if (node[0]?.photo !== null) {
+          expect.soft(typeof node[0]?.photo).toBe('string');
+        }
+        expect.soft(typeof node[0]?.createdAt).toBe('string');
+      }
+    }
+  );
 });

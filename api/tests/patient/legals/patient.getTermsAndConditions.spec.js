@@ -29,4 +29,28 @@ test.describe('GraphQL: Get Terms and Conditions', () => {
       expect.soft(typeof node.content).toBe('string');
     }
   );
+
+  test(
+    'PHARMA-496 | Terms and conditions should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-496', '@legals'],
+    },
+    async ({ api, noAuth }) => {
+      const getTNCRes = await safeGraphQL(api, {
+        query: GET_PATIENT_TERMS_AND_CONDITIONS_QUERY,
+        headers: noAuth,
+      });
+
+      expect(getTNCRes.httpStatus).toBe(200);
+      expect(getTNCRes.httpOk).toBe(true);
+      expect(getTNCRes.ok, getTNCRes.error || 'Get Terms and Conditions failed').toBe(true);
+
+      const node = getTNCRes.body?.data?.patient?.legals?.termsAndConditions;
+      expect(node, 'Missing data.patient.legals.termsAndConditions').toBeTruthy();
+      expect.soft(typeof node?.title).toBe('string');
+      expect.soft(typeof node?.content).toBe('string');
+      expect.soft(node?.title?.length > 0).toBe(true);
+      expect.soft(node?.content?.length > 0).toBe(true);
+    }
+  );
 });

@@ -91,4 +91,38 @@ test.describe('GraphQL: Patient Send Chat Message By Order Id', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(sendChatMessageInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-488 | Send chat message by order id should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-488'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const chatInput = buildChatMessageInput();
+      const sendChatMessageRes = await safeGraphQL(api, {
+        query: SEND_CHAT_MESSAGE_BY_ORDER_ID_MUTATION,
+        variables: { orderId: CHAT_ORDER_ID, chat: chatInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(sendChatMessageRes.httpStatus).toBe(200);
+      expect(sendChatMessageRes.httpOk).toBe(true);
+      expect(
+        sendChatMessageRes.ok,
+        sendChatMessageRes.error || 'Send chat message by order id endpoint failed'
+      ).toBe(true);
+
+      const node = sendChatMessageRes.body?.data?.patient?.chat?.sendOrderMessage;
+      expect(node, 'Missing data.patient.chat.sendOrderMessage').toBeTruthy();
+      expect.soft(typeof node?.message).toBe('string');
+      expect.soft(node?.message).toBe(chatInput.message);
+      if (node?.photo !== null) {
+        expect.soft(typeof node?.photo).toBe('string');
+      }
+      expect.soft(typeof node?.createdAt).toBe('string');
+    }
+  );
 });

@@ -85,4 +85,38 @@ test.describe('GraphQL: Patient Update Chat Message', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(updateChatMessageInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-491 | Update chat message should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-491'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const updatedMessage = buildUpdatedMessage();
+      const updateChatMessageRes = await safeGraphQL(api, {
+        query: UPDATE_CHAT_MESSAGE_MUTATION,
+        variables: { id: CHAT_MESSAGE_ID, message: updatedMessage },
+        headers: bearer(accessToken),
+      });
+
+      expect(updateChatMessageRes.httpStatus).toBe(200);
+      expect(updateChatMessageRes.httpOk).toBe(true);
+      expect(updateChatMessageRes.ok, updateChatMessageRes.error || 'Update chat message endpoint failed').toBe(true);
+
+      const node = updateChatMessageRes.body?.data?.patient?.chat?.updateMessage;
+      expect(node, 'Missing data.patient.chat.updateMessage').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.message).toBe('string');
+      expect.soft(typeof node?.edited).toBe('boolean');
+      if (node?.photo !== null) {
+        expect.soft(typeof node?.photo).toBe('string');
+      }
+      expect.soft(typeof node?.createdAt).toBe('string');
+      expect.soft(node?.id).toBe(String(CHAT_MESSAGE_ID));
+      expect.soft(node?.message).toBe(updatedMessage);
+    }
+  );
 });

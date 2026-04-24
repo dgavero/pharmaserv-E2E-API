@@ -76,4 +76,33 @@ test.describe('GraphQL: Patient Get Chat Thread', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getChatThreadInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-485 | Chat thread should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-485'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getChatThreadRes = await safeGraphQL(api, {
+        query: GET_CHAT_THREAD_QUERY,
+        variables: { orderId: CHAT_ORDER_ID, type: CHAT_PARTIES_TYPE },
+        headers: bearer(accessToken),
+      });
+
+      expect(getChatThreadRes.httpStatus).toBe(200);
+      expect(getChatThreadRes.httpOk).toBe(true);
+      expect(getChatThreadRes.ok, getChatThreadRes.error || 'Get chat thread endpoint failed').toBe(true);
+
+      const node = getChatThreadRes.body?.data?.patient?.chat?.thread;
+      expect(node, 'Missing data.patient.chat.thread').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.partiesType).toBe('string');
+      expect.soft(typeof node?.requesterType).toBe('string');
+      expect.soft(node.id).toBe(String(CHAT_THREAD_ID));
+      expect.soft(node.partiesType).toBe(CHAT_PARTIES_TYPE);
+    }
+  );
 });
