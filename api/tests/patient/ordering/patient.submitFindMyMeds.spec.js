@@ -2,6 +2,7 @@ import { loginAsPatientAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATI
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getPatientCredentials } from '../../../helpers/roleCredentials.js';
+import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { SUBMIT_FINDMYMEDS_ORDER_QUERY } from './patient.orderingQueries.js';
 import { buildPatientFindMyMedsOrderInput } from './patient.testData.js';
 import { loginPharmacist, declineOrderAsPharmacist } from '../../e2e/shared/steps/pharmacist.steps.js';
@@ -94,6 +95,76 @@ test.describe('GraphQL: Submit FindMyMeds Order', () => {
       expect(submitFindMyMedsResInvalidAuth.ok).toBe(false);
       expect(submitFindMyMedsResInvalidAuth.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(submitFindMyMedsResInvalidAuth.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-504 | Submit FindMyMeds order should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-504'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const submitFindMyMedsRes = await safeGraphQL(api, {
+        query: SUBMIT_FINDMYMEDS_ORDER_QUERY,
+        variables: { order: buildPatientFindMyMedsOrderInput() },
+        headers: bearer(accessToken),
+      });
+
+      expect(submitFindMyMedsRes.httpStatus).toBe(200);
+      expect(submitFindMyMedsRes.httpOk).toBe(true);
+      expect(submitFindMyMedsRes.ok, submitFindMyMedsRes.error || 'Submit FindMyMeds Order request failed').toBe(true);
+
+      const node = submitFindMyMedsRes.body?.data?.patient?.order?.book;
+      expect(node, 'Missing data.patient.order.book').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.patient?.firstName).toBe('string');
+      expect.soft(typeof node?.patient?.lastName).toBe('string');
+
+      await declineSubmittedOrder(api, node.id);
+    }
+  );
+
+  test(
+    'PHARMA-508 | Should reuse existing FindMyMeds order when Idempotency-Key is reused',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-508'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const orderInput = buildPatientFindMyMedsOrderInput();
+      const firstIdempotencyKey = `findmymeds-${randomAlphanumeric(16)}`;
+
+      const firstSubmitRes = await safeGraphQL(api, {
+        query: SUBMIT_FINDMYMEDS_ORDER_QUERY,
+        variables: { order: orderInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(firstSubmitRes.ok, firstSubmitRes.error || 'First submit FindMyMeds order call failed').toBe(true);
+
+      const firstNode = firstSubmitRes.body?.data?.patient?.order?.book;
+      expect(firstNode, 'Missing first submit FindMyMeds order node').toBeTruthy();
+      expect.soft(typeof firstNode.id).toBe('string');
+
+      const secondSubmitRes = await safeGraphQL(api, {
+        query: SUBMIT_FINDMYMEDS_ORDER_QUERY,
+        variables: { order: orderInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(
+        secondSubmitRes.ok,
+        secondSubmitRes.error || 'Second submit FindMyMeds order call with same key failed'
+      ).toBe(true);
+
+      const secondNode = secondSubmitRes.body?.data?.patient?.order?.book;
+      expect(secondNode, 'Missing second submit FindMyMeds order node').toBeTruthy();
+      expect(secondNode.id).toBe(firstNode.id);
+
+      await declineSubmittedOrder(api, firstNode.id);
     }
   );
 });

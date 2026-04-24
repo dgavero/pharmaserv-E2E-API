@@ -74,4 +74,28 @@ test.describe('GraphQL: Find Medicines', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-502 | Find medicines should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-502'],
+    },
+    async ({ api, noAuth }) => {
+      const findMedicinesRes = await safeGraphQL(api, {
+        query: FIND_MEDICINES_QUERY,
+        variables: { query: medicineQueryInput },
+        headers: noAuth,
+      });
+      expect(findMedicinesRes.httpStatus).toBe(200);
+      expect(findMedicinesRes.httpOk).toBe(true);
+      expect(findMedicinesRes.ok, findMedicinesRes.error || 'Find medicines request failed').toBe(true);
+
+      const medicinesNode = findMedicinesRes.body?.data?.medicines;
+      expect(Array.isArray(medicinesNode), 'medicines should be an array').toBe(true);
+      expect(medicinesNode.length, 'medicines should contain at least one item').toBeGreaterThan(0);
+      expect.soft(typeof medicinesNode[0]?.id).toBe('string');
+      expect.soft(typeof medicinesNode[0]?.brand).toBe('string');
+      expect.soft(typeof medicinesNode[0]?.genericName).toBe('string');
+    }
+  );
 });

@@ -86,4 +86,30 @@ test.describe('GraphQL: Find Pharmacies', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(findPharmaciesResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-500 | Find pharmacies should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-500'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+      const findPharmaciesRes = await safeGraphQL(api, {
+        query: FIND_PHAMARCIES_QUERY,
+        variables: { query: queryInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(findPharmaciesRes.httpStatus).toBe(200);
+      expect(findPharmaciesRes.httpOk).toBe(true);
+      expect(findPharmaciesRes.ok, findPharmaciesRes.error || 'Find Pharmacies request failed').toBe(true);
+
+      const node = findPharmaciesRes.body?.data?.patient?.pharmacies;
+      expect(Array.isArray(node), 'Pharmacies should be an array').toBe(true);
+      expect(node.length > 0, 'Pharmacies array should not be empty').toBe(true);
+      expect.soft(typeof node[0]?.id).toBe('string');
+      expect.soft(typeof node[0]?.name).toBe('string');
+    }
+  );
 });
