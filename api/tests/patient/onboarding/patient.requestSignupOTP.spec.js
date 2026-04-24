@@ -58,4 +58,30 @@ test.describe('GraphQL: Patient Request Signup OTP', () => {
       expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-497 | Request signup OTP should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-497'],
+    },
+    async ({ api, noAuth }) => {
+      const phoneNumber = buildPhoneNumberInput();
+      const requestSignupOTPRes = await safeGraphQL(api, {
+        query: REQUEST_SIGNUP_OTP_QUERY,
+        variables: { phoneNumber },
+        headers: noAuth,
+      });
+
+      expect(requestSignupOTPRes.httpStatus).toBe(200);
+      expect(requestSignupOTPRes.httpOk).toBe(true);
+      expect(requestSignupOTPRes.ok, requestSignupOTPRes.error || 'Request signup OTP failed').toBe(true);
+
+      const node = requestSignupOTPRes.body?.data?.patient?.requestSignupOTP;
+      expect(node, 'Missing data.patient.requestSignupOTP').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.phoneNumber).toBe('string');
+      expect.soft(node?.id?.length > 0).toBe(true);
+      expect.soft(node?.phoneNumber).toBe(phoneNumber);
+    }
+  );
 });
