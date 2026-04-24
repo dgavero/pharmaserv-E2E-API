@@ -90,4 +90,53 @@ test.describe('GraphQL: Patient Login', () => {
       });
     }
   );
+
+  test(
+    'PHARMA-483 | Patient login should satisfy token response contract',
+    {
+      tag: ['@api', '@patient', '@positive', '@login', '@pharma-483'],
+    },
+    async ({ api }) => {
+      const loginRes = await safeGraphQL(api, {
+        query: LOGIN_MUTATION,
+        variables: buildValidCreds(),
+      });
+
+      expect(loginRes.httpStatus).toBe(200);
+      expect(loginRes.httpOk).toBe(true);
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const tokens = loginRes.body?.data?.patient?.auth?.login;
+      expect(tokens, 'Missing data.patient.auth.login').toBeTruthy();
+      expect.soft(typeof tokens?.accessToken).toBe('string');
+      expect.soft(typeof tokens?.refreshToken).toBe('string');
+      expect.soft(tokens?.accessToken?.length > 20).toBe(true);
+      expect.soft(tokens?.refreshToken?.length > 20).toBe(true);
+    }
+  );
+
+  test(
+    'PHARMA-484 | Patient login should fail when required input is missing',
+    {
+      tag: ['@api', '@patient', '@negative', '@login', '@pharma-484'],
+    },
+    async ({ api }) => {
+      const missingUsernameRes = await safeGraphQL(api, {
+        query: LOGIN_MUTATION,
+        variables: { password: buildValidCreds().password },
+      });
+
+      expect(missingUsernameRes.ok, 'Expected GraphQL validation failure for missing username').toBe(false);
+      expect(missingUsernameRes.httpStatus).toBe(200);
+      expect(missingUsernameRes.httpOk).toBe(true);
+
+      const { message, path } = getGQLError(missingUsernameRes);
+      expect(message.toLowerCase()).toContain('variable');
+      expect.soft(message.toLowerCase()).toContain('username');
+      expect.soft(path ?? null).toBeFalsy();
+
+      const loginNode = missingUsernameRes.body?.data?.patient?.auth?.login;
+      expect.soft(loginNode ?? null).toBeFalsy();
+    }
+  );
 });
