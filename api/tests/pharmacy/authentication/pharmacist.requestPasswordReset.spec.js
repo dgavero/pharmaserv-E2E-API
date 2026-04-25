@@ -54,4 +54,30 @@ test.describe('GraphQL: Password Reset', () => {
       expect(requestResetPasswordRes.ok).toBe(false);
     }
   );
+
+  test(
+    'PHARMA-531 | Request password reset should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-531'],
+    },
+    async ({ api, noAuth }) => {
+      const requestResetPasswordRes = await safeGraphQL(api, {
+        query: RESET_PASSWORD_QUERY,
+        variables: {
+          phoneNumber: getRegularPharmacistPhoneNumber(),
+        },
+        headers: noAuth,
+      });
+
+      expect(requestResetPasswordRes.httpStatus).toBe(200);
+      expect(requestResetPasswordRes.httpOk).toBe(true);
+      expect(requestResetPasswordRes.ok, requestResetPasswordRes.error || 'Request password reset failed').toBe(true);
+
+      const node = requestResetPasswordRes.body?.data?.pharmacist?.requestPasswordReset;
+      expect(typeof node, 'Expected data.pharmacist.requestPasswordReset to be string').toBe('string');
+      expect.soft(node?.length > 0).toBe(true);
+      expect.soft(node?.toLowerCase()).toContain('password reset');
+      expect.soft(node?.toLowerCase()).toContain('granted');
+    }
+  );
 });
