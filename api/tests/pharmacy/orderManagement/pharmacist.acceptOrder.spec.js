@@ -26,4 +26,32 @@ test.describe('GraphQL: Pharmacy Accept Order', () => {
       expect(acceptOrderRes.ok, acceptOrderRes.error || 'Expected Accept Order to Fail').toBe(false);
     }
   );
+
+  test(
+    'PHARMA-537 | Accept already accepted order should satisfy error response contract',
+    {
+      tag: ['@api', '@pharmacist', '@negative', '@pharma-537'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const acceptOrderRes = await safeGraphQL(api, {
+        query: ACCEPT_ORDER_QUERY,
+        variables: {
+          orderId: getReusableTestIds({ slot: 'slotOne' }).orderId,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(acceptOrderRes.httpStatus).toBe(200);
+      expect(acceptOrderRes.httpOk).toBe(true);
+      expect(acceptOrderRes.ok, acceptOrderRes.error || 'Expected Accept Order to fail').toBe(false);
+
+      const gqlError = acceptOrderRes.body?.errors?.[0];
+      expect(gqlError, 'Expected GraphQL error object').toBeTruthy();
+      expect.soft(typeof gqlError?.message).toBe('string');
+      expect.soft(gqlError?.message?.length > 0).toBe(true);
+    }
+  );
 });
