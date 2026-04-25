@@ -83,4 +83,33 @@ test.describe('GraphQL: Branch Management Actions', () => {
       expect(getBranchByIdRes.ok).toBe(true);
     }
   );
+
+  test(
+    'PHARMA-532 | Get branch detail should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-532'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const getBranchByIdRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_BRANCH_BY_ID_QUERY,
+        variables: {
+          branchId: regularPharmacistAccount.branchId,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(getBranchByIdRes.httpStatus).toBe(200);
+      expect(getBranchByIdRes.httpOk).toBe(true);
+      expect(getBranchByIdRes.ok, getBranchByIdRes.error || 'Get branch detail failed').toBe(true);
+
+      const node = getBranchByIdRes.body?.data?.pharmacy?.admin?.branch?.detail;
+      expect(node, 'Missing data.pharmacy.admin.branch.detail').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.code).toBe('string');
+      expect.soft(typeof node?.name).toBe('string');
+    }
+  );
 });

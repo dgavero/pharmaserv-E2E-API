@@ -78,4 +78,28 @@ test.describe('GraphQL: Pharmacy Get Chat Unseen Count', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getChatUnseenCountInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-533 | Get chat unseen count should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-533'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const getChatUnseenCountRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_CHAT_UNSEEN_COUNT_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(getChatUnseenCountRes.httpStatus).toBe(200);
+      expect(getChatUnseenCountRes.httpOk).toBe(true);
+      expect(getChatUnseenCountRes.ok, getChatUnseenCountRes.error || 'Get chat unseen count failed').toBe(true);
+
+      const node = getChatUnseenCountRes.body?.data?.pharmacy?.chat?.unseenCount;
+      expect(node, 'Missing data.pharmacy.chat.unseenCount').toBeDefined();
+      expect.soft(typeof node === 'number' || typeof node === 'string').toBe(true);
+    }
+  );
 });
