@@ -36,4 +36,32 @@ test.describe('GraphQL: Start Pickup Order', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-564 | Start pickup for unassigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-564'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const startPickupOrderRes = await safeGraphQL(api, {
+        query: START_PICKUP_ORDER_QUERY,
+        variables: { orderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(startPickupOrderRes.ok, startPickupOrderRes.error || 'Start Pickup Order is expected to fail').toBe(
+        false
+      );
+      if (startPickupOrderRes.httpOk) {
+        const { message } = getGQLError(startPickupOrderRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(startPickupOrderRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

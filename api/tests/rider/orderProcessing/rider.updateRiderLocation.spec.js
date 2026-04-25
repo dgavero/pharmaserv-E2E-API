@@ -91,4 +91,33 @@ test.describe('GraphQL: Update Rider Location', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-566 | Update rider location should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-566'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const updateRiderLocationRes = await safeGraphQL(api, {
+        query: UPDATE_RIDER_LOCATION_QUERY,
+        variables: { pathPoint: buildPathPoint() },
+        headers: bearer(accessToken),
+      });
+
+      expect(updateRiderLocationRes.httpStatus).toBe(200);
+      expect(updateRiderLocationRes.httpOk).toBe(true);
+      expect(updateRiderLocationRes.ok, updateRiderLocationRes.error || 'Update Rider Location request failed').toBe(
+        true
+      );
+
+      const node = updateRiderLocationRes.body?.data?.rider?.order?.updateLocation;
+      expect(
+        typeof node === 'boolean' || typeof node === 'string',
+        'Expected data.rider.order.updateLocation to be boolean|string'
+      ).toBe(true);
+    }
+  );
 });

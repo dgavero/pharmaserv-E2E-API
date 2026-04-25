@@ -38,4 +38,35 @@ test.describe('GraphQL: Arrive at Pharmacy', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-556 | Arrive at pharmacy unassigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-556'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const arriveAtPharmacyRes = await safeGraphQL(api, {
+        query: ARRIVE_AT_PHARMACY_QUERY,
+        variables: {
+          orderId,
+          branchId,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(arriveAtPharmacyRes.ok, arriveAtPharmacyRes.error || 'Arrive at Pharmacy is expected to fail').toBe(
+        false
+      );
+      if (arriveAtPharmacyRes.httpOk) {
+        const { message } = getGQLError(arriveAtPharmacyRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(arriveAtPharmacyRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

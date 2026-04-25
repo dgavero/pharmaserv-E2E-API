@@ -40,4 +40,34 @@ test.describe('GraphQL: Set Pickup Proof', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-563 | Set pickup proof for unassigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-563'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const setPickupProofRes = await safeGraphQL(api, {
+        query: SET_PICKUP_PROOF_QUERY,
+        variables: {
+          orderId,
+          branchId,
+          proof: { photo: proof },
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(setPickupProofRes.ok, setPickupProofRes.error || 'Set Pickup Proof is expected to fail').toBe(false);
+      if (setPickupProofRes.httpOk) {
+        const { message } = getGQLError(setPickupProofRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(setPickupProofRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

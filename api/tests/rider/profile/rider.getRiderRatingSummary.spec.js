@@ -73,4 +73,32 @@ test.describe('GraphQL: Get Rider Rating Summary', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-569 | Rider rating summary should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-569'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getRiderRatingSummaryRes = await safeGraphQL(api, {
+        query: RIDER_GET_RATING_SUMMARY_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(getRiderRatingSummaryRes.httpStatus).toBe(200);
+      expect(getRiderRatingSummaryRes.httpOk).toBe(true);
+      expect(
+        getRiderRatingSummaryRes.ok,
+        getRiderRatingSummaryRes.error || 'Get Rider Rating Summary request failed'
+      ).toBe(true);
+
+      const node = getRiderRatingSummaryRes.body?.data?.rider?.ratingSummary;
+      expect(node, 'Missing data.rider.ratingSummary').toBeTruthy();
+      expect.soft(typeof node?.average === 'number' || typeof node?.average === 'string').toBe(true);
+      expect.soft(typeof node?.five).toBe('number');
+      expect.soft(typeof node?.one).toBe('number');
+    }
+  );
 });

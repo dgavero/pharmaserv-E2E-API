@@ -72,4 +72,30 @@ test.describe('GraphQL: Get Rider Documents', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-568 | Rider documents should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-568'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getRiderDocumentsRes = await safeGraphQL(api, {
+        query: RIDER_GET_DOCUMENTS_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(getRiderDocumentsRes.httpStatus).toBe(200);
+      expect(getRiderDocumentsRes.httpOk).toBe(true);
+      expect(getRiderDocumentsRes.ok, getRiderDocumentsRes.error || 'Get Rider Documents request failed').toBe(true);
+
+      const node = getRiderDocumentsRes.body?.data?.rider?.documents;
+      expect(Array.isArray(node), 'Expected data.rider.documents to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.type).toBe('string');
+        expect.soft(typeof node[0]?.photo).toBe('string');
+      }
+    }
+  );
 });

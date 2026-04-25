@@ -76,4 +76,33 @@ test.describe('GraphQL: Get Assigned Orders', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-558 | Get assigned orders should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-558'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getAssignedOrdersRes = await safeGraphQL(api, {
+        query: GET_ASSIGNED_ORDERS_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(getAssignedOrdersRes.httpStatus).toBe(200);
+      expect(getAssignedOrdersRes.httpOk).toBe(true);
+      expect(getAssignedOrdersRes.ok, getAssignedOrdersRes.error || 'Get Assigned Orders request failed').toBe(true);
+
+      const node = getAssignedOrdersRes.body?.data?.rider?.assignedOrders;
+      expect(Array.isArray(node), 'Expected data.rider.assignedOrders to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.deliveryType).toBe('string');
+        expect.soft(typeof node[0]?.status).toBe('string');
+        expect.soft(Array.isArray(node[0]?.legs)).toBe(true);
+      }
+    }
+  );
 });

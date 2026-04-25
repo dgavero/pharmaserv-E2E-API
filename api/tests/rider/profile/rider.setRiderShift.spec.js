@@ -69,4 +69,35 @@ test.describe('GraphQL: Rider able to set shift start/end', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-571 | Rider set shift start should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-571'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      await createRiderScheduleAsAdmin(api, defaultRiderAccount.riderId);
+      const setShiftStartRes = await safeGraphQL(api, {
+        query: RIDER_SET_SHIFT_START_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      if (setShiftStartRes.ok) {
+        expect(setShiftStartRes.httpStatus).toBe(200);
+        expect(setShiftStartRes.httpOk).toBe(true);
+        const node = setShiftStartRes.body?.data?.rider?.schedule?.startShift;
+        expect(
+          typeof node === 'boolean' || typeof node === 'string',
+          'Expected data.rider.schedule.startShift to be boolean|string'
+        ).toBe(true);
+      } else {
+        const { message } = getGQLError(setShiftStartRes);
+        expect(typeof message).toBe('string');
+        expect(message).toMatch(/shift already started/i);
+      }
+    }
+  );
 });

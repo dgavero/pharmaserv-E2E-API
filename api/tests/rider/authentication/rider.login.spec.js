@@ -18,4 +18,22 @@ test.describe('GraphQL: Rider Authentication', () => {
       expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
     }
   );
+
+  test(
+    'PHARMA-551 | Rider login should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-551'],
+    },
+    async ({ api }) => {
+      const { raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.httpStatus).toBe(200);
+      expect(loginRes.httpOk).toBe(true);
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const node = loginRes.body?.data?.rider?.auth?.login;
+      expect(node, 'Missing data.rider.auth.login').toBeTruthy();
+      expect.soft(typeof node?.accessToken).toBe('string');
+      expect.soft(typeof node?.refreshToken).toBe('string');
+    }
+  );
 });

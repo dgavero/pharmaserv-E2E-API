@@ -93,4 +93,31 @@ test.describe('GraphQL: Rider Get Schedule', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-570 | Rider schedule should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-570'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      await createRiderScheduleAsAdmin(api, defaultRiderAccount.riderId);
+      const getRiderScheduleRes = await safeGraphQL(api, {
+        query: RIDER_GET_SCHEDULE_QUERY,
+        variables: { date: getScheduleDateForAdminHelper() },
+        headers: bearer(accessToken),
+      });
+
+      expect(getRiderScheduleRes.httpStatus).toBe(200);
+      expect(getRiderScheduleRes.httpOk).toBe(true);
+      expect(getRiderScheduleRes.ok, getRiderScheduleRes.error || 'Get Rider Schedule request failed').toBe(true);
+
+      const node = getRiderScheduleRes.body?.data?.rider?.schedule;
+      expect(node, 'Missing data.rider.schedule').toBeTruthy();
+      expect.soft(typeof node?.startTime).toBe('string');
+      expect.soft(typeof node?.endTime).toBe('string');
+    }
+  );
 });

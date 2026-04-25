@@ -78,4 +78,30 @@ test.describe('GraphQL: Get Rider Profile', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(meRiderResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-567 | Rider me should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-567'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, defaultRiderAccount);
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const meRiderRes = await safeGraphQL(api, {
+        query: ME_RIDER_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(meRiderRes.httpStatus).toBe(200);
+      expect(meRiderRes.httpOk).toBe(true);
+      expect(meRiderRes.ok, meRiderRes.error || 'Get Rider Profile request failed').toBe(true);
+
+      const riderNode = meRiderRes.body?.data?.rider?.me;
+      expect(riderNode, 'Missing data.rider.me').toBeTruthy();
+      expect.soft(typeof riderNode?.id).toBe('string');
+      expect.soft(typeof riderNode?.username).toBe('string');
+      expect.soft(typeof riderNode?.status).toBe('string');
+    }
+  );
 });

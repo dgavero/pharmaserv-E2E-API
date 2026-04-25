@@ -36,4 +36,30 @@ test.describe('GraphQL: Arrive at Drop-off', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-555 | Arrive at dropoff unassigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-555'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const arriveAtDropOffRes = await safeGraphQL(api, {
+        query: ARRIVE_AT_DROPOFF_QUERY,
+        variables: { orderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(arriveAtDropOffRes.ok, arriveAtDropOffRes.error || 'Arrive at Drop-off is expected to fail').toBe(false);
+      if (arriveAtDropOffRes.httpOk) {
+        const { message } = getGQLError(arriveAtDropOffRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(arriveAtDropOffRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });
