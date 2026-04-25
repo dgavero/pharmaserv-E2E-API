@@ -132,4 +132,32 @@ test.describe('GraphQL: Patient Create Discount Card', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-518 | Create discount card should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-518'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const createDiscountCardRes = await safeGraphQL(api, {
+        query: CREATE_DISCOUNT_CARD_QUERY,
+        variables: { discountCard: discountCardInput() },
+        headers: bearer(accessToken),
+      });
+
+      expect(createDiscountCardRes.httpStatus).toBe(200);
+      expect(createDiscountCardRes.httpOk).toBe(true);
+      expect(createDiscountCardRes.ok, createDiscountCardRes.error || 'Create Discount Card request failed').toBe(true);
+
+      const node = createDiscountCardRes.body?.data?.patient?.discountCard?.create;
+      expect(node, 'Missing data.patient.discountCard.create').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.name).toBe('string');
+      expect.soft(typeof node?.cardType).toBe('string');
+      expect.soft(typeof node?.cardNumber).toBe('string');
+    }
+  );
 });

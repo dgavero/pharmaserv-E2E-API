@@ -50,4 +50,42 @@ test.describe('GraphQL: Remove Prescription', () => {
       expect(removePrescriptionRes.ok).toBe(true);
     }
   );
+
+  test(
+    'PHARMA-513 | Remove prescription should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-513'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const scanPresriptionRes = await safeGraphQL(api, {
+        query: SCAN_PRESCRIPTION_QUERY,
+        variables: {
+          prescription: {
+            patientId: defaultPatientAccount.patientId,
+            photoToScan: 'addfff-1344-1356.png',
+          },
+        },
+        headers: bearer(accessToken),
+      });
+      expect(scanPresriptionRes.ok, scanPresriptionRes.error || 'Scan prescription setup failed').toBe(true);
+
+      const prescriptionId = scanPresriptionRes.body?.data?.patient?.prescription?.scan?.id;
+      expect(prescriptionId, 'Missing prescription id from scan setup').toBeTruthy();
+
+      const removePrescriptionRes = await safeGraphQL(api, {
+        query: REMOVE_PRESCRIPTION_QUERY,
+        variables: { prescriptionId },
+        headers: bearer(accessToken),
+      });
+      expect(removePrescriptionRes.httpStatus).toBe(200);
+      expect(removePrescriptionRes.httpOk).toBe(true);
+      expect(removePrescriptionRes.ok, removePrescriptionRes.error || 'Remove prescription request failed').toBe(true);
+
+      const node = removePrescriptionRes.body?.data?.patient?.prescription?.remove;
+      expect(node, 'Missing data.patient.prescription.remove').toBeTruthy();
+    }
+  );
 });

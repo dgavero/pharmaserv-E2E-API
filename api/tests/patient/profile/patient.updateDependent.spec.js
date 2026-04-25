@@ -147,4 +147,33 @@ test.describe('GraphQL: Patient Update Dependent', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-527 | Update dependent should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-527'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const dependentId = await getExistingDependentId(api, accessToken);
+      const updateDependentRes = await safeGraphQL(api, {
+        query: UPDATE_DEPENDENT_QUERY,
+        variables: { dependentId, patient: updateDependentInput() },
+        headers: bearer(accessToken),
+      });
+
+      expect(updateDependentRes.httpStatus).toBe(200);
+      expect(updateDependentRes.httpOk).toBe(true);
+      expect(updateDependentRes.ok, updateDependentRes.error || 'Update Dependent request failed').toBe(true);
+
+      const node = updateDependentRes.body?.data?.patient?.updateDependent;
+      expect(node, 'Missing data.patient.updateDependent').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.firstName).toBe('string');
+      expect.soft(typeof node?.lastName).toBe('string');
+      expect.soft(typeof node?.email).toBe('string');
+    }
+  );
 });

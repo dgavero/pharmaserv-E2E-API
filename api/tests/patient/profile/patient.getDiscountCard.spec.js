@@ -96,4 +96,34 @@ test.describe('GraphQL: Patient Get Discount Card Details', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getDCInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-522 | Get discount cards should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-522'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getDCRes = await safeGraphQL(api, {
+        query: GET_DISCOUNT_CARDS_QUERY,
+        variables: { patientId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getDCRes.httpStatus).toBe(200);
+      expect(getDCRes.httpOk).toBe(true);
+      expect(getDCRes.ok, getDCRes.error || 'Get Discount Card request failed').toBe(true);
+
+      const node = getDCRes.body?.data?.patient?.discountCards;
+      expect(Array.isArray(node), 'Expected patient.discountCards to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.name).toBe('string');
+        expect.soft(typeof node[0]?.cardType).toBe('string');
+        expect.soft(typeof node[0]?.cardNumber).toBe('string');
+      }
+    }
+  );
 });

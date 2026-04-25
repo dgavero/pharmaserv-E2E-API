@@ -90,4 +90,33 @@ test.describe('GraphQL: Patient Add Dependent', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(addDependentInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-516 | Add dependent should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-516'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const dependentInput = newDependentInput();
+      const addDependentRes = await safeGraphQL(api, {
+        query: ADD_DEPENDENT_QUERY,
+        variables: { patient: dependentInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(addDependentRes.httpStatus).toBe(200);
+      expect(addDependentRes.httpOk).toBe(true);
+      expect(addDependentRes.ok, addDependentRes.error || 'Add dependent request failed').toBe(true);
+
+      const node = addDependentRes.body?.data?.patient?.addDependent;
+      expect(node, 'Missing data.patient.addDependent').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.firstName).toBe('string');
+      expect.soft(typeof node?.lastName).toBe('string');
+      expect.soft(typeof node?.email).toBe('string');
+    }
+  );
 });

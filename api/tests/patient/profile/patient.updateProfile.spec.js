@@ -88,4 +88,35 @@ test.describe('GraphQL: Patient Update Profile', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(updatePatientNoAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-529 | Update patient profile should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-529'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const updatePatientRes = await safeGraphQL(api, {
+        query: UPDATE_PATIENT_QUERY,
+        variables: { patient: updatePatientInput() },
+        headers: bearer(accessToken),
+      });
+
+      expect(updatePatientRes.httpStatus).toBe(200);
+      expect(updatePatientRes.httpOk).toBe(true);
+      expect(updatePatientRes.ok, updatePatientRes.error || 'Update Patient Profile failed').toBe(true);
+
+      const node = updatePatientRes.body?.data?.patient?.update;
+      expect(node, 'Missing data.patient.update').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.firstName).toBe('string');
+      expect.soft(typeof node?.lastName).toBe('string');
+      expect.soft(typeof node?.email).toBe('string');
+      expect.soft(['string', 'number']).toContain(typeof node?.height);
+      expect.soft(['string', 'number']).toContain(typeof node?.weight);
+      expect.soft(typeof node?.bloodType).toBe('string');
+    }
+  );
 });

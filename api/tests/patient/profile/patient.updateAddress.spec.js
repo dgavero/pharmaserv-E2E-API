@@ -79,4 +79,37 @@ test.describe('GraphQL: Patient Update Address', () => {
       expect.soft(node.lng).toBe(updateAddress.lng);
     }
   );
+
+  test(
+    'PHARMA-526 | Update address should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-526'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const patientAddressId = await getFirstAddressId(api, accessToken);
+      const updateAddressRes = await safeGraphQL(api, {
+        query: UPDATE_ADDRESS_QUERY,
+        variables: {
+          addressId: patientAddressId,
+          address: updateAddressInput(),
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(updateAddressRes.httpStatus).toBe(200);
+      expect(updateAddressRes.httpOk).toBe(true);
+      expect(updateAddressRes.ok, updateAddressRes.error || 'Update Address request failed').toBe(true);
+
+      const node = updateAddressRes.body?.data?.patient?.address?.update;
+      expect(node, 'Missing patient.address.update').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.addressName).toBe('string');
+      expect.soft(typeof node?.address).toBe('string');
+      expect.soft(typeof node?.lat).toBe('number');
+      expect.soft(typeof node?.lng).toBe('number');
+    }
+  );
 });

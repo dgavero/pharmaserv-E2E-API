@@ -110,4 +110,35 @@ test.describe('GraphQL: Patient Get Address', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getAddressResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-520 | Get addresses should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-520'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getAddressRes = await safeGraphQL(api, {
+        query: GET_ADDRESS_QUERY,
+        variables: { patientId: defaultPatientAccount.patientId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getAddressRes.httpStatus).toBe(200);
+      expect(getAddressRes.httpOk).toBe(true);
+      expect(getAddressRes.ok, getAddressRes.error || 'Get Address request failed').toBe(true);
+
+      const node = getAddressRes.body?.data?.patient?.addresses;
+      expect(Array.isArray(node), 'Expected patient.addresses to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.addressName).toBe('string');
+        expect.soft(typeof node[0]?.address).toBe('string');
+        expect.soft(typeof node[0]?.lat).toBe('number');
+        expect.soft(typeof node[0]?.lng).toBe('number');
+      }
+    }
+  );
 });
