@@ -211,4 +211,29 @@ test.describe('GraphQL: Open-Pause-Close My Branch as Pharmacist', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(branchCloseResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-549 | Open my branch should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-549'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const branchOpenRes = await safeGraphQL(api, {
+        query: PHARMACIST_OPEN_MY_BRANCH_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(branchOpenRes.httpStatus).toBe(200);
+      expect(branchOpenRes.httpOk).toBe(true);
+      expect(branchOpenRes.ok, branchOpenRes.error || 'Failed to open pharmacist branch').toBe(true);
+
+      const node = branchOpenRes.body?.data?.pharmacy?.branch?.open;
+      expect(node, 'Missing data.pharmacy.branch.open').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.name).toBe('string');
+      expect.soft(typeof node?.status).toBe('string');
+    }
+  );
 });
