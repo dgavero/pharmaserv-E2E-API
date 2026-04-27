@@ -96,4 +96,31 @@ test.describe('GraphQL: Admin Create Ads Location', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(createAdsLocationInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-573 | Should NOT create ads location when required location input is missing',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-573'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const createAdsLocationMissingInputRes = await safeGraphQL(api, {
+        query: CREATE_ADS_LOCATION_MUTATION,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(createAdsLocationMissingInputRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+
+      if (createAdsLocationMissingInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(createAdsLocationMissingInputRes);
+        expect(message, 'Expected GraphQL validation message for missing location variable').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(createAdsLocationMissingInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

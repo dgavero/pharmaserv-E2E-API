@@ -93,6 +93,32 @@ test.describe('GraphQL: Admin Find Patients', () => {
   );
 
   test(
+    'PHARMA-575 | Should NOT find patients when required query variable is missing',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-575'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const findPatientsMissingQueryRes = await safeGraphQL(api, {
+        query: FIND_PATIENTS_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(findPatientsMissingQueryRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (findPatientsMissingQueryRes.httpOk) {
+        const { message, code, classification } = getGQLError(findPatientsMissingQueryRes);
+        expect(message, 'Expected GraphQL validation message for missing query').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(findPatientsMissingQueryRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
     'PHARMA-465 | Find patients should return expected item schema and include target patient',
     {
       tag: ['@api', '@admin', '@positive', '@pharma-465'],

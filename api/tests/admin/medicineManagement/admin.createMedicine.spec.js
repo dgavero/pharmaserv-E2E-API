@@ -82,6 +82,32 @@ test.describe('GraphQL: Admin Create Medicine', () => {
   );
 
   test(
+    'PHARMA-576 | Should NOT create medicine when required medicine input is missing',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-576'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const createMedicineMissingInputRes = await safeGraphQL(api, {
+        query: CREATE_MEDICINE_MUTATION,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(createMedicineMissingInputRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (createMedicineMissingInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(createMedicineMissingInputRes);
+        expect(message, 'Expected GraphQL validation message for missing medicine input').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(createMedicineMissingInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
     'PHARMA-452 | Create medicine should satisfy response contract shape',
     {
       tag: ['@api', '@admin', '@positive', '@create', '@pharma-452'],

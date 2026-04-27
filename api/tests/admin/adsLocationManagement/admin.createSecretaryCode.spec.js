@@ -95,4 +95,31 @@ test.describe('GraphQL: Admin Create Secretary Code', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(createSecretaryCodeInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-574 | Should NOT create secretary code when required code input is missing',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-574'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const createSecretaryCodeMissingInputRes = await safeGraphQL(api, {
+        query: CREATE_SECRETARY_CODE_MUTATION,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(createSecretaryCodeMissingInputRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+
+      if (createSecretaryCodeMissingInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(createSecretaryCodeMissingInputRes);
+        expect(message, 'Expected GraphQL validation message for missing code variable').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(createSecretaryCodeMissingInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

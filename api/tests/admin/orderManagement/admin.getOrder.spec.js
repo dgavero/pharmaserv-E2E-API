@@ -74,6 +74,32 @@ test.describe('GraphQL: Admin Get Order', () => {
   );
 
   test(
+    'PHARMA-577 | Should NOT get order when required orderId variable is missing',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-577'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getOrderMissingOrderIdRes = await safeGraphQL(api, {
+        query: GET_ORDER_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderMissingOrderIdRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (getOrderMissingOrderIdRes.httpOk) {
+        const { message, code, classification } = getGQLError(getOrderMissingOrderIdRes);
+        expect(message, 'Expected GraphQL validation message for missing orderId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(getOrderMissingOrderIdRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
     'PHARMA-457 | Get order should satisfy response contract shape',
     {
       tag: ['@api', '@admin', '@positive', '@pharma-457'],
