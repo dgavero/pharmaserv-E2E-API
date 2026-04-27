@@ -3,6 +3,9 @@ import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { GET_PAGED_PHARMACIES_QUERY, GET_PHARMACY_QUERY } from './admin.pharmacyManagementQueries.js';
+import { getPharmacyManagementTestData } from './pharmacyManagement.testData.js';
+
+const { pharmacyDetail } = getPharmacyManagementTestData();
 
 test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
   test(
@@ -76,24 +79,13 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       tag: ['@api', '@admin', '@positive', '@pharma-15'],
     },
     async ({ api }) => {
-      const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
-
-      // Set pharmacy ID and name by environment
-      const pharmacyByEnv = {
-        DEV: { id: '1', name: 'Mercury Drug' },
-        QA: { id: '59', name: 'Pharmacy API-QA' },
-        PROD: { id: '3', name: 'Watsons' },
-      };
-
-      const EXPECTED_PHARMACY = pharmacyByEnv[env] ?? pharmacyByEnv.DEV;
-
       // 1) Admin login
       const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const pharmacyRes = await safeGraphQL(api, {
         query: GET_PHARMACY_QUERY,
-        variables: { pharmacyId: EXPECTED_PHARMACY.id }, // ID! accepts number or string
+        variables: { pharmacyId: pharmacyDetail.id }, // ID! accepts number or string
         headers: bearer(accessToken),
       });
 
@@ -103,8 +95,8 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       const pharmacyNode = pharmacyRes.body?.data?.administrator?.pharmacy?.detail;
       expect(pharmacyNode, 'Missing data.administrator.pharmacy.detail').toBeTruthy();
 
-      expect(pharmacyNode.id).toBe(EXPECTED_PHARMACY.id);
-      expect(pharmacyNode.name).toBe(EXPECTED_PHARMACY.name);
+      expect(pharmacyNode.id).toBe(pharmacyDetail.id);
+      expect(pharmacyNode.name).toBe(pharmacyDetail.name);
 
       // (Optional soft types)
       expect.soft(typeof pharmacyNode.id).toBe('string');
@@ -195,20 +187,12 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       tag: ['@api', '@admin', '@positive', '@pharma-473'],
     },
     async ({ api }) => {
-      const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
-      const pharmacyByEnv = {
-        DEV: { id: '1' },
-        QA: { id: '59' },
-        PROD: { id: '3' },
-      };
-      const targetPharmacy = pharmacyByEnv[env] ?? pharmacyByEnv.DEV;
-
       const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
 
       const pharmacyRes = await safeGraphQL(api, {
         query: GET_PHARMACY_QUERY,
-        variables: { pharmacyId: targetPharmacy.id },
+        variables: { pharmacyId: pharmacyDetail.id },
         headers: bearer(accessToken),
       });
 
@@ -220,7 +204,7 @@ test.describe('GraphQL: Admin Get Paged Pharmacies', () => {
       expect(pharmacyNode, 'Missing data.administrator.pharmacy.detail').toBeTruthy();
       expect.soft(typeof pharmacyNode?.id).toBe('string');
       expect.soft(typeof pharmacyNode?.name).toBe('string');
-      expect.soft(pharmacyNode.id).toBe(targetPharmacy.id);
+      expect.soft(pharmacyNode.id).toBe(pharmacyDetail.id);
       expect.soft(pharmacyNode.name.length).toBeGreaterThan(0);
     }
   );
