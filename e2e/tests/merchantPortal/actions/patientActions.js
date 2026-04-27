@@ -394,7 +394,7 @@ export async function sendThreadImageAsPatientForHybrid(api, { patientAccessToke
       patientAccessToken,
       ext,
     });
-    console.log(`[E2E-21 chat image] Uploaded chat photo blobName: ${attachmentBlobName}`);
+    console.log(`[chat image] Uploaded chat photo blobName: ${attachmentBlobName}`);
     await uploadImageToSignedUrl(api, {
       uploadUrl: attachmentUploadUrl,
       imagePath: normalizedImagePath,
