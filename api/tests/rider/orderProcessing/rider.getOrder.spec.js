@@ -61,4 +61,30 @@ test.describe('GraphQL: Get Order', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-586 | Should NOT get order when required orderId variable is missing',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-586'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getOrderMissingVariableRes = await safeGraphQL(api, {
+        query: GET_ORDER_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (getOrderMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(getOrderMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing orderId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(getOrderMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

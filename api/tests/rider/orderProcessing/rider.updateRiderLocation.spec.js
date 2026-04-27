@@ -120,4 +120,30 @@ test.describe('GraphQL: Update Rider Location', () => {
       ).toBe(true);
     }
   );
+
+  test(
+    'PHARMA-588 | Should NOT update rider location when required pathPoint variable is missing',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-588'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const updateRiderLocationMissingVariableRes = await safeGraphQL(api, {
+        query: UPDATE_RIDER_LOCATION_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(updateRiderLocationMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (updateRiderLocationMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(updateRiderLocationMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing pathPoint').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(updateRiderLocationMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

@@ -80,4 +80,30 @@ test.describe('GraphQL: Password Reset', () => {
       expect.soft(node?.toLowerCase()).toContain('granted');
     }
   );
+
+  test(
+    'PHARMA-584 | Should NOT request password reset when required phoneNumber variable is missing',
+    {
+      tag: ['@api', '@pharmacist', '@negative', '@pharma-584'],
+    },
+    async ({ api, noAuth }) => {
+      const requestResetPasswordMissingVariableRes = await safeGraphQL(api, {
+        query: RESET_PASSWORD_QUERY,
+        variables: {},
+        headers: noAuth,
+      });
+
+      expect(requestResetPasswordMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (requestResetPasswordMissingVariableRes.httpOk) {
+        const errorMessage = String(
+          requestResetPasswordMissingVariableRes.body?.errors?.[0]?.message ||
+            requestResetPasswordMissingVariableRes.error ||
+            ''
+        );
+        expect(errorMessage, 'Expected GraphQL validation message for missing phoneNumber').toBeTruthy();
+      } else {
+        expect.soft(requestResetPasswordMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

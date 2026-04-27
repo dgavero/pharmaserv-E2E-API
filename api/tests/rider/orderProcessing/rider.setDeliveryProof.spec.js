@@ -71,4 +71,30 @@ test.describe('GraphQL: Set Delivery Proof', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-587 | Should NOT set delivery proof when required proof variable is missing',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-587'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const setDeliveryProofMissingVariableRes = await safeGraphQL(api, {
+        query: SET_DELIVERY_PROOF_QUERY,
+        variables: { orderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(setDeliveryProofMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (setDeliveryProofMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(setDeliveryProofMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing proof').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(setDeliveryProofMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

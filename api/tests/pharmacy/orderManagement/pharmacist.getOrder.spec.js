@@ -1,5 +1,5 @@
 import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
-import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { getReusableTestIds } from '../../testData/reusableTestIds.js';
@@ -76,6 +76,32 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
       expect.soft(typeof node?.status).toBe('string');
       expect.soft(node?.patient).toBeTruthy();
       expect.soft(Array.isArray(node?.legs)).toBe(true);
+    }
+  );
+
+  test(
+    'PHARMA-585 | Should NOT get order by id when required orderId variable is missing',
+    {
+      tag: ['@api', '@pharmacist', '@negative', '@pharma-585'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const getOrderByIdMissingVariableRes = await safeGraphQL(api, {
+        query: GET_ORDER_BY_ID_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderByIdMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (getOrderByIdMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(getOrderByIdMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing orderId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(getOrderByIdMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
     }
   );
 });

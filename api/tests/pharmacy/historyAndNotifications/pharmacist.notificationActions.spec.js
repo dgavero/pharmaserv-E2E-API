@@ -166,6 +166,32 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
   );
 
   test(
+    'PHARMA-590 | Should NOT mark notification as SEEN when required notificationId variable is missing',
+    {
+      tag: ['@api', '@pharmacist', '@negative', '@pharma-590'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const seenNotificationMissingVariableRes = await safeGraphQL(api, {
+        query: PHARMACIST_SEEN_NOTIFICATION_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(seenNotificationMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (seenNotificationMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(seenNotificationMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing notificationId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(seenNotificationMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
     'PHARMA-312 | Should be able to remove notification',
     {
       tag: ['@api', '@pharmacist', '@positive', '@pharma-312'],
