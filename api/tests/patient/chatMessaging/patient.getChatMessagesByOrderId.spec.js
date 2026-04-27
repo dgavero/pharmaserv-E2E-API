@@ -110,4 +110,30 @@ test.describe('GraphQL: Patient Get Chat Messages By Order Id', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-580 | Should NOT get chat messages by order id when required orderId variable is missing',
+    {
+      tag: ['@api', '@patient', '@negative', '@pharma-580'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getChatMessagesMissingVariableRes = await safeGraphQL(api, {
+        query: GET_CHAT_MESSAGES_BY_ORDER_ID_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(getChatMessagesMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (getChatMessagesMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(getChatMessagesMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing orderId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(getChatMessagesMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

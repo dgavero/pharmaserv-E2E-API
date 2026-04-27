@@ -155,4 +155,30 @@ test.describe('GraphQL: Patient Create Address', () => {
       expect.soft(typeof node?.lng).toBe('number');
     }
   );
+
+  test(
+    'PHARMA-582 | Should NOT create address when required address variable is missing',
+    {
+      tag: ['@api', '@patient', '@negative', '@pharma-582'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const createAddressMissingVariableRes = await safeGraphQL(api, {
+        query: CREATE_ADDRESS_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(createAddressMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (createAddressMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(createAddressMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing address').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(createAddressMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });
