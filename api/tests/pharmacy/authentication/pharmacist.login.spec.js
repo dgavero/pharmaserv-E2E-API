@@ -76,4 +76,29 @@ test.describe('GraphQL: Pharmacist Login', () => {
       expect(loginRes.httpStatus).toBe(401);
     }
   );
+
+  test(
+    'PHARMA-530 | Pharmacist login should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-530'],
+    },
+    async ({ api, noAuth }) => {
+      const loginRes = await safeGraphQL(api, {
+        query: PHARMACIST_LOGIN_QUERY,
+        variables: getPharmacistCredentials('reg01'),
+        headers: noAuth,
+      });
+
+      expect(loginRes.httpStatus).toBe(200);
+      expect(loginRes.httpOk).toBe(true);
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login request failed').toBe(true);
+
+      const node = loginRes.body?.data?.pharmacist?.auth?.login;
+      expect(node, 'Missing data.pharmacist.auth.login').toBeTruthy();
+      expect.soft(typeof node?.accessToken).toBe('string');
+      expect.soft(node?.accessToken?.length > 0).toBe(true);
+      expect.soft(typeof node?.refreshToken).toBe('string');
+      expect.soft(node?.refreshToken?.length > 0).toBe(true);
+    }
+  );
 });

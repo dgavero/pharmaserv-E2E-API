@@ -87,4 +87,31 @@ test.describe('GraphQL: Me', () => {
       });
     }
   );
+
+  test(
+    'PHARMA-515 | patient.me should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-515'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: login } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(login.ok, login.error || 'Login failed').toBe(true);
+
+      const meRes = await safeGraphQL(api, {
+        query: ME_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(meRes.httpStatus).toBe(200);
+      expect(meRes.httpOk).toBe(true);
+      expect(meRes.ok, meRes.error || 'Me query failed').toBe(true);
+
+      const me = meRes.body?.data?.patient?.me;
+      expect(me, 'Missing data.patient.me').toBeTruthy();
+      expect.soft(typeof me?.id).toBe('string');
+      expect.soft(typeof me?.uuid).toBe('string');
+      expect.soft(typeof me?.username).toBe('string');
+      expect.soft(typeof me?.email).toBe('string');
+    }
+  );
 });

@@ -1,7 +1,16 @@
-import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import {
+  loginAsAdminAndGetTokens,
+  loginAsPatientAndGetTokens,
+  loginAsRiderAndGetTokens,
+  loginAsPharmacistAndGetTokens,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_HTTP_STATUSES,
+} from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getPatientAccount, getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomLetters } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_VEHICLE_MUTATION } from './admin.assetsManagementQueries.js';
 
@@ -99,6 +108,124 @@ test.describe('GraphQL: Admin Create Vehicle', () => {
       expect(createVehicleInvalidAuthRes.ok).toBe(false);
       expect(createVehicleInvalidAuthRes.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(createVehicleInvalidAuthRes.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-432 | Should fail create vehicle when vehicleType enum is invalid',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-432'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const invalidVehicleInput = {
+        ...buildVehicleInput(),
+        vehicleType: 'INVALID_VEHICLE_TYPE',
+      };
+
+      const createVehicleInvalidInputRes = await safeGraphQL(api, {
+        query: CREATE_VEHICLE_MUTATION,
+        variables: { vehicle: invalidVehicleInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(createVehicleInvalidInputRes.ok).toBe(false);
+      if (createVehicleInvalidInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(createVehicleInvalidInputRes);
+        expect(message, 'Expected GraphQL validation message for invalid vehicleType').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL validation code/classification').toBeTruthy();
+      } else {
+        expect.soft(createVehicleInvalidInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
+    'PHARMA-444 | Should reuse existing vehicle when Idempotency-Key is reused',
+    {
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-444'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const vehicleInput = buildVehicleInput();
+      const firstIdempotencyKey = `vehicle-${randomAlphanumeric(16)}`;
+
+      const firstCreateRes = await safeGraphQL(api, {
+        query: CREATE_VEHICLE_MUTATION,
+        variables: { vehicle: vehicleInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(firstCreateRes.ok, firstCreateRes.error || 'First create vehicle call failed').toBe(true);
+
+      const firstNode = firstCreateRes.body?.data?.administrator?.asset?.createVehicle;
+      expect(firstNode, 'Missing first create vehicle node').toBeTruthy();
+      expect.soft(typeof firstNode.id).toBe('string');
+
+      const secondCreateSameKeyRes = await safeGraphQL(api, {
+        query: CREATE_VEHICLE_MUTATION,
+        variables: { vehicle: vehicleInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(
+        secondCreateSameKeyRes.ok,
+        secondCreateSameKeyRes.error || 'Second create vehicle call with same key failed'
+      ).toBe(true);
+
+      const secondSameKeyNode = secondCreateSameKeyRes.body?.data?.administrator?.asset?.createVehicle;
+      expect(secondSameKeyNode, 'Missing second create vehicle node (same key)').toBeTruthy();
+      expect(secondSameKeyNode.id).toBe(firstNode.id);
+    }
+  );
+
+  test(
+    'PHARMA-448 | Should reject create vehicle for non-admin roles',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-448'],
+    },
+    async ({ api }) => {
+      const roleCases = [
+        {
+          role: 'patient',
+          login: () => loginAsPatientAndGetTokens(api, getPatientAccount('default')),
+        },
+        {
+          role: 'rider',
+          login: () => loginAsRiderAndGetTokens(api, getRiderAccount('default')),
+        },
+        {
+          role: 'pharmacist',
+          login: () => loginAsPharmacistAndGetTokens(api, getPharmacistAccount('reg01')),
+        },
+      ];
+
+      for (const roleCase of roleCases) {
+        const { accessToken, raw: loginRes } = await roleCase.login();
+        expect(loginRes.ok, `${roleCase.role} login failed`).toBe(true);
+
+        const createVehicleRes = await safeGraphQL(api, {
+          query: CREATE_VEHICLE_MUTATION,
+          variables: { vehicle: buildVehicleInput() },
+          headers: bearer(accessToken),
+        });
+
+        expect(createVehicleRes.ok, `${roleCase.role} should not be authorized to create vehicle`).toBe(false);
+
+        if (!createVehicleRes.httpOk) {
+          expect(
+            NOAUTH_HTTP_STATUSES,
+            `${roleCase.role} expected unauthorized transport status`
+          ).toContain(createVehicleRes.httpStatus);
+        } else {
+          const { message, code, classification } = getGQLError(createVehicleRes);
+          expect(message, `${roleCase.role} expected GraphQL auth/permission message`).toMatch(NOAUTH_MESSAGE_PATTERN);
+          expect.soft(NOAUTH_CODES, `${roleCase.role} expected auth/permission code`).toContain(code);
+          expect.soft(NOAUTH_CLASSIFICATIONS, `${roleCase.role} expected auth classification`).toContain(classification);
+        }
+      }
     }
   );
 });

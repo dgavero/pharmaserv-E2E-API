@@ -139,4 +139,39 @@ test.describe('GraphQL: Patient Remove Address', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(removeAddressResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-524 | Remove address should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-524'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const createAddressRes = await safeGraphQL(api, {
+        query: CREATE_ADDRESS_QUERY,
+        variables: { address: newAddressInput() },
+        headers: bearer(accessToken),
+      });
+      expect(createAddressRes.ok, createAddressRes.error || 'Create Address setup failed').toBe(true);
+
+      const addressId = createAddressRes.body?.data?.patient?.address?.create?.id;
+      expect(addressId, 'Missing address id from create setup').toBeTruthy();
+
+      const removeAddressRes = await safeGraphQL(api, {
+        query: REMOVE_ADDRESS_QUERY,
+        variables: { addressId },
+        headers: bearer(accessToken),
+      });
+
+      expect(removeAddressRes.httpStatus).toBe(200);
+      expect(removeAddressRes.httpOk).toBe(true);
+      expect(removeAddressRes.ok, removeAddressRes.error || 'Remove Address request failed').toBe(true);
+
+      const node = removeAddressRes.body?.data?.patient?.address?.remove;
+      expect.soft(typeof node).toBe('string');
+      expect.soft(node).toContain('removed');
+    }
+  );
 });

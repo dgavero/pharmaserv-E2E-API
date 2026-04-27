@@ -87,4 +87,39 @@ test.describe('GraphQL: Patient Remove Discount Card', () => {
   );
 
   //Todo add > Should NOT be able to remove unowned Discount Card of Patient
+
+  test(
+    'PHARMA-525 | Remove discount card should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-525'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const createDiscountCardRes = await safeGraphQL(api, {
+        query: CREATE_DISCOUNT_CARD_QUERY,
+        variables: { discountCard: discountCardInput() },
+        headers: bearer(accessToken),
+      });
+      expect(createDiscountCardRes.ok, createDiscountCardRes.error || 'Create discount card setup failed').toBe(true);
+
+      const discountCardId = createDiscountCardRes.body?.data?.patient?.discountCard?.create?.id;
+      expect(discountCardId, 'Missing discount card id from create setup').toBeTruthy();
+
+      const removeDiscountCardRes = await safeGraphQL(api, {
+        query: REMOVE_DISCOUNT_CARD_QUERY,
+        variables: { discountCardId },
+        headers: bearer(accessToken),
+      });
+
+      expect(removeDiscountCardRes.httpStatus).toBe(200);
+      expect(removeDiscountCardRes.httpOk).toBe(true);
+      expect(removeDiscountCardRes.ok, removeDiscountCardRes.error || 'Remove Discount Card request failed').toBe(true);
+
+      const node = removeDiscountCardRes.body?.data?.patient?.discountCard?.remove;
+      expect.soft(typeof node).toBe('string');
+      expect.soft(node).toContain('removed');
+    }
+  );
 });

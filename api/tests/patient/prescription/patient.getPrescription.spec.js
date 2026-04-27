@@ -9,7 +9,7 @@ import {
   NOAUTH_CODES,
   NOAUTH_HTTP_STATUSES,
 } from '../../../helpers/auth.js';
-import { GET_PRESCRIPTION_DETAIL_QUERY } from './patient.prescriptionQueries.js';
+import { GET_PRESCRIPTION_DETAIL_QUERY, SCAN_PRESCRIPTION_QUERY } from './patient.prescriptionQueries.js';
 import {
   getPrescriptionUploadUrlAsPatient,
   uploadImageToSignedUrl,
@@ -114,6 +114,50 @@ test.describe('GraphQL: Get Prescription Detail', () => {
       expect(getPrescriptionRes.ok, 'Get prescription detail with invalid auth should fail').toBe(false);
       expect(getPrescriptionRes.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(getPrescriptionRes.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-514 | Get prescription detail should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-514'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, defaultPatientAccount);
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const scanPrescriptionRes = await safeGraphQL(api, {
+        query: SCAN_PRESCRIPTION_QUERY,
+        variables: {
+          prescription: {
+            patientId: defaultPatientAccount.patientId,
+            photoToScan: 'addfff-1344-1356.png',
+          },
+        },
+        headers: bearer(accessToken),
+      });
+      expect(scanPrescriptionRes.ok, scanPrescriptionRes.error || 'Scan prescription setup failed').toBe(true);
+
+      const prescriptionId = scanPrescriptionRes.body?.data?.patient?.prescription?.scan?.id;
+      expect(prescriptionId, 'Missing prescription id from scan setup').toBeTruthy();
+      const getPrescriptionRes = await safeGraphQL(api, {
+        query: GET_PRESCRIPTION_DETAIL_QUERY,
+        variables: {
+          prescriptionId,
+          patientId: defaultPatientAccount.patientId,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(getPrescriptionRes.httpStatus).toBe(200);
+      expect(getPrescriptionRes.httpOk).toBe(true);
+      expect(getPrescriptionRes.ok, getPrescriptionRes.error || 'Get prescription detail failed').toBe(true);
+
+      const prescriptionNode = getPrescriptionRes.body?.data?.patient?.prescription?.detail;
+      expect(prescriptionNode, 'Missing data.patient.prescription.detail').toBeTruthy();
+      expect.soft(typeof prescriptionNode?.id).toBe('string');
+      expect.soft(typeof prescriptionNode?.photo).toBe('string');
+      expect.soft(Array.isArray(prescriptionNode?.prescriptionItems)).toBe(true);
     }
   );
 });

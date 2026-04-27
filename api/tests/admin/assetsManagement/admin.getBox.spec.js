@@ -69,4 +69,31 @@ test.describe('GraphQL: Admin Get Box', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getBoxInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-433 | Get box should return contract-valid structure and types',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-433'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getBoxRes = await safeGraphQL(api, {
+        query: GET_BOX_QUERY,
+        variables: { assetReferenceId: 1 },
+        headers: bearer(accessToken),
+      });
+
+      expect(getBoxRes.httpStatus).toBe(200);
+      expect(getBoxRes.httpOk).toBe(true);
+      expect(getBoxRes.ok, getBoxRes.error || 'Get box endpoint failed').toBe(true);
+
+      const node = getBoxRes.body?.data?.administrator?.asset?.box;
+      expect(node, 'Missing data.administrator.asset.box').toBeTruthy();
+      expect.soft(typeof node.boxNumber).toBe('string');
+      expect.soft(node.boxNumber.length).toBeGreaterThan(0);
+      expect.soft(Object.keys(node).sort()).toEqual(['boxNumber']);
+    }
+  );
 });

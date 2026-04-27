@@ -126,4 +126,33 @@ test.describe('GraphQL: Patient Create Address', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(createAddressResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-517 | Create address should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-517'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const createAddressRes = await safeGraphQL(api, {
+        query: CREATE_ADDRESS_QUERY,
+        variables: { address: newAddressInput() },
+        headers: bearer(accessToken),
+      });
+
+      expect(createAddressRes.httpStatus).toBe(200);
+      expect(createAddressRes.httpOk).toBe(true);
+      expect(createAddressRes.ok, createAddressRes.error || 'Create Address request failed').toBe(true);
+
+      const node = createAddressRes.body?.data?.patient?.address?.create;
+      expect(node, 'Missing data.patient.address.create').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.addressName).toBe('string');
+      expect.soft(typeof node?.address).toBe('string');
+      expect.soft(typeof node?.lat).toBe('number');
+      expect.soft(typeof node?.lng).toBe('number');
+    }
+  );
 });

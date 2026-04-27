@@ -51,4 +51,34 @@ test.describe('GraphQL: Update Prices', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-565 | Update prices for unassigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-565'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const updatePricesRes = await safeGraphQL(api, {
+        query: UPDATE_PRICES_QUERY,
+        variables: {
+          orderId,
+          branchId,
+          prices: [buildPrices()],
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(updatePricesRes.ok, updatePricesRes.error || 'Update Prices is expected to fail').toBe(false);
+      if (updatePricesRes.httpOk) {
+        const { message } = getGQLError(updatePricesRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(updatePricesRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

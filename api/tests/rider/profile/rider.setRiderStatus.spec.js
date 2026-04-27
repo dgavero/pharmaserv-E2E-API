@@ -48,4 +48,31 @@ test.describe('GraphQL: Rider able to set status', () => {
       ).toBe(true);
     }
   );
+
+  test(
+    'PHARMA-572 | Rider set available status should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-572'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const setAvailableStatusRes = await safeGraphQL(api, {
+        query: RIDER_SET_AVAILABLE_STATUS_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(setAvailableStatusRes.httpStatus).toBe(200);
+      expect(setAvailableStatusRes.httpOk).toBe(true);
+      expect(
+        setAvailableStatusRes.ok,
+        setAvailableStatusRes.error || 'Set Rider Available Status request failed'
+      ).toBe(true);
+
+      const node = setAvailableStatusRes.body?.data?.rider?.setAvailable;
+      expect(node, 'Missing data.rider.setAvailable').toBeTruthy();
+      expect.soft(typeof node?.status).toBe('string');
+    }
+  );
 });

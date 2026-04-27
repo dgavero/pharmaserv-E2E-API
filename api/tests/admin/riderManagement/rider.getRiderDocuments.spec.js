@@ -154,4 +154,34 @@ test.describe('GraphQL: Admin Rider Documents', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getRiderDocumentsInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-481 | Rider documents should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-481'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getRiderDocumentsRes = await safeGraphQL(api, {
+        query: GET_RIDER_DOCUMENTS_QUERY,
+        variables: { riderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getRiderDocumentsRes.httpStatus).toBe(200);
+      expect(getRiderDocumentsRes.httpOk).toBe(true);
+      expect(getRiderDocumentsRes.ok, getRiderDocumentsRes.error || 'Get rider documents endpoint failed').toBe(true);
+
+      const node = getRiderDocumentsRes.body?.data?.administrator?.rider?.documents;
+      expect(Array.isArray(node), 'Get rider documents should return an array').toBe(true);
+      expect(node.length, 'Get rider documents should return at least one document').toBeGreaterThan(0);
+      for (const documentNode of node) {
+        expect.soft(typeof documentNode?.type).toBe('string');
+        expect.soft(typeof documentNode?.photo).toBe('string');
+      }
+      expect.soft(node.some((documentNode) => documentNode?.type === riderDocumentType)).toBe(true);
+    }
+  );
 });

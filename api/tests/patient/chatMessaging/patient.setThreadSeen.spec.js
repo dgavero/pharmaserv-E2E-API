@@ -76,4 +76,29 @@ test.describe('GraphQL: Patient Set Thread Seen', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(setThreadSeenInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-492 | Set thread seen should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-492'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const setThreadSeenRes = await safeGraphQL(api, {
+        query: SET_CHAT_THREAD_SEEN_MUTATION,
+        variables: { threadId: CHAT_THREAD_ID },
+        headers: bearer(accessToken),
+      });
+
+      expect(setThreadSeenRes.httpStatus).toBe(200);
+      expect(setThreadSeenRes.httpOk).toBe(true);
+      expect(setThreadSeenRes.ok, setThreadSeenRes.error || 'Set thread seen endpoint failed').toBe(true);
+
+      const seenNode = setThreadSeenRes.body?.data?.patient?.chat?.seen;
+      expect.soft(typeof seenNode).toBe('string');
+      expect.soft(seenNode.length > 0).toBe(true);
+    }
+  );
 });

@@ -81,4 +81,30 @@ test.describe('GraphQL: Pharmacist Profile', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(meResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-545 | Pharmacist me should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-545'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const meRes = await safeGraphQL(api, {
+        query: PHARMACIST_ME_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(meRes.httpStatus).toBe(200);
+      expect(meRes.httpOk).toBe(true);
+      expect(meRes.ok, meRes.error || 'Failed to get pharmacist profile').toBe(true);
+
+      const node = meRes.body?.data?.pharmacist?.me;
+      expect(node, 'Missing data.pharmacist.me').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.username).toBe('string');
+      expect.soft(typeof node?.admin).toBe('boolean');
+      expect.soft(typeof node?.psePharmacist).toBe('boolean');
+    }
+  );
 });

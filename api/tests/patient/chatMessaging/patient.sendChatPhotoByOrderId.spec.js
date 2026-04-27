@@ -90,4 +90,35 @@ test.describe('GraphQL: Patient Send Chat Photo By Order Id', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(sendChatPhotoInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-490 | Send chat photo by order id should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-490'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const chatInput = buildChatPhotoInput();
+      const sendChatPhotoRes = await safeGraphQL(api, {
+        query: SEND_CHAT_PHOTO_BY_ORDER_ID_MUTATION,
+        variables: { orderId: CHAT_ORDER_ID, chat: chatInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(sendChatPhotoRes.httpStatus).toBe(200);
+      expect(sendChatPhotoRes.httpOk).toBe(true);
+      expect(sendChatPhotoRes.ok, sendChatPhotoRes.error || 'Send chat photo by order id endpoint failed').toBe(true);
+
+      const node = sendChatPhotoRes.body?.data?.patient?.chat?.sendOrderMessage;
+      expect(node, 'Missing data.patient.chat.sendOrderMessage').toBeTruthy();
+      if (node?.message !== null) {
+        expect.soft(typeof node?.message).toBe('string');
+      }
+      expect.soft(typeof node?.photo).toBe('string');
+      expect.soft(node?.photo).toBe(CHAT_PHOTO_NAME);
+      expect.soft(typeof node?.createdAt).toBe('string');
+    }
+  );
 });

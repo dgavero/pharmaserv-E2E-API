@@ -85,4 +85,45 @@ test.describe('GraphQL: Admin Get Paged Orders', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getPagedOrdersInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-458 | Get paged orders should satisfy page and item schema',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-458'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getPagedOrdersRes = await safeGraphQL(api, {
+        query: GET_PAGED_ORDERS_QUERY,
+        variables: {
+          filter: {
+            pageSize: 10,
+            page: 1,
+            startDate: '2020-01-01',
+            endDate: '2030-12-31',
+            ascending: false,
+          },
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(getPagedOrdersRes.httpStatus).toBe(200);
+      expect(getPagedOrdersRes.httpOk).toBe(true);
+      expect(getPagedOrdersRes.ok, getPagedOrdersRes.error || 'Get paged orders endpoint failed').toBe(true);
+
+      const pagedNode = getPagedOrdersRes.body?.data?.administrator?.order?.pagedOrders;
+      expect(pagedNode, 'Missing data.administrator.order.pagedOrders').toBeTruthy();
+      expect.soft(typeof pagedNode?.page?.totalSize).toBe('number');
+      expect.soft(pagedNode.page.totalSize).toBeGreaterThanOrEqual(0);
+      expect(Array.isArray(pagedNode.items), 'Expected pagedOrders.items to be an array').toBe(true);
+
+      for (const item of pagedNode.items) {
+        expect.soft(typeof item?.id === 'string' || typeof item?.id === 'number').toBe(true);
+        expect.soft(item?.status === null || typeof item?.status === 'string').toBe(true);
+        expect.soft(typeof item?.patient === 'object').toBe(true);
+      }
+    }
+  );
 });

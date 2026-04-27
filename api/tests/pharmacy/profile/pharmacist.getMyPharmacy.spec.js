@@ -66,4 +66,28 @@ test.describe('GraphQL: Get My Pharmacy', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(myPharmacyResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-548 | Get my pharmacy should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-548'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const myPharmacyRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_MY_PHARMACY_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(myPharmacyRes.httpStatus).toBe(200);
+      expect(myPharmacyRes.httpOk).toBe(true);
+      expect(myPharmacyRes.ok, myPharmacyRes.error || 'Failed to get pharmacist pharmacy').toBe(true);
+
+      const node = myPharmacyRes.body?.data?.pharmacy?.myPharmacy;
+      expect(node, 'Missing data.pharmacy.myPharmacy').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.name).toBe('string');
+    }
+  );
 });

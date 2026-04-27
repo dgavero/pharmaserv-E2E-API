@@ -84,4 +84,33 @@ test.describe('GraphQL: Patient Get Order', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getOrderResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-499 | Get order should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-499'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getOrderRes = await safeGraphQL(api, {
+        query: GET_ORDER_QUERY,
+        variables: { orderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderRes.httpStatus).toBe(200);
+      expect(getOrderRes.httpOk).toBe(true);
+      expect(getOrderRes.ok, getOrderRes.error || 'Get Order request failed').toBe(true);
+
+      const node = getOrderRes.body?.data?.patient?.order;
+      expect(node, 'Missing data.patient.order').toBeTruthy();
+      expect.soft(typeof node?.patient?.id).toBe('string');
+      expect.soft(typeof node?.patient?.firstName).toBe('string');
+      expect.soft(typeof node?.patient?.lastName).toBe('string');
+      expect.soft(Array.isArray(node?.legs)).toBe(true);
+      expect.soft(typeof node?.status).toBe('string');
+    }
+  );
 });

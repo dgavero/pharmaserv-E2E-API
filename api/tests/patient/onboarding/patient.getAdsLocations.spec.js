@@ -69,4 +69,33 @@ test.describe('GraphQL: Patient Get Ads Locations', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-498 | Ads locations should satisfy list-item response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-498'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getAdsLocationsRes = await safeGraphQL(api, {
+        query: GET_ADS_LOCATIONS_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(getAdsLocationsRes.httpStatus).toBe(200);
+      expect(getAdsLocationsRes.httpOk).toBe(true);
+      expect(getAdsLocationsRes.ok, getAdsLocationsRes.error || 'Get ads locations failed').toBe(true);
+
+      const node = getAdsLocationsRes.body?.data?.patient?.adsLocations;
+      expect(Array.isArray(node), 'Missing or invalid data.patient.adsLocations').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.locationCode).toBe('string');
+        expect.soft(typeof node[0]?.location).toBe('string');
+        expect.soft(typeof node[0]?.address).toBe('string');
+        expect.soft(Array.isArray(node[0]?.codes)).toBe(true);
+      }
+    }
+  );
 });

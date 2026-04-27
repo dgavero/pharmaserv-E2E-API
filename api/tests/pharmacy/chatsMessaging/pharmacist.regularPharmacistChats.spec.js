@@ -198,4 +198,36 @@ test.describe('GraphQL: Regular Pharmacist Messaging', () => {
       expect(setThreadSeenRes.ok).toBe(true);
     }
   );
+
+  test(
+    'PHARMA-534 | Regular pharmacist get chat thread should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-534'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const testData = resolveTestData();
+      const getChatThreadIdRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_CHAT_THREAD_BY_ID_QUERY,
+        variables: {
+          orderId: testData.orderId,
+          type: `PATIENT_PHARMACY`,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(getChatThreadIdRes.httpStatus).toBe(200);
+      expect(getChatThreadIdRes.httpOk).toBe(true);
+      expect(getChatThreadIdRes.ok, getChatThreadIdRes.error || 'Get chat thread failed').toBe(true);
+
+      const node = getChatThreadIdRes.body?.data?.pharmacy?.chat?.thread;
+      expect(node, 'Missing data.pharmacy.chat.thread').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.partiesType).toBe('string');
+      expect.soft(typeof node?.requesterType).toBe('string');
+      expect.soft(typeof node?.supportAgentType).toBe('string');
+    }
+  );
 });

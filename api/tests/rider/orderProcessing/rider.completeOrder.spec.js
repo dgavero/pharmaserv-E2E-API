@@ -36,4 +36,30 @@ test.describe('GraphQL: Complete Order', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-557 | Complete unassigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-557'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const completeOrderRes = await safeGraphQL(api, {
+        query: COMPLETE_ORDER_QUERY,
+        variables: { orderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(completeOrderRes.ok, completeOrderRes.error || 'Complete Order is expected to fail').toBe(false);
+      if (completeOrderRes.httpOk) {
+        const { message } = getGQLError(completeOrderRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(completeOrderRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

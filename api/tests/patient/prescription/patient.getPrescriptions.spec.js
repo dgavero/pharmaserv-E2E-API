@@ -8,9 +8,9 @@ const defaultPatientAccount = getPatientAccount('default');
 
 test.describe('GraphQL: Get Prescription', () => {
   test(
-    'PHARMA-181 | Should be able to Get Prescription as patient',
+    'PHARMA-512 | Should get prescriptions and satisfy response contract shape',
     {
-      tag: ['@api', '@patient', '@positive', '@pharma-181'],
+      tag: ['@api', '@patient', '@positive', '@pharma-512'],
     },
     async ({ api }) => {
       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
@@ -24,7 +24,17 @@ test.describe('GraphQL: Get Prescription', () => {
         headers: bearer(accessToken),
       });
 
+      expect(getPrescriptionRes.httpStatus).toBe(200);
+      expect(getPrescriptionRes.httpOk).toBe(true);
       expect(getPrescriptionRes.ok, getPrescriptionRes.error || 'Get prescription failed').toBe(true);
+
+      const node = getPrescriptionRes.body?.data?.patient?.prescriptions;
+      expect(Array.isArray(node), 'Expected patient.prescriptions to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.photo).toBe('string');
+        expect.soft(Array.isArray(node[0]?.prescriptionItems)).toBe(true);
+      }
     }
   );
 });

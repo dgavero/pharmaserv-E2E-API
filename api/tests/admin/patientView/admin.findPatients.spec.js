@@ -91,4 +91,39 @@ test.describe('GraphQL: Admin Find Patients', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(findPatientsInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-465 | Find patients should return expected item schema and include target patient',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-465'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const findPatientsRes = await safeGraphQL(api, {
+        query: FIND_PATIENTS_QUERY,
+        variables: { query: EXPECTED_PATIENT.firstName },
+        headers: bearer(accessToken),
+      });
+
+      expect(findPatientsRes.httpStatus).toBe(200);
+      expect(findPatientsRes.httpOk).toBe(true);
+      expect(findPatientsRes.ok, findPatientsRes.error || 'Find patients endpoint failed').toBe(true);
+
+      const node = findPatientsRes.body?.data?.administrator?.patient?.searchedPatients;
+      expect(Array.isArray(node), 'Find patients should return an array').toBe(true);
+      expect(node.length, 'Find patients should return at least one patient').toBeGreaterThan(0);
+
+      const matchedPatient = node.find(
+        (patientNode) =>
+          patientNode?.firstName === EXPECTED_PATIENT.firstName &&
+          patientNode?.lastName === EXPECTED_PATIENT.lastName
+      );
+      expect(matchedPatient, 'Expected patient was not found in searched patients').toBeTruthy();
+      expect.soft(typeof matchedPatient?.id === 'string' || typeof matchedPatient?.id === 'number').toBe(true);
+      expect.soft(typeof matchedPatient?.firstName).toBe('string');
+      expect.soft(typeof matchedPatient?.lastName).toBe('string');
+    }
+  );
 });

@@ -256,4 +256,40 @@ test.describe('GraphQL: Get Rider Detail', () => {
       expect.soft(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-477 | Rider detail should satisfy response contract shape',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-477'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const rider = await getDefaultRiderProfile(api);
+      const getRiderRes = await safeGraphQL(api, {
+        query: GET_RIDER_DETAIL_QUERY,
+        variables: {
+          by: { id: rider.id },
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(getRiderRes.httpStatus).toBe(200);
+      expect(getRiderRes.httpOk).toBe(true);
+      expect(getRiderRes.ok, getRiderRes.error || 'Get Rider Detail failed').toBe(true);
+
+      const node = getRiderRes.body?.data?.administrator?.rider?.detail;
+      expect(node, 'Missing data.administrator.rider.detail').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.uuid).toBe('string');
+      expect.soft(typeof node?.username).toBe('string');
+      expect.soft(typeof node?.email).toBe('string');
+      expect.soft(typeof node?.firstName).toBe('string');
+      expect.soft(typeof node?.lastName).toBe('string');
+      expect.soft(typeof node?.status).toBe('string');
+      expect.soft(['AVAILABLE', 'UNAVAILABLE']).toContain(node?.status);
+      expect.soft(node.id).toBe(rider.id);
+    }
+  );
 });

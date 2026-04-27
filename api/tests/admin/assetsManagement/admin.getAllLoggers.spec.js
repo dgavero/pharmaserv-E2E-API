@@ -79,4 +79,31 @@ test.describe('GraphQL: Admin Get All Loggers', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getAllLoggersInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-440 | Get all loggers should return contract-valid list items',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-440'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getAllLoggersRes = await safeGraphQL(api, {
+        query: GET_ALL_LOGGERS_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(getAllLoggersRes.httpStatus).toBe(200);
+      expect(getAllLoggersRes.httpOk).toBe(true);
+      expect(getAllLoggersRes.ok, getAllLoggersRes.error || 'Get all loggers endpoint failed').toBe(true);
+
+      const node = getAllLoggersRes.body?.data?.administrator?.asset?.allLoggers;
+      expect(Array.isArray(node), 'Expected allLoggers to be an array').toBe(true);
+      for (const loggerNode of node) {
+        expect.soft(typeof loggerNode?.loggerNumber).toBe('string');
+        expect.soft(Object.keys(loggerNode || {}).sort()).toEqual(['loggerNumber']);
+      }
+    }
+  );
 });

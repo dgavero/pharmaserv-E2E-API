@@ -331,4 +331,37 @@ test.describe('GraphQL: Patient Identification Card Management', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(removeIdentificationCardRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-523 | Identification cards should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-523'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, defaultPatientAccount);
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      await createIdentificationCardAsPatient(api, accessToken);
+      const getIdentificationCardsRes = await safeGraphQL(api, {
+        query: GET_IDENTIFICATION_CARDS_QUERY,
+        variables: { patientId: defaultPatientAccount.patientId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getIdentificationCardsRes.httpStatus).toBe(200);
+      expect(getIdentificationCardsRes.httpOk).toBe(true);
+      expect(
+        getIdentificationCardsRes.ok,
+        getIdentificationCardsRes.error || 'Get Identification Cards request failed'
+      ).toBe(true);
+
+      const node = getIdentificationCardsRes.body?.data?.patient?.identificationCards;
+      expect(Array.isArray(node), 'Expected patient.identificationCards to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.cardType).toBe('string');
+        expect.soft(typeof node[0]?.cardId).toBe('string');
+      }
+    }
+  );
 });

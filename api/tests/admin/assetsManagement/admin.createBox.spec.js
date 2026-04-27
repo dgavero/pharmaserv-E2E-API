@@ -1,7 +1,16 @@
-import { loginAsAdminAndGetTokens, NOAUTH_MESSAGE_PATTERN, NOAUTH_CLASSIFICATIONS, NOAUTH_CODES, NOAUTH_HTTP_STATUSES } from '../../../helpers/auth.js';
+import {
+  loginAsAdminAndGetTokens,
+  loginAsPatientAndGetTokens,
+  loginAsRiderAndGetTokens,
+  loginAsPharmacistAndGetTokens,
+  NOAUTH_MESSAGE_PATTERN,
+  NOAUTH_CLASSIFICATIONS,
+  NOAUTH_CODES,
+  NOAUTH_HTTP_STATUSES,
+} from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getPatientAccount, getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomLetters, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_BOX_MUTATION } from './admin.assetsManagementQueries.js';
 
@@ -90,6 +99,123 @@ test.describe('GraphQL: Admin Create Box', () => {
       expect(createBoxInvalidAuthRes.ok).toBe(false);
       expect(createBoxInvalidAuthRes.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(createBoxInvalidAuthRes.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-429 | Should fail create box when status enum is invalid',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-429'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const invalidBoxInput = {
+        ...buildBoxInput(),
+        status: 'INVALID_STATUS',
+      };
+
+      const createBoxInvalidInputRes = await safeGraphQL(api, {
+        query: CREATE_BOX_MUTATION,
+        variables: { box: invalidBoxInput },
+        headers: bearer(accessToken),
+      });
+
+      expect(createBoxInvalidInputRes.ok).toBe(false);
+      if (createBoxInvalidInputRes.httpOk) {
+        const { message, code, classification } = getGQLError(createBoxInvalidInputRes);
+        expect(message, 'Expected GraphQL validation message for invalid status').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL validation code/classification').toBeTruthy();
+      } else {
+        expect.soft(createBoxInvalidInputRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
+    'PHARMA-441 | Should reuse existing box when Idempotency-Key is reused',
+    {
+      tag: ['@api', '@admin', '@positive', '@create', '@pharma-441'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const boxInput = buildBoxInput();
+      const firstIdempotencyKey = `box-${randomAlphanumeric(16)}`;
+
+      const firstCreateRes = await safeGraphQL(api, {
+        query: CREATE_BOX_MUTATION,
+        variables: { box: boxInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(firstCreateRes.ok, firstCreateRes.error || 'First create box call failed').toBe(true);
+
+      const firstNode = firstCreateRes.body?.data?.administrator?.asset?.createBox;
+      expect(firstNode, 'Missing first create box node').toBeTruthy();
+      expect.soft(typeof firstNode.id).toBe('string');
+
+      const secondCreateSameKeyRes = await safeGraphQL(api, {
+        query: CREATE_BOX_MUTATION,
+        variables: { box: boxInput },
+        headers: { ...bearer(accessToken), 'Idempotency-Key': firstIdempotencyKey },
+      });
+      expect(secondCreateSameKeyRes.ok, secondCreateSameKeyRes.error || 'Second create box call with same key failed').toBe(
+        true
+      );
+
+      const secondSameKeyNode = secondCreateSameKeyRes.body?.data?.administrator?.asset?.createBox;
+      expect(secondSameKeyNode, 'Missing second create box node (same key)').toBeTruthy();
+      expect(secondSameKeyNode.id).toBe(firstNode.id);
+    }
+  );
+
+  test(
+    'PHARMA-445 | Should reject create box for non-admin roles',
+    {
+      tag: ['@api', '@admin', '@negative', '@create', '@pharma-445'],
+    },
+    async ({ api }) => {
+      const roleCases = [
+        {
+          role: 'patient',
+          login: () => loginAsPatientAndGetTokens(api, getPatientAccount('default')),
+        },
+        {
+          role: 'rider',
+          login: () => loginAsRiderAndGetTokens(api, getRiderAccount('default')),
+        },
+        {
+          role: 'pharmacist',
+          login: () => loginAsPharmacistAndGetTokens(api, getPharmacistAccount('reg01')),
+        },
+      ];
+
+      for (const roleCase of roleCases) {
+        const { accessToken, raw: loginRes } = await roleCase.login();
+        expect(loginRes.ok, `${roleCase.role} login failed`).toBe(true);
+
+        const createBoxRes = await safeGraphQL(api, {
+          query: CREATE_BOX_MUTATION,
+          variables: { box: buildBoxInput() },
+          headers: bearer(accessToken),
+        });
+
+        expect(createBoxRes.ok, `${roleCase.role} should not be authorized to create box`).toBe(false);
+
+        if (!createBoxRes.httpOk) {
+          expect(
+            NOAUTH_HTTP_STATUSES,
+            `${roleCase.role} expected unauthorized transport status`
+          ).toContain(createBoxRes.httpStatus);
+        } else {
+          const { message, code, classification } = getGQLError(createBoxRes);
+          expect(message, `${roleCase.role} expected GraphQL auth/permission message`).toMatch(NOAUTH_MESSAGE_PATTERN);
+          expect.soft(NOAUTH_CODES, `${roleCase.role} expected auth/permission code`).toContain(code);
+          expect.soft(NOAUTH_CLASSIFICATIONS, `${roleCase.role} expected auth classification`).toContain(classification);
+        }
+      }
     }
   );
 });

@@ -87,4 +87,49 @@ test.describe('GraphQL: Admin Get Paged Assets', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getPagedAssetsInvalidAuthRes.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-437 | Get paged assets should return valid page and item schema',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-437'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getPagedAssetsRes = await safeGraphQL(api, {
+        query: GET_PAGED_ASSETS_QUERY,
+        variables: {
+          filter: {
+            pageSize: 100,
+            page: 1,
+            startDate: '2020-01-01',
+            endDate: '2030-12-31',
+            ascending: false,
+          },
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(getPagedAssetsRes.httpStatus).toBe(200);
+      expect(getPagedAssetsRes.httpOk).toBe(true);
+      expect(getPagedAssetsRes.ok, getPagedAssetsRes.error || 'Get paged assets endpoint failed').toBe(true);
+
+      const pagedNode = getPagedAssetsRes.body?.data?.administrator?.asset?.pagedAssets;
+      expect(pagedNode, 'Missing data.administrator.asset.pagedAssets').toBeTruthy();
+
+      const pageNode = pagedNode.page;
+      expect(pageNode, 'Missing pagedAssets.page').toBeTruthy();
+      expect.soft(typeof pageNode.totalSize).toBe('number');
+      expect.soft(pageNode.totalSize).toBeGreaterThanOrEqual(0);
+
+      const itemsNode = pagedNode.items;
+      expect(Array.isArray(itemsNode), 'Expected pagedAssets.items to be an array').toBe(true);
+      for (const item of itemsNode) {
+        expect.soft(typeof item?.id === 'string' || typeof item?.id === 'number').toBe(true);
+        expect.soft(item?.type === null || typeof item?.type === 'string').toBe(true);
+        expect.soft(item?.status === null || typeof item?.status === 'string').toBe(true);
+      }
+    }
+  );
 });

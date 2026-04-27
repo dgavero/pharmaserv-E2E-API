@@ -93,4 +93,39 @@ test.describe('GraphQL: Pharmacy Find Nearest Branches', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-540 | Find nearest branches should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-540'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const findNearestBranchesRes = await safeGraphQL(api, {
+        query: FIND_NEAREST_BRANCHES_QUERY,
+        variables: { finder: finderInput() },
+        headers: bearer(accessToken),
+      });
+
+      expect(findNearestBranchesRes.httpStatus).toBe(200);
+      expect(findNearestBranchesRes.httpOk).toBe(true);
+      expect(
+        findNearestBranchesRes.ok,
+        findNearestBranchesRes.error || 'Find nearest branches request failed'
+      ).toBe(true);
+
+      const nearestBranchesNode = findNearestBranchesRes.body?.data?.pharmacy?.branch?.nearestBranches;
+      expect(Array.isArray(nearestBranchesNode), 'Expected nearestBranches to be an array').toBe(true);
+      if (nearestBranchesNode.length > 0) {
+        expect.soft(typeof nearestBranchesNode[0]?.id).toBe('string');
+        expect.soft(typeof nearestBranchesNode[0]?.pharmacyName).toBe('string');
+        expect.soft(
+          typeof nearestBranchesNode[0]?.distance === 'number' ||
+            typeof nearestBranchesNode[0]?.distance === 'string'
+        ).toBe(true);
+      }
+    }
+  );
 });

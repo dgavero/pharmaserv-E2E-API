@@ -40,4 +40,35 @@ test.describe('GraphQL: Set Delivery Proof', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-562 | Set delivery proof for unassigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-562'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const setDeliveryProofRes = await safeGraphQL(api, {
+        query: SET_DELIVERY_PROOF_QUERY,
+        variables: {
+          orderId,
+          proof: { photo },
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(setDeliveryProofRes.ok, setDeliveryProofRes.error || 'Set Delivery Proof is expected to fail').toBe(
+        false
+      );
+      if (setDeliveryProofRes.httpOk) {
+        const { message } = getGQLError(setDeliveryProofRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(setDeliveryProofRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

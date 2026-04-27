@@ -234,4 +234,33 @@ test.describe('GraphQL: Pharmacy Notifications ', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-536 | Get notifications should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-536'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const getNotificationRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_NOTIFICATIONS_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(getNotificationRes.httpStatus).toBe(200);
+      expect(getNotificationRes.httpOk).toBe(true);
+      expect(getNotificationRes.ok, getNotificationRes.error || 'Get notifications failed').toBe(true);
+
+      const notificationsNode = getNotificationRes.body?.data?.pharmacy?.branch?.notifications;
+      expect(Array.isArray(notificationsNode), 'Expected notifications to be an array').toBe(true);
+      if (notificationsNode.length > 0) {
+        expect.soft(typeof notificationsNode[0]?.id).toBe('string');
+        expect.soft(typeof notificationsNode[0]?.type).toBe('string');
+        expect.soft(typeof notificationsNode[0]?.title).toBe('string');
+        expect.soft(typeof notificationsNode[0]?.seen).toBe('boolean');
+      }
+    }
+  );
 });

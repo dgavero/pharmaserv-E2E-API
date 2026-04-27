@@ -138,6 +138,7 @@ Details: [secrets/README.md](./secrets/README.md)
   - [docs/architecture.md](./docs/architecture.md)
   - [docs/test-layer-map.md](./docs/test-layer-map.md)
   - [docs/coding-standards.md](./docs/coding-standards.md)
+  - [docs/api-validation-checklist.md](./docs/api-validation-checklist.md)
   - [docs/change-workflow.md](./docs/change-workflow.md)
   - [docs/risk-checklist.md](./docs/risk-checklist.md)
 

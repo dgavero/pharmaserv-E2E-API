@@ -144,4 +144,37 @@ test.describe('GraphQL: Update My Branch as Pharmacist', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-550 | Update my branch should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-550'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const branchUpdateRes = await safeGraphQL(api, {
+        query: PHARMACIST_UPDATE_MY_BRANCH_QUERY,
+        variables: {
+          branch: buildBranchUpdate(),
+        },
+        headers: bearer(accessToken),
+      });
+      expect(branchUpdateRes.httpStatus).toBe(200);
+      expect(branchUpdateRes.httpOk).toBe(true);
+      expect(branchUpdateRes.ok, branchUpdateRes.error || 'Failed to update pharmacist branch').toBe(true);
+
+      const updatedBranch = branchUpdateRes.body?.data?.pharmacy?.branch?.update;
+      expect(updatedBranch, 'Missing data.pharmacy.branch.update').toBeTruthy();
+      expect.soft(typeof updatedBranch?.id).toBe('string');
+      expect.soft(typeof updatedBranch?.name).toBe('string');
+      expect.soft(
+        typeof updatedBranch?.lat === 'number' || typeof updatedBranch?.lat === 'string'
+      ).toBe(true);
+      expect.soft(
+        typeof updatedBranch?.lng === 'number' || typeof updatedBranch?.lng === 'string'
+      ).toBe(true);
+    }
+  );
 });

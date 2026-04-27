@@ -165,4 +165,34 @@ test.describe('GraphQL: Patient Default Address', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-519 | Get default address should satisfy response contract shape',
+    {
+      tag: ['@api', '@patient', '@positive', '@pharma-519'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const getDefaultAddressRes = await safeGraphQL(api, {
+        query: GET_DEFAULT_ADDRESS_QUERY,
+        variables: { patientId: defaultPatientAccount.patientId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getDefaultAddressRes.httpStatus).toBe(200);
+      expect(getDefaultAddressRes.httpOk).toBe(true);
+      expect(getDefaultAddressRes.ok, getDefaultAddressRes.error || 'Get default address failed').toBe(true);
+
+      const node = getDefaultAddressRes.body?.data?.patient?.defaultAddress;
+      if (node) {
+        expect.soft(typeof node?.id).toBe('string');
+        expect.soft(typeof node?.addressName).toBe('string');
+        expect.soft(typeof node?.address).toBe('string');
+        expect.soft(typeof node?.lat).toBe('number');
+        expect.soft(typeof node?.lng).toBe('number');
+      }
+    }
+  );
 });

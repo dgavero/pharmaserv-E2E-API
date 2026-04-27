@@ -49,4 +49,33 @@ test.describe('GraphQL: Pharmacy Get Order By ID', () => {
       expect(getOrderByIdRes.ok, getOrderByIdRes.error || 'Get order by ID is expected to fail on order:1').toBe(false);
     }
   );
+
+  test(
+    'PHARMA-542 | Get order by id should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-542'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const getOrderByIdRes = await safeGraphQL(api, {
+        query: GET_ORDER_BY_ID_QUERY,
+        variables: {
+          orderId,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderByIdRes.httpStatus).toBe(200);
+      expect(getOrderByIdRes.httpOk).toBe(true);
+      expect(getOrderByIdRes.ok, getOrderByIdRes.error || 'Get order by ID failed').toBe(true);
+
+      const node = getOrderByIdRes.body?.data?.pharmacy?.branch?.order;
+      expect(node, 'Missing data.pharmacy.branch.order').toBeTruthy();
+      expect.soft(typeof node?.status).toBe('string');
+      expect.soft(node?.patient).toBeTruthy();
+      expect.soft(Array.isArray(node?.legs)).toBe(true);
+    }
+  );
 });

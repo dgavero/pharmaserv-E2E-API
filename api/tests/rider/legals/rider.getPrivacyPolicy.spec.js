@@ -21,4 +21,28 @@ test.describe('GraphQL: Get Rider Privacy Policy', () => {
       ).toBe(true);
     }
   );
+
+  test(
+    'PHARMA-554 | Rider privacy policy should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-554'],
+    },
+    async ({ api, noAuth }) => {
+      const getPrivacyPolicyRes = await safeGraphQL(api, {
+        query: GET_RIDER_PRIVACY_POLICY_QUERY,
+        headers: noAuth,
+      });
+
+      expect(getPrivacyPolicyRes.httpStatus).toBe(200);
+      expect(getPrivacyPolicyRes.httpOk).toBe(true);
+      expect(getPrivacyPolicyRes.ok, getPrivacyPolicyRes.error || 'Get Rider Privacy Policy request failed').toBe(
+        true
+      );
+
+      const node = getPrivacyPolicyRes.body?.data?.rider?.legals?.privacyPolicy;
+      expect(node, 'Missing data.rider.legals.privacyPolicy').toBeTruthy();
+      expect.soft(typeof node?.title).toBe('string');
+      expect.soft(typeof node?.content).toBe('string');
+    }
+  );
 });

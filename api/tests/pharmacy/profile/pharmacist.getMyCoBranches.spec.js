@@ -74,4 +74,32 @@ test.describe('GraphQL: Get My Co-Branches as Pharmacist', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(myCoBranchesResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-547 | Get my co-branches should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-547'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const myCoBranchesRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_MY_CO_BRANCHES_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(myCoBranchesRes.httpStatus).toBe(200);
+      expect(myCoBranchesRes.httpOk).toBe(true);
+      expect(myCoBranchesRes.ok, myCoBranchesRes.error || 'Failed to get pharmacist co-branches').toBe(true);
+
+      const nodes = myCoBranchesRes.body?.data?.pharmacy?.branches;
+      expect(Array.isArray(nodes), 'Expected data.pharmacy.branches to be an array').toBe(true);
+      if (nodes.length > 0) {
+        expect.soft(typeof nodes[0]?.id).toBe('string');
+        expect.soft(typeof nodes[0]?.pharmacyName).toBe('string');
+        expect.soft(typeof nodes[0]?.name).toBe('string');
+        expect.soft(typeof nodes[0]?.status).toBe('string');
+      }
+    }
+  );
 });

@@ -70,4 +70,30 @@ test.describe('GraphQL: Get My Branch', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(myBranchResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-546 | Get my branch should satisfy response contract shape',
+    {
+      tag: ['@api', '@pharmacist', '@positive', '@pharma-546'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const myBranchRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_MY_BRANCH_QUERY,
+        headers: bearer(accessToken),
+      });
+      expect(myBranchRes.httpStatus).toBe(200);
+      expect(myBranchRes.httpOk).toBe(true);
+      expect(myBranchRes.ok, myBranchRes.error || 'Failed to get pharmacist branch').toBe(true);
+
+      const node = myBranchRes.body?.data?.pharmacy?.branch?.myBranch;
+      expect(node, 'Missing data.pharmacy.branch.myBranch').toBeTruthy();
+      expect.soft(typeof node?.id).toBe('string');
+      expect.soft(typeof node?.code).toBe('string');
+      expect.soft(typeof node?.name).toBe('string');
+      expect.soft(typeof node?.status).toBe('string');
+    }
+  );
 });

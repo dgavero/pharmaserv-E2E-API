@@ -46,4 +46,38 @@ test.describe('GraphQL: Get Current Order', () => {
       expect(NOAUTH_CLASSIFICATIONS).toContain(classification);
     }
   );
+
+  test(
+    'PHARMA-559 | Get current order without assigned order should satisfy error response contract',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-559'],
+    },
+    async ({ api }) => {
+      const testEnv = String(process.env.TEST_ENV || 'DEV')
+        .trim()
+        .toUpperCase();
+      const noOrderRider = noOrderRiderByEnv[testEnv];
+      expect(noOrderRider, `Unsupported TEST_ENV=${testEnv}. Expected DEV, QA, or PROD.`).toBeTruthy();
+
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, {
+        username: noOrderRider.username,
+        password: noOrderRider.password,
+      });
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getCurrentOrderRes = await safeGraphQL(api, {
+        query: GET_CURRENT_ORDER_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(getCurrentOrderRes.ok, getCurrentOrderRes.error || 'Get Current Order is expected to fail').toBe(false);
+      if (getCurrentOrderRes.httpOk) {
+        const { message } = getGQLError(getCurrentOrderRes);
+        expect(typeof message).toBe('string');
+        expect.soft(message.length > 0).toBe(true);
+      } else {
+        expect(getCurrentOrderRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

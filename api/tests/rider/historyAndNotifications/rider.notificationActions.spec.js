@@ -372,4 +372,32 @@ test.describe('GraphQL: Rider Notification Actions', () => {
       }
     }
   );
+
+  test(
+    'PHARMA-553 | Rider notifications should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-553'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getNotificationsRes = await safeGraphQL(api, {
+        query: GET_NOTIFICATIONS_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(getNotificationsRes.httpStatus).toBe(200);
+      expect(getNotificationsRes.httpOk).toBe(true);
+      expect(getNotificationsRes.ok, getNotificationsRes.error || 'Get Notifications request failed').toBe(true);
+
+      const node = getNotificationsRes.body?.data?.rider?.notifications;
+      expect(Array.isArray(node), 'Expected data.rider.notifications to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.type).toBe('string');
+        expect.soft(typeof node[0]?.title).toBe('string');
+      }
+    }
+  );
 });

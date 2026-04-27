@@ -77,4 +77,31 @@ test.describe('GraphQL: Rider Get Order History', () => {
       expect(NOAUTH_HTTP_STATUSES).toContain(getOrderHistoryResInvalidAuth.httpStatus);
     }
   );
+
+  test(
+    'PHARMA-552 | Rider order history should satisfy response contract shape',
+    {
+      tag: ['@api', '@rider', '@positive', '@pharma-552'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getOrderHistoryRes = await safeGraphQL(api, {
+        query: GET_ORDER_HISTORY_QUERY,
+        headers: bearer(accessToken),
+      });
+
+      expect(getOrderHistoryRes.httpStatus).toBe(200);
+      expect(getOrderHistoryRes.httpOk).toBe(true);
+      expect(getOrderHistoryRes.ok, getOrderHistoryRes.error || 'Get Order History request failed').toBe(true);
+
+      const node = getOrderHistoryRes.body?.data?.rider?.orderHistory;
+      expect(Array.isArray(node), 'Expected data.rider.orderHistory to be an array').toBe(true);
+      if (node.length > 0) {
+        expect.soft(typeof node[0]?.id).toBe('string');
+        expect.soft(typeof node[0]?.status).toBe('string');
+      }
+    }
+  );
 });

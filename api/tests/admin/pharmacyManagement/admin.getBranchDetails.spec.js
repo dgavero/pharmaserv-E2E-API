@@ -113,4 +113,38 @@ test.describe('GraphQL: Admin Get Paged Branches', () => {
       expect(getPagedBranchesInvalidBearerRes.httpStatus).toBe(401);
     }
   );
+
+  test(
+    'PHARMA-471 | Paged branches should satisfy page and item schema',
+    {
+      tag: ['@api', '@admin', '@positive', '@pharma-471'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: adminLoginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
+
+      const getPagedBranchesRes = await safeGraphQL(api, {
+        query: GET_PAGED_BRANCHES_QUERY,
+        variables: buildPagedBranchesVariables(),
+        headers: bearer(accessToken),
+      });
+
+      expect(getPagedBranchesRes.httpStatus).toBe(200);
+      expect(getPagedBranchesRes.httpOk).toBe(true);
+      expect(getPagedBranchesRes.ok, getPagedBranchesRes.error || 'administrator.branch.pagedBranches failed').toBe(true);
+
+      const pagedBranchesNode = getPagedBranchesRes.body?.data?.administrator?.branch?.pagedBranches;
+      expect(pagedBranchesNode, 'Missing data.administrator.branch.pagedBranches').toBeTruthy();
+      expect.soft(typeof pagedBranchesNode?.page?.totalSize).toBe('number');
+      expect.soft(pagedBranchesNode.page.totalSize).toBeGreaterThanOrEqual(0);
+
+      const items = pagedBranchesNode?.items ?? [];
+      expect(Array.isArray(items), 'Expected pagedBranches.items to be an array').toBe(true);
+      expect(items.length, 'Expected at least 1 branch item').toBeGreaterThan(0);
+      for (const item of items) {
+        expect.soft(typeof item?.id).toBe('string');
+        expect.soft(typeof item?.name).toBe('string');
+      }
+    }
+  );
 });

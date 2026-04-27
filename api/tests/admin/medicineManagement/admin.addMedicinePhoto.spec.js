@@ -1,5 +1,8 @@
 import {
   loginAsAdminAndGetTokens,
+  loginAsPatientAndGetTokens,
+  loginAsRiderAndGetTokens,
+  loginAsPharmacistAndGetTokens,
   NOAUTH_MESSAGE_PATTERN,
   NOAUTH_CLASSIFICATIONS,
   NOAUTH_CODES,
@@ -7,7 +10,7 @@ import {
 } from '../../../helpers/auth.js';
 import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
-import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
+import { getAdminCredentials, getPatientAccount, getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { ADD_MEDICINE_PHOTO_MUTATION } from './admin.medicineManagementQueries.js';
 import {
   createMedicineAsAdmin,
@@ -121,6 +124,70 @@ test.describe('GraphQL: Admin Add Medicine Photo', () => {
       expect(addMedicinePhotoInvalidAuthRes.ok).toBe(false);
       expect(addMedicinePhotoInvalidAuthRes.httpOk).toBe(false);
       expect(NOAUTH_HTTP_STATUSES).toContain(addMedicinePhotoInvalidAuthRes.httpStatus);
+    }
+  );
+
+  test(
+    'PHARMA-454 | Should reject add medicine photo for non-admin roles',
+    {
+      tag: ['@api', '@admin', '@negative', '@update', '@pharma-454'],
+    },
+    async ({ api }) => {
+      const { accessToken: adminAccessToken, raw: adminLoginRes } = await loginAsAdminAndGetTokens(
+        api,
+        getAdminCredentials('default')
+      );
+      expect(adminLoginRes.ok, adminLoginRes.error || 'Admin login failed').toBe(true);
+
+      const { medicineNode } = await createMedicineAsAdmin(api, { adminAccessToken });
+      const { medicineUploadUrl, medicineBlobName } = await getMedicineUploadUrlAsAdmin(api, {
+        adminAccessToken,
+      });
+      await uploadImageToSignedUrl(api, { uploadUrl: medicineUploadUrl, imagePath: WOOSH_IMAGE_PATH });
+
+      const roleCases = [
+        {
+          role: 'patient',
+          login: () => loginAsPatientAndGetTokens(api, getPatientAccount('default')),
+        },
+        {
+          role: 'rider',
+          login: () => loginAsRiderAndGetTokens(api, getRiderAccount('default')),
+        },
+        {
+          role: 'pharmacist',
+          login: () => loginAsPharmacistAndGetTokens(api, getPharmacistAccount('reg01')),
+        },
+      ];
+
+      for (const roleCase of roleCases) {
+        const { accessToken, raw: loginRes } = await roleCase.login();
+        expect(loginRes.ok, `${roleCase.role} login failed`).toBe(true);
+
+        const addMedicinePhotoRes = await safeGraphQL(api, {
+          query: ADD_MEDICINE_PHOTO_MUTATION,
+          variables: {
+            photo: {
+              medicineId: Number(medicineNode.id),
+              photo: medicineBlobName,
+            },
+          },
+          headers: bearer(accessToken),
+        });
+
+        expect(addMedicinePhotoRes.ok, `${roleCase.role} should not be authorized to add medicine photo`).toBe(false);
+        if (!addMedicinePhotoRes.httpOk) {
+          expect(
+            NOAUTH_HTTP_STATUSES,
+            `${roleCase.role} expected unauthorized transport status`
+          ).toContain(addMedicinePhotoRes.httpStatus);
+        } else {
+          const { message, code, classification } = getGQLError(addMedicinePhotoRes);
+          expect(message, `${roleCase.role} expected GraphQL auth/permission message`).toMatch(NOAUTH_MESSAGE_PATTERN);
+          expect.soft(NOAUTH_CODES, `${roleCase.role} expected auth/permission code`).toContain(code);
+          expect.soft(NOAUTH_CLASSIFICATIONS, `${roleCase.role} expected auth classification`).toContain(classification);
+        }
+      }
     }
   );
 });
