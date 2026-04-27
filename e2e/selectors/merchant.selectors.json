@@ -93,9 +93,12 @@
     "DeclineResultModal": "//div[@role='dialog' and @data-state='open'][.//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'order declined')]]",
     "DeclineResultModalCloseXButton": "(//div[@role='dialog' and @data-state='open'][.//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'order declined')]]//*[@data-slot='dialog-close'])[1]",
     "CancelledStatusReasonContainsTemplate": "//main//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'cancelled') and contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'{reason}')]",
+    "ChatBoxContainer": "//*[.//textarea[@placeholder='Reply...']]",
     "ChatMessageInput": "//textarea[@placeholder='Reply...']",
     "ChatSendButton": "//textarea[@placeholder='Reply...']/following-sibling::button[@type='submit'][1]",
-    "ChatBubbleByMessageTemplate": "//main//*[normalize-space()='{message}']"
+    "ChatBubbleByMessageTemplate": "//main//*[normalize-space()='{message}']",
+    "ChatImageByBlobNameTemplate": "(//*[.//textarea[@placeholder='Reply...']]//img[contains(@src,'{blobName}')])[1]",
+    "ChatImageInChatBox": "(//*[.//textarea[@placeholder='Reply...']]//img)[1]"
   },
   "Common": {
     "SuccessToast": "//*[@role='alert' or contains(@class,'toast')][contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'success') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'updated') or contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'sent')]"

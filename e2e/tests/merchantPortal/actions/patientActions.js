@@ -3,6 +3,7 @@ import { Timeouts } from '../../../Timeouts.js';
 import { markFailed } from '../../../helpers/testFailure.js';
 import { safeGraphQL, bearer } from '../../../../api/helpers/graphqlUtils.js';
 import { extractApiFailureSnippet } from '../../../../api/helpers/apiReporting.js';
+import path from 'node:path';
 import { getPatientAccount, getPatientCredentials } from '../../../../api/helpers/roleCredentials.js';
 import {
   PATIENT_ACCEPT_QUOTE_QUERY,
@@ -18,6 +19,7 @@ import {
   submitOrderAsPatient,
   getPaymentQRCodeAsPatient,
   getBlobTokenAsPatient,
+  getAttachmentUploadUrlAsPatient,
   getProofOfPaymentUploadUrlAsPatient,
   payOrderAsPatient,
   payOrderAsPatientForPickupOrder,
@@ -377,5 +379,45 @@ export async function sendThreadMessageAsPatientForHybrid(api, { patientAccessTo
     expect(sendThreadMessageNode?.message, 'Missing message from sendThreadMessage response').toBe(normalizedMessage);
   } catch (error) {
     failAction('sendThreadMessageAsPatientForHybrid', error);
+  }
+}
+
+export async function sendThreadImageAsPatientForHybrid(api, { patientAccessToken, threadId, imagePath }) {
+  try {
+    const normalizedImagePath = String(imagePath || '').trim();
+    if (!normalizedImagePath) {
+      markFailed('sendThreadImageAsPatientForHybrid requires a non-empty imagePath');
+    }
+
+    const ext = path.extname(normalizedImagePath).replace('.', '') || 'png';
+    const { attachmentUploadUrl, attachmentBlobName } = await getAttachmentUploadUrlAsPatient(api, {
+      patientAccessToken,
+      ext,
+    });
+    console.log(`[E2E-21 chat image] Uploaded chat photo blobName: ${attachmentBlobName}`);
+    await uploadImageToSignedUrl(api, {
+      uploadUrl: attachmentUploadUrl,
+      imagePath: normalizedImagePath,
+    });
+
+    const sendThreadImageRes = await safeGraphQL(api, {
+      query: PATIENT_SEND_CHAT_MESSAGE_BY_THREAD_ID_MUTATION,
+      variables: {
+        threadId,
+        chat: {
+          sender: 'PATIENT',
+          photo: attachmentBlobName,
+        },
+      },
+      headers: bearer(patientAccessToken),
+    });
+    expect(sendThreadImageRes.ok, sendThreadImageRes.error || 'Patient send thread image failed').toBe(true);
+
+    const sendThreadImageNode = sendThreadImageRes.body?.data?.patient?.chat?.sendThreadMessage;
+    expect(sendThreadImageNode?.photo, 'Missing photo from sendThreadMessage response').toBe(attachmentBlobName);
+
+    return { photoBlobName: attachmentBlobName };
+  } catch (error) {
+    failAction('sendThreadImageAsPatientForHybrid', error);
   }
 }

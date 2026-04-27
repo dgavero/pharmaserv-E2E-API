@@ -13,6 +13,7 @@ import {
   getOrderMessagesAsPatientForHybrid,
   payOrderAsPatientWithProof,
   rateRiderAsPatientForHybrid,
+  sendThreadImageAsPatientForHybrid,
   sendThreadMessageAsPatientForHybrid,
 } from './actions/patientActions.js';
 import {
@@ -309,7 +310,7 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
   );
 
   test(
-    'E2E-21 | FindMyMeds Chat With User',
+    'E2E-21 | FindMyMeds Chat With User (User uploads an image)',
     {
       tag: [
         '@ui',
@@ -323,12 +324,14 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
         '@chat',
       ],
       // Flow summary: patient creates FindMyMeds order with one medicine item -> merchant accepts order and sends chat message in UI ->
-      // patient verifies merchant message by orderId via API -> patient replies by threadId via API ->
-      // merchant verifies patient message in UI -> merchant cancels order in UI -> verifies Declined/Cancelled tab.
+      // patient verifies merchant message by orderId via API -> patient replies by threadId via API (text message only) ->
+      // patient replies by threadId via API (image upload) -> merchant verifies patient text message in UI ->
+      // merchant verifies patient image appears in chat UI -> merchant cancels order in UI -> verifies Declined/Cancelled tab.
     },
     async ({ page, api }) => {
       const merchant = createMerchantPortalContext(page, { accountKey: 'e2e-pse01' });
       const declineReason = 'cancelled for automated test E2E-21';
+      const patientReplyImagePath = path.resolve('upload/api-images/woosh.jpeg');
       const singleMedicineId = buildBasePrescriptionItems()[0]?.medicineId;
       expect(singleMedicineId, 'Missing default FindMyMeds base medicineId for E2E-21').toBeTruthy();
 
@@ -381,9 +384,17 @@ test.describe('Merchant Portal | FindMyMeds Full Flow', () => {
         threadId,
         message: patientReplyMessage,
       });
+      const { photoBlobName: patientReplyPhotoBlobName } = await sendThreadImageAsPatientForHybrid(api, {
+        patientAccessToken,
+        threadId,
+        imagePath: patientReplyImagePath,
+      });
 
       // UI (merchant): verify patient message appears in chat panel.
       await merchant.orderDetailsPage.verifyChatMessageVisible(patientReplyMessage, {
+        timeout: Timeouts.standard,
+      });
+      await merchant.orderDetailsPage.verifyChatImageVisibleByBlobName(patientReplyPhotoBlobName, {
         timeout: Timeouts.standard,
       });
 

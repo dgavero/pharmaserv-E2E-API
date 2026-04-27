@@ -80,6 +80,8 @@ export default class MerchantOrderDetailsPage {
       chatMessageInput: getSelector(this.sel, 'OrderDetails.ChatMessageInput'),
       chatSendButton: getSelector(this.sel, 'OrderDetails.ChatSendButton'),
       chatBubbleByMessageTemplate: getSelector(this.sel, 'OrderDetails.ChatBubbleByMessageTemplate'),
+      chatImageByBlobNameTemplate: getSelector(this.sel, 'OrderDetails.ChatImageByBlobNameTemplate'),
+      chatImageInChatBox: getSelector(this.sel, 'OrderDetails.ChatImageInChatBox'),
     };
   }
 
@@ -1001,6 +1003,34 @@ export default class MerchantOrderDetailsPage {
         .toBe(true);
     } catch {
       markFailed(`Expected chat bubble message was not visible: "${normalizedMessage}"`);
+    }
+  }
+
+  async verifyChatImageVisibleByBlobName(photoBlobName, { timeout = Timeouts.standard } = {}) {
+    // Verifies an image is visible inside the chatbox; logs blob name for easier trace/debug correlation.
+    const normalizedPhotoBlobName = String(photoBlobName || '').trim();
+    if (!normalizedPhotoBlobName) {
+      markFailed('verifyChatImageVisibleByBlobName requires a non-empty photoBlobName');
+    }
+    console.log(`[E2E-21 chat image] Verifying chat image visibility for blobName: ${normalizedPhotoBlobName}`);
+
+    try {
+      await expect
+        .poll(
+          async () =>
+            this.page
+              .locator(this.s.chatImageInChatBox)
+              .first()
+              .isVisible()
+              .catch(() => false),
+          {
+            timeout,
+            intervals: [300],
+          }
+        )
+        .toBe(true);
+    } catch {
+      markFailed(`Expected chat image was not visible in chatbox for photo blob: "${normalizedPhotoBlobName}"`);
     }
   }
 
