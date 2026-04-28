@@ -139,11 +139,6 @@ run_safe() {
     failed=1
   fi
 
-  if [[ "${failed}" -ne 0 ]]; then
-    log "✗ SAFE MODE finished with failures"
-    exit 1
-  fi
-
   log "▶ Merging SAFE batch blob reports into a single HTML report"
   mapfile -t blob_zips < <(find .blob-report -type f -name '*.zip' | sort)
   if [[ "${#blob_zips[@]}" -eq 0 ]]; then
@@ -167,6 +162,11 @@ run_safe() {
     rm -rf .playwright-report
     mv playwright-report .playwright-report
     log "✓ Merged SAFE report ready at .playwright-report"
+  fi
+
+  if [[ "${failed}" -ne 0 ]]; then
+    log "✗ SAFE MODE finished with failures"
+    exit 1
   fi
 
   log "✓ SAFE MODE completed"

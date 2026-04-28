@@ -20,22 +20,6 @@ function sanitizePublishLogs(text) {
     .replace(/(github_pat_[a-z0-9_]+)/gi, '***');
 }
 
-function walkDir(rootDir) {
-  const out = [];
-  if (!fs.existsSync(rootDir)) return out;
-  const stack = [rootDir];
-  while (stack.length) {
-    const cur = stack.pop();
-    const entries = fs.readdirSync(cur, { withFileTypes: true });
-    for (const entry of entries) {
-      const full = path.join(cur, entry.name);
-      if (entry.isDirectory()) stack.push(full);
-      else out.push(full);
-    }
-  }
-  return out;
-}
-
 class DiscordReporter {
   constructor() {
     this.statePath = path.resolve('.discord-cumulative.json');
@@ -75,37 +59,6 @@ class DiscordReporter {
       failedCaseIds: Array.from(this.failedCaseIds),
     };
     fs.writeFileSync(this.statePath, JSON.stringify(snapshot, null, 2));
-  }
-
-  mergeSafeBatchBlobReports() {
-    if (!this.reuseRun || this.batchCount <= 1) return true;
-    const blobRoot = path.resolve('.blob-report');
-    const zipFiles = walkDir(blobRoot).filter((file) => file.endsWith('.zip'));
-    if (zipFiles.length === 0) return false;
-
-    const mergeInputDir = path.resolve('.blob-report', '__merge-input');
-    fs.rmSync(mergeInputDir, { recursive: true, force: true });
-    fs.mkdirSync(mergeInputDir, { recursive: true });
-
-    for (const [idx, zipPath] of zipFiles.entries()) {
-      const dest = path.join(mergeInputDir, `${String(idx + 1).padStart(4, '0')}-${path.basename(zipPath)}`);
-      fs.copyFileSync(zipPath, dest);
-    }
-
-    const res = spawnSync(
-      'npx',
-      ['playwright', 'merge-reports', '--reporter', 'html', mergeInputDir],
-      { encoding: 'utf-8' }
-    );
-    if (res.status !== 0) {
-      const logs = sanitizePublishLogs((res.stdout || '') + (res.stderr || ''));
-      console.error(
-        `[DiscordReporter] merge-reports failed (status=${res.status}, signal=${res.signal || 'none'})`
-      );
-      if (logs.trim()) console.error('[DiscordReporter] merge logs:\n' + logs.trim());
-      return false;
-    }
-    return true;
   }
 
   /**
@@ -183,9 +136,6 @@ class DiscordReporter {
       await shutdownBot();
       return;
     }
-
-    // Merge safe-batch blob outputs into one final HTML report before publish.
-    this.mergeSafeBatchBlobReports();
 
     // At test suite end:
     // - Auto-publishes Playwright HTML report to GitHub Pages (unless disabled via REPORT_PUBLISH=0)
