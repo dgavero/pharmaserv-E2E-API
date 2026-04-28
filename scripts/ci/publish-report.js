@@ -2,6 +2,7 @@
 const ghpages = require('gh-pages');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { spawnSync } = require('node:child_process');
 
 // === CONFIG ===
@@ -24,14 +25,7 @@ function parseRunFolderTimestampMs(folderName) {
   const match = /^run-(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})$/.exec(folderName);
   if (!match) return null;
   const [, year, month, day, hour, minute, second] = match;
-  return Date.UTC(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-    Number(hour),
-    Number(minute),
-    Number(second)
-  );
+  return Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
 }
 
 function pruneOldReports() {
@@ -52,31 +46,40 @@ function pruneOldReports() {
 }
 
 function hydrateExistingReports() {
-  // Pull existing gh-pages reports into local REPORTS_DIR so publishing keeps history.
-  const fetch = spawnSync('git', ['fetch', '--depth=1', 'origin', 'gh-pages'], { encoding: 'utf-8' });
-  if (fetch.status !== 0) {
-    const logs = ((fetch.stdout || '') + (fetch.stderr || '')).trim();
-    console.warn('⚠️ Skipped history hydration: unable to fetch origin/gh-pages');
-    if (logs) console.warn(logs);
-    return;
-  }
+  const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || process.env.GH_PAGES_TOKEN;
+  const cloneUrl = token ? `https://x-access-token:${token}@github.com/${REPO}.git` : `https://github.com/${REPO}.git`;
 
-  const archive = spawnSync('git', ['archive', '--format=tar', 'FETCH_HEAD', 'reports']);
-  if (archive.status !== 0 || !archive.stdout || archive.stdout.length === 0) {
-    console.log('ℹ️ No existing reports found on gh-pages; starting fresh');
-    return;
-  }
+  // We intentionally clone gh-pages instead of reading local .git history.
+  // In CI this script runs inside Docker, and .dockerignore excludes .git.
+  // Cloning gh-pages gives us the previously published /reports content so
+  // each new publish can preserve recent runs instead of replacing them.
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-reports-'));
+  try {
+    // Shallow clone keeps network/storage overhead small.
+    const clone = spawnSync(
+      'git',
+      ['clone', '--depth=1', '--single-branch', '--branch', 'gh-pages', cloneUrl, tmpRoot],
+      { encoding: 'utf-8' }
+    );
+    if (clone.status !== 0) {
+      console.warn('⚠️ Skipped history hydration: unable to clone gh-pages branch');
+      return false;
+    }
 
-  const extract = spawnSync('tar', ['-xf', '-'], {
-    cwd: process.cwd(),
-    input: archive.stdout,
-    encoding: 'utf-8',
-  });
-  if (extract.status !== 0) {
-    const logs = ((extract.stdout || '') + (extract.stderr || '')).trim();
-    throw new Error(`Unable to extract archived reports from gh-pages${logs ? `: ${logs}` : ''}`);
+    const srcReports = path.join(tmpRoot, 'reports');
+    if (!fs.existsSync(srcReports)) {
+      console.log('ℹ️ No existing reports found on gh-pages; starting fresh');
+      return true;
+    }
+
+    for (const entry of fs.readdirSync(srcReports)) {
+      fs.cpSync(path.join(srcReports, entry), path.join(REPORTS_DIR, entry), { recursive: true });
+    }
+    console.log('📥 Hydrated existing reports from gh-pages');
+    return true;
+  } finally {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
-  console.log('📥 Hydrated existing reports from gh-pages');
 }
 
 function walkDir(rootDir) {
@@ -115,13 +118,17 @@ function escapeHtml(input) {
     .replace(/'/g, '&#39;');
 }
 
-function buildPublishOptions(folderName) {
+function buildPublishOptions(folderName, keepRemoteOnFailure = false) {
   const options = {
     branch: 'gh-pages',
     dest: 'reports', // put contents under /reports on the branch
     message: `publish: ${folderName}`,
     dotfiles: true,
-    add: false, // overwrite the 'reports' folder each time (we already manage retention)
+    // Normal path: add=false (replace remote /reports with curated local folder,
+    // which includes hydrated history + current run + retention pruning).
+    // Fallback path: add=true when hydration failed, to avoid deleting remote
+    // reports due to missing baseline history in local workspace.
+    add: keepRemoteOnFailure,
   };
 
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || process.env.GH_PAGES_TOKEN;
@@ -200,7 +207,9 @@ function prepareTraceArtifacts(destDir, folderName) {
   try {
     // 1) Ensure reports dir
     if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR);
-    hydrateExistingReports();
+    // Load current gh-pages reports into local folder first.
+    // This is required for retention to work across CI runs.
+    const hydrationOk = hydrateExistingReports();
 
     // 2) Copy the latest PW report into a timestamped subfolder
     const folderName = timestampFolderName();
@@ -220,7 +229,8 @@ function prepareTraceArtifacts(destDir, folderName) {
     // 5) Publish the local REPORTS_DIR, but place it under 'reports' on gh-pages
     ghpages.publish(
       REPORTS_DIR,
-      buildPublishOptions(folderName),
+      // If hydration failed, publish additively to protect existing reports.
+      buildPublishOptions(folderName, !hydrationOk),
       (err) => {
         if (err) {
           console.error('❌ Report publish failed:', err);
