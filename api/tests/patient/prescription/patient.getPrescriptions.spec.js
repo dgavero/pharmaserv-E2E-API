@@ -13,6 +13,8 @@ test.describe('GraphQL: Get Prescription', () => {
       tag: ['@api', '@patient', '@positive', '@pharma-512'],
     },
     async ({ api }) => {
+      test.skip(true, 'To activate once feature is implemented in UI');
+
       const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
       expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
 
@@ -23,6 +25,8 @@ test.describe('GraphQL: Get Prescription', () => {
         },
         headers: bearer(accessToken),
       });
+
+      console.log('Get Prescription Response:', getPrescriptionRes);
 
       expect(getPrescriptionRes.httpStatus).toBe(200);
       expect(getPrescriptionRes.httpOk).toBe(true);
