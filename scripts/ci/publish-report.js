@@ -2,12 +2,13 @@
 const ghpages = require('gh-pages');
 const path = require('path');
 const fs = require('fs');
+const { spawnSync } = require('node:child_process');
 
 // === CONFIG ===
 const REPORTS_DIR = path.resolve('reports'); // local folder that accumulates all runs
 const SOURCE_DIR = path.resolve('.playwright-report'); // Playwright output
 const TEST_RESULTS_DIR = path.resolve('test-results'); // Playwright test artifacts (trace.zip on failures)
-const KEEP_DAYS = 15; // retention window
+const KEEP_DAYS = 10; // retention window
 const REPO = 'dgavero/pharmaserv-E2E-API';
 const BASE_URL = `https://${REPO.split('/')[0]}.github.io/${REPO.split('/')[1]}/reports`;
 const TRACE_VIEWER_BASE = 'https://trace.playwright.dev/?trace=';
@@ -19,17 +20,63 @@ function timestampFolderName() {
   return `run-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 }
 
+function parseRunFolderTimestampMs(folderName) {
+  const match = /^run-(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})$/.exec(folderName);
+  if (!match) return null;
+  const [, year, month, day, hour, minute, second] = match;
+  return Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second)
+  );
+}
+
 function pruneOldReports() {
   if (!fs.existsSync(REPORTS_DIR)) return;
   const cutoff = Date.now() - KEEP_DAYS * 24 * 60 * 60 * 1000;
   for (const entry of fs.readdirSync(REPORTS_DIR)) {
     const full = path.join(REPORTS_DIR, entry);
     const stat = fs.statSync(full);
-    if (stat.isDirectory() && stat.mtimeMs < cutoff) {
+    if (!stat.isDirectory()) continue;
+
+    const runTs = parseRunFolderTimestampMs(entry);
+    const ageBasis = runTs ?? stat.mtimeMs;
+    if (ageBasis < cutoff) {
       console.log(`🧹 Pruning old report: ${entry}`);
       fs.rmSync(full, { recursive: true, force: true });
     }
   }
+}
+
+function hydrateExistingReports() {
+  // Pull existing gh-pages reports into local REPORTS_DIR so publishing keeps history.
+  const fetch = spawnSync('git', ['fetch', '--depth=1', 'origin', 'gh-pages'], { encoding: 'utf-8' });
+  if (fetch.status !== 0) {
+    const logs = ((fetch.stdout || '') + (fetch.stderr || '')).trim();
+    console.warn('⚠️ Skipped history hydration: unable to fetch origin/gh-pages');
+    if (logs) console.warn(logs);
+    return;
+  }
+
+  const archive = spawnSync('git', ['archive', '--format=tar', 'FETCH_HEAD', 'reports']);
+  if (archive.status !== 0 || !archive.stdout || archive.stdout.length === 0) {
+    console.log('ℹ️ No existing reports found on gh-pages; starting fresh');
+    return;
+  }
+
+  const extract = spawnSync('tar', ['-xf', '-'], {
+    cwd: process.cwd(),
+    input: archive.stdout,
+    encoding: 'utf-8',
+  });
+  if (extract.status !== 0) {
+    const logs = ((extract.stdout || '') + (extract.stderr || '')).trim();
+    throw new Error(`Unable to extract archived reports from gh-pages${logs ? `: ${logs}` : ''}`);
+  }
+  console.log('📥 Hydrated existing reports from gh-pages');
 }
 
 function walkDir(rootDir) {
@@ -153,6 +200,7 @@ function prepareTraceArtifacts(destDir, folderName) {
   try {
     // 1) Ensure reports dir
     if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR);
+    hydrateExistingReports();
 
     // 2) Copy the latest PW report into a timestamped subfolder
     const folderName = timestampFolderName();
