@@ -144,6 +144,16 @@ run_safe() {
     exit 1
   fi
 
+  log "▶ Merging SAFE batch blob reports into a single HTML report"
+  rm -rf playwright-report
+  if ! npx playwright merge-reports --reporter html .blob-report; then
+    log "✗ Failed to merge blob reports from .blob-report"
+    exit 1
+  fi
+  rm -rf .playwright-report
+  mv playwright-report .playwright-report
+  log "✓ Merged SAFE report ready at .playwright-report"
+
   log "✓ SAFE MODE completed"
 }
 
