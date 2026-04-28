@@ -238,6 +238,32 @@ test.describe('GraphQL: Rider Notification Actions', () => {
   );
 
   test(
+    'PHARMA-592 | Should NOT mark notification as SEEN when required notificationId variable is missing',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-592'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const seenNotificationMissingVariableRes = await safeGraphQL(api, {
+        query: SEEN_NOTIFICATION_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(seenNotificationMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (seenNotificationMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(seenNotificationMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing notificationId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(seenNotificationMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
     'PHARMA-327 | Should be able to mark all notifications as SEEN',
     {
       tag: ['@api', '@rider', '@positive', '@pharma-327'],

@@ -156,6 +156,32 @@ test.describe('GraphQL: Admin Rider Documents', () => {
   );
 
   test(
+    'PHARMA-578 | Should NOT get rider document when required type variable is missing',
+    {
+      tag: ['@api', '@admin', '@negative', '@pharma-578'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsAdminAndGetTokens(api, getAdminCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Admin login failed').toBe(true);
+
+      const getRiderDocumentMissingTypeRes = await safeGraphQL(api, {
+        query: GET_RIDER_DOCUMENT_QUERY,
+        variables: { riderId },
+        headers: bearer(accessToken),
+      });
+
+      expect(getRiderDocumentMissingTypeRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (getRiderDocumentMissingTypeRes.httpOk) {
+        const { message, code, classification } = getGQLError(getRiderDocumentMissingTypeRes);
+        expect(message, 'Expected GraphQL validation message for missing document type').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(getRiderDocumentMissingTypeRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
+  test(
     'PHARMA-481 | Rider documents should satisfy response contract shape',
     {
       tag: ['@api', '@admin', '@positive', '@pharma-481'],

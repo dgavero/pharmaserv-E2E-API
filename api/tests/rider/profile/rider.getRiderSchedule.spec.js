@@ -120,4 +120,30 @@ test.describe('GraphQL: Rider Get Schedule', () => {
       expect.soft(typeof node?.endTime).toBe('string');
     }
   );
+
+  test(
+    'PHARMA-593 | Should NOT get rider schedule when required date variable is missing',
+    {
+      tag: ['@api', '@rider', '@negative', '@pharma-593'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsRiderAndGetTokens(api, getRiderCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Rider login failed').toBe(true);
+
+      const getRiderScheduleMissingVariableRes = await safeGraphQL(api, {
+        query: RIDER_GET_SCHEDULE_QUERY,
+        variables: {},
+        headers: bearer(accessToken),
+      });
+
+      expect(getRiderScheduleMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (getRiderScheduleMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(getRiderScheduleMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing date').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(getRiderScheduleMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

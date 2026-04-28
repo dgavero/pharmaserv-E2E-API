@@ -84,4 +84,27 @@ test.describe('GraphQL: Patient Request Signup OTP', () => {
       expect.soft(node?.phoneNumber).toBe(phoneNumber);
     }
   );
+
+  test(
+    'PHARMA-579 | Should NOT request signup OTP when required phoneNumber variable is missing',
+    {
+      tag: ['@api', '@patient', '@negative', '@pharma-579'],
+    },
+    async ({ api, noAuth }) => {
+      const requestSignupOTPMissingVariableRes = await safeGraphQL(api, {
+        query: REQUEST_SIGNUP_OTP_QUERY,
+        variables: {},
+        headers: noAuth,
+      });
+
+      expect(requestSignupOTPMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (requestSignupOTPMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(requestSignupOTPMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing phoneNumber').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(requestSignupOTPMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
 });

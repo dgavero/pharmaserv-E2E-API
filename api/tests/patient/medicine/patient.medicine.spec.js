@@ -91,5 +91,33 @@ test.describe('GraphQL: Medicine Favorites', () => {
     }
   );
 
+  test(
+    'PHARMA-583 | Should NOT add favorite medicine when required medicineId variable is missing',
+    {
+      tag: ['@api', '@patient', '@negative', '@pharma-583'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPatientAndGetTokens(api, getPatientCredentials('default'));
+      expect(loginRes.ok, loginRes.error || 'Patient login failed').toBe(true);
+
+      const addFavoriteMedicineMissingVariableRes = await safeGraphQL(api, {
+        query: ADD_FAVORITE_MEDICINE_QUERY,
+        variables: {
+          patientId: defaultPatientAccount.patientId,
+        },
+        headers: bearer(accessToken),
+      });
+
+      expect(addFavoriteMedicineMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (addFavoriteMedicineMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(addFavoriteMedicineMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing medicineId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(addFavoriteMedicineMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
+    }
+  );
+
   // remove medicine to add later once api is implemented
 });

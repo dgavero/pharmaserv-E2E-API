@@ -33,7 +33,10 @@ export default class MerchantOrderDetailsPage {
       editItemTypeDropdown: getSelector(this.sel, 'OrderDetails.EditItemTypeDropdown'),
       editItemTemperatureDropdown: getSelector(this.sel, 'OrderDetails.EditItemTemperatureDropdown'),
       editItemDiscountDropdown: getSelector(this.sel, 'OrderDetails.EditItemDiscountDropdown'),
-      editItemDropdownOptionByLabelTemplate: getSelector(this.sel, 'OrderDetails.EditItemDropdownOptionByLabelTemplate'),
+      editItemDropdownOptionByLabelTemplate: getSelector(
+        this.sel,
+        'OrderDetails.EditItemDropdownOptionByLabelTemplate'
+      ),
       editItemVATExemptCheckbox: getSelector(this.sel, 'OrderDetails.EditItemVATExemptCheckbox'),
       editItemDiscountedQtyInput: getSelector(this.sel, 'OrderDetails.EditItemDiscountedQtyInput'),
       editItemQtyInput: getSelector(this.sel, 'OrderDetails.EditItemQtyInput'),
@@ -76,7 +79,10 @@ export default class MerchantOrderDetailsPage {
       declineConfirmButton: getSelector(this.sel, 'OrderDetails.DeclineConfirmButton'),
       declineResultModal: getSelector(this.sel, 'OrderDetails.DeclineResultModal'),
       declineResultModalCloseXButton: getSelector(this.sel, 'OrderDetails.DeclineResultModalCloseXButton'),
-      cancelledStatusReasonContainsTemplate: getSelector(this.sel, 'OrderDetails.CancelledStatusReasonContainsTemplate'),
+      cancelledStatusReasonContainsTemplate: getSelector(
+        this.sel,
+        'OrderDetails.CancelledStatusReasonContainsTemplate'
+      ),
       chatMessageInput: getSelector(this.sel, 'OrderDetails.ChatMessageInput'),
       chatSendButton: getSelector(this.sel, 'OrderDetails.ChatSendButton'),
       chatBubbleByMessageTemplate: getSelector(this.sel, 'OrderDetails.ChatBubbleByMessageTemplate'),
@@ -435,7 +441,10 @@ export default class MerchantOrderDetailsPage {
                   .toLowerCase();
                 if (!normalizedOptionText) continue;
                 if (normalizedOptionText.includes('add as custom')) continue;
-                if (!normalizedOptionText.includes(normalizedKeyword.toLowerCase()) && normalizedOptionText.length < 8) {
+                if (
+                  !normalizedOptionText.includes(normalizedKeyword.toLowerCase()) &&
+                  normalizedOptionText.length < 8
+                ) {
                   continue;
                 }
                 candidateIndex = index;
@@ -459,7 +468,11 @@ export default class MerchantOrderDetailsPage {
           .click()
           .catch(() => {});
         const selectedValue = await searchInput.inputValue().catch(() => normalizedKeyword);
-        return String(selectedValue || '').trim().toLowerCase() !== normalizedKeyword.toLowerCase();
+        return (
+          String(selectedValue || '')
+            .trim()
+            .toLowerCase() !== normalizedKeyword.toLowerCase()
+        );
       }
       return false;
     };
@@ -1012,7 +1025,7 @@ export default class MerchantOrderDetailsPage {
     if (!normalizedPhotoBlobName) {
       markFailed('verifyChatImageVisibleByBlobName requires a non-empty photoBlobName');
     }
-    console.log(`[E2E-21 chat image] Verifying chat image visibility for blobName: ${normalizedPhotoBlobName}`);
+    console.log(`[chat image] Verifying chat image visibility for blobName: ${normalizedPhotoBlobName}`);
 
     try {
       await expect

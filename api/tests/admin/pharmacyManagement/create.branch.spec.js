@@ -13,6 +13,7 @@ import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials, getPatientAccount, getRiderAccount, getPharmacistAccount } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
 import { CREATE_BRANCH_MUTATION } from './admin.pharmacyManagementQueries.js';
+import { getPharmacyManagementTestData } from './pharmacyManagement.testData.js';
 
 /** Helpers */
 function randomIntInclusive(min, max) {
@@ -52,9 +53,9 @@ function buildBranchVariables() {
   const openingTime = '10:00:00+08:00';
   const closingTime = '21:00:00+08:00';
 
-  // Created branch for API test will go to this pharmacy
-  const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
-  const pharmacyId = String({ DEV: 4, QA: 64, PROD: 10 }[env] ?? 4);
+  // Created branch for API test will go to this pharmacy.
+  const { createBranchPharmacyId } = getPharmacyManagementTestData();
+  const pharmacyId = String(createBranchPharmacyId);
 
   const branch = {
     name, // string

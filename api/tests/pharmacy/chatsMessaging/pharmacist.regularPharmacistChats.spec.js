@@ -1,5 +1,5 @@
 import { loginAsPharmacistAndGetTokens } from '../../../helpers/auth.js';
-import { safeGraphQL, bearer } from '../../../helpers/graphqlUtils.js';
+import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.js';
 import { test, expect } from '../../../globalConfig.api.js';
 import { getPharmacistCredentials } from '../../../helpers/roleCredentials.js';
 import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
@@ -228,6 +228,32 @@ test.describe('GraphQL: Regular Pharmacist Messaging', () => {
       expect.soft(typeof node?.partiesType).toBe('string');
       expect.soft(typeof node?.requesterType).toBe('string');
       expect.soft(typeof node?.supportAgentType).toBe('string');
+    }
+  );
+
+  test(
+    'PHARMA-591 | Should NOT get chat thread when required orderId variable is missing',
+    {
+      tag: ['@api', '@pharmacist', '@negative', '@pharma-591'],
+    },
+    async ({ api }) => {
+      const { accessToken, raw: loginRes } = await loginAsPharmacistAndGetTokens(api, getPharmacistCredentials('reg01'));
+      expect(loginRes.ok, loginRes.error || 'Pharmacist login failed').toBe(true);
+
+      const getChatThreadMissingVariableRes = await safeGraphQL(api, {
+        query: PHARMACIST_GET_CHAT_THREAD_BY_ID_QUERY,
+        variables: { type: `PATIENT_PHARMACY` },
+        headers: bearer(accessToken),
+      });
+
+      expect(getChatThreadMissingVariableRes.ok, 'Expected GraphQL variable validation failure').toBe(false);
+      if (getChatThreadMissingVariableRes.httpOk) {
+        const { message, code, classification } = getGQLError(getChatThreadMissingVariableRes);
+        expect(message, 'Expected GraphQL validation message for missing orderId').toBeTruthy();
+        expect.soft(code || classification, 'Expected GraphQL error code/classification').toBeTruthy();
+      } else {
+        expect.soft(getChatThreadMissingVariableRes.httpStatus).toBeGreaterThanOrEqual(400);
+      }
     }
   );
 });

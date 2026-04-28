@@ -3,20 +3,13 @@ import { safeGraphQL, bearer, getGQLError } from '../../../helpers/graphqlUtils.
 import { test, expect } from '../../../globalConfig.api.js';
 import { getAdminCredentials } from '../../../helpers/roleCredentials.js';
 import { GET_PAGED_BRANCHES_QUERY } from './admin.pharmacyManagementQueries.js';
+import { getPharmacyManagementTestData } from './pharmacyManagement.testData.js';
 
 function buildPagedBranchesVariables() {
-  const env = String(process.env.TEST_ENV || 'DEV').toUpperCase();
-
-  const pharmacyIdByEnv = {
-    DEV: 36,
-    QA: 59,
-    PROD: 70,
-  };
-
-  const pharmacyId = pharmacyIdByEnv[env] ?? pharmacyIdByEnv.DEV;
+  const { pagedBranchesPharmacyId } = getPharmacyManagementTestData();
 
   return {
-    pharmacyId,
+    pharmacyId: pagedBranchesPharmacyId,
     filter: {
       pageSize: 3,
       page: 1,
