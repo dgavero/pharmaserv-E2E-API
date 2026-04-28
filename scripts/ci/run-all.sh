@@ -145,14 +145,29 @@ run_safe() {
   fi
 
   log "▶ Merging SAFE batch blob reports into a single HTML report"
-  rm -rf playwright-report
-  if ! npx playwright merge-reports --reporter html .blob-report; then
-    log "✗ Failed to merge blob reports from .blob-report"
-    exit 1
+  mapfile -t blob_zips < <(find .blob-report -type f -name '*.zip' | sort)
+  if [[ "${#blob_zips[@]}" -eq 0 ]]; then
+    log "⚠ No blob zip files found under .blob-report; keeping existing .playwright-report"
+  else
+    merge_input=".blob-report/__merge-input"
+    rm -rf "${merge_input}" playwright-report
+    mkdir -p "${merge_input}"
+
+    idx=1
+    for zip_path in "${blob_zips[@]}"; do
+      printf -v target_name "%04d-%s" "${idx}" "$(basename "${zip_path}")"
+      cp "${zip_path}" "${merge_input}/${target_name}"
+      idx=$((idx + 1))
+    done
+
+    if ! npx playwright merge-reports --reporter html "${merge_input}"; then
+      log "✗ Failed to merge blob reports from ${merge_input}"
+      exit 1
+    fi
+    rm -rf .playwright-report
+    mv playwright-report .playwright-report
+    log "✓ Merged SAFE report ready at .playwright-report"
   fi
-  rm -rf .playwright-report
-  mv playwright-report .playwright-report
-  log "✓ Merged SAFE report ready at .playwright-report"
 
   log "✓ SAFE MODE completed"
 }
