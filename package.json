@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:all": "bash scripts/ci/run-all.sh safe",
-    "test:all:safe": "bash scripts/ci/run-all.sh safe",
+    "test:all": "bash scripts/ci/run-all.sh regression",
+    "test:all:regression": "bash scripts/ci/run-all.sh regression",
     "test:all:stress": "bash scripts/ci/run-all.sh stress",
     "report:publish": "node scripts/ci/publish-report.js",
     "secrets:encrypt": "node scripts/secrets/build-encrypted-files.js --all",

@@ -14,7 +14,7 @@ on:
         type: choice
         options:
           - basic
-          - safe
+          - regression
           - stress
       threads:
         description: 'Threads'
@@ -30,11 +30,6 @@ on:
           - DEV
           - QA
           - PROD
-      safe_pause_seconds:
-        description: 'Rest per test batch (seconds)'
-        required: false
-        default: '30'
-        type: string
       tags:
         description: 'Run specific TAGS (e.g. PHARMA-67)'
         required: false
@@ -63,40 +58,77 @@ concurrency:
 
 jobs:
   test-manual:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_mode != 'regression'
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
       mode: ${{ inputs.run_mode || 'basic' }}
       event_name: workflow_dispatch
       test_env: ${{ inputs.test_env || 'DEV' }}
       threads: ${{ inputs.threads || '4' }}
-      safe_pause_seconds: ${{ inputs.safe_pause_seconds || '30' }}
       run_tags: ${{ inputs.tags || '' }}
       artifact_name: playwright-report
+    secrets: inherit
+
+  regression-api:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'regression'
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: regression
+      event_name: workflow_dispatch
+      test_env: ${{ inputs.test_env || 'DEV' }}
+      threads: ${{ inputs.threads || '4' }}
+      run_tags: ${{ inputs.tags || '' }}
+      project: api
+      artifact_name: playwright-report-regression-api
+    secrets: inherit
+
+  regression-e2e:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_mode == 'regression'
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: regression
+      event_name: workflow_dispatch
+      test_env: ${{ inputs.test_env || 'DEV' }}
+      threads: ${{ inputs.threads || '4' }}
+      run_tags: ${{ inputs.tags || '' }}
+      project: e2e
+      artifact_name: playwright-report-regression-e2e
     secrets: inherit
 
   test-merge:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
-      mode: safe
+      mode: basic
       event_name: push
       test_env: DEV
       threads: '4'
-      safe_pause_seconds: '30'
       run_tags: smoke
       artifact_name: playwright-report-merge
     secrets: inherit
 
-  qa-scheduled-full:
+  qa-scheduled-api:
     if: github.event_name == 'schedule'
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
-      mode: safe
-      event_name: workflow_dispatch
+      mode: regression
+      event_name: schedule
       test_env: QA
       threads: '4'
-      safe_pause_seconds: '30'
       run_tags: ''
-      artifact_name: playwright-report-qa-scheduled
+      project: api
+      artifact_name: playwright-report-qa-scheduled-api
+    secrets: inherit
+
+  qa-scheduled-e2e:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_run-docker-tests.yml
+    with:
+      mode: regression
+      event_name: schedule
+      test_env: QA
+      threads: '4'
+      run_tags: ''
+      project: e2e
+      artifact_name: playwright-report-qa-scheduled-e2e
     secrets: inherit

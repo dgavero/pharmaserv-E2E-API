@@ -12,8 +12,8 @@ Playwright test framework for Pharmaserv with:
 - `PROJECT` selector support: `api`, `e2e`, or `e2e,api` (default runs both)
 - `TEST_ENV` routing with default `DEV`
 - Tokenized, case-insensitive `TAGS` filtering
-- Safe full runner (`api standalone` -> `api e2e` -> `ui e2e`) with pause controls
-- Smoke selection is supported in CI (manual `basic` runs in one pass; auto `push` uses safe smoke batches)
+- Regression runner for full-suite single-invocation execution
+- Smoke selection is supported in CI (`basic` runs in one pass)
 - Optional stress mode for full parallel execution
 - Incremental Discord progress reporting during CI runs
 - Rerun failed PHARMA IDs helper in summary
@@ -47,13 +47,13 @@ TEST_ENV=DEV THREADS=4 TAGS=PHARMA-160 PROJECT=api npx playwright test
 # E2E only
 TEST_ENV=DEV THREADS=4 TAGS=merchant PROJECT=e2e npx playwright test
 
-# Safe full-run orchestration (recommended for shared DEV)
+# Regression full-run orchestration
 npm run test:all
 
 # Stress full-run orchestration (single full invocation with parallel workers, high load)
 npm run test:all:stress
 
-# Safe dry-run preview (logs only, no test execution)
+# Regression dry-run preview (logs only, no test execution)
 DRY_RUN=1 npm run test:all
 ```
 
@@ -102,31 +102,32 @@ eval "$(TEST_ENV=DEV npm run -s secrets:load)"
 
 Details: [secrets/README.md](./secrets/README.md)
 
-## Safe vs Direct Run
+## Regression vs Direct Run
 
-- `npm run test:all` uses safe batch sequencing with pauses.
-- Direct `npx playwright test ...` does not use batch safety and can overload shared DEV if scope is broad.
+- `npm run test:all` runs a single full-suite invocation (`regression` mode).
+- Direct `npx playwright test ...` remains useful for targeted local runs.
 
 ## CI Behavior
 
-- `push` to `main`: runs `safe + smoke` (batched).
-- `schedule`: runs full QA safe coverage in `qa-scheduled-full`.
+- `push` to `main`: runs `basic + smoke`.
+- `schedule`: runs full QA regression coverage in parallel `api` + `e2e` jobs.
 
 ## CI Manual Run Inputs
 
 - In GitHub Actions `workflow_dispatch`, you can set:
 
-1. `run_mode` (`basic`, `safe`, `stress`)
+1. `run_mode` (`basic`, `regression`, `stress`)
 2. `threads`
 3. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
-4. `safe_pause_seconds`
-5. `tags` (`Run specific TAGS`, example: `PHARMA-180|PHARMA-181`)
+4. `tags` (`Run specific TAGS`, example: `PHARMA-180|PHARMA-181`)
 
 - Behavior:
 
 1. `stress` ignores `tags` and runs full suite in parallel.
-2. `safe` + empty `tags` runs full safe batches.
-3. `safe` + non-empty `tags` runs matching tags directly (single pass).
+2. `regression` runs one workflow with two parallel jobs:
+   - `regression-api` -> `PROJECT=api`
+   - `regression-e2e` -> `PROJECT=e2e`
+3. `regression` supports optional `tags` filtering inside each parallel job.
 4. `basic` + empty `tags` runs smoke tags.
 5. `basic` + non-empty `tags` runs matching tags directly.
 

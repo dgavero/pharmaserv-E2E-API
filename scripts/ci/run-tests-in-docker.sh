@@ -5,13 +5,13 @@ MODE="${MODE:-basic}"
 EVENT_NAME="${EVENT_NAME:-workflow_dispatch}"
 TEST_ENV="${TEST_ENV:-DEV}"
 THREADS="${THREADS:-4}"
-SAFE_PAUSE_SECONDS="${SAFE_PAUSE_SECONDS:-30}"
 RUN_TAGS="${RUN_TAGS:-}"
+PROJECT="${PROJECT:-}"
 DOCKER_IMAGE="${DOCKER_IMAGE:-pharmaserv-tests-ci}"
 ENV_FILE="${ENV_FILE:-}"
 HEADLESS="${HEADLESS:-true}"
 
-echo "Resolved selector: mode=${MODE} test_env=${TEST_ENV} threads=${THREADS} safe_pause=${SAFE_PAUSE_SECONDS} run_tags=${RUN_TAGS}"
+echo "Resolved selector: mode=${MODE} test_env=${TEST_ENV} threads=${THREADS} run_tags=${RUN_TAGS} project=${PROJECT}"
 
 rm -rf .playwright-report test-results screenshots .blob-report
 mkdir -p .playwright-report test-results screenshots .blob-report
@@ -51,7 +51,6 @@ run_container() {
 
   local -a args=("${BASE_ARGS[@]}")
   args+=(
-    -e SAFE_PAUSE_SECONDS="${SAFE_PAUSE_SECONDS}"
     -e SAFE_TAGS="${safe_tags}"
     -e TAGS="${tags}"
     -e PROJECT="${project}"
@@ -67,24 +66,10 @@ if [[ "${MODE}" == "stress" ]]; then
   echo "Running full suite in STRESS mode"
   echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} npm run test:all:stress"
   run_container "${RUN_TAGS}" "${RUN_TAGS}" "${PROJECT:-}" "${DISCORD_GREP_LABEL:-}" npm run test:all:stress
-elif [[ "${MODE}" == "safe" ]]; then
-  if [[ "${EVENT_NAME}" == "push" ]]; then
-    echo "Running SAFE mode smoke batches (push)"
-    echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} SAFE_PAUSE_SECONDS=${SAFE_PAUSE_SECONDS} SAFE_TAGS=${RUN_TAGS} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
-    run_container "${RUN_TAGS}" "${RUN_TAGS}" "${PROJECT:-}" "smoke" npm run test:all:safe
-  elif [[ "${EVENT_NAME}" == "schedule" ]]; then
-    echo "Running SAFE mode smoke batches (schedule DEV)"
-    echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} SAFE_PAUSE_SECONDS=${SAFE_PAUSE_SECONDS} SAFE_TAGS=${RUN_TAGS} DISCORD_GREP_LABEL=smoke npm run test:all:safe"
-    run_container "${RUN_TAGS}" "${RUN_TAGS}" "${PROJECT:-}" "smoke" npm run test:all:safe
-  elif [[ -n "${RUN_TAGS}" ]]; then
-    echo "Running SAFE mode with specific TAGS in a single pass"
-    echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=e2e,api npx playwright test"
-    run_container "${SAFE_TAGS:-}" "${RUN_TAGS}" "e2e,api" "${DISCORD_GREP_LABEL:-}" npx playwright test
-  else
-    echo "Running full suite in SAFE mode"
-    echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} SAFE_PAUSE_SECONDS=${SAFE_PAUSE_SECONDS} SAFE_TAGS=__ALL__ npm run test:all:safe"
-    run_container "__ALL__" "${TAGS:-}" "${PROJECT:-}" "${DISCORD_GREP_LABEL:-}" npm run test:all:safe
-  fi
+elif [[ "${MODE}" == "regression" ]]; then
+  echo "Running REGRESSION mode in a single invocation"
+  echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=${PROJECT} npx playwright test"
+  run_container "${SAFE_TAGS:-}" "${RUN_TAGS}" "${PROJECT}" "${DISCORD_GREP_LABEL:-}" npx playwright test
 else
   if [[ -n "${RUN_TAGS}" ]]; then
     echo "Running BASIC mode with specific TAGS"

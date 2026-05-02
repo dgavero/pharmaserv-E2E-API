@@ -15,11 +15,11 @@ on:
       threads:
         required: true
         type: string
-      safe_pause_seconds:
-        required: true
-        type: string
       run_tags:
         required: true
+        type: string
+      project:
+        required: false
         type: string
       artifact_name:
         required: true
@@ -100,8 +100,8 @@ jobs:
           EVENT_NAME="${{ inputs.event_name }}" \
           TEST_ENV="${{ inputs.test_env }}" \
           THREADS="${{ inputs.threads }}" \
-          SAFE_PAUSE_SECONDS="${{ inputs.safe_pause_seconds }}" \
           RUN_TAGS="${{ inputs.run_tags }}" \
+          PROJECT="${{ inputs.project }}" \
           DOCKER_IMAGE="pharmaserv-tests-ci" \
           ENV_FILE=".ci-secrets.env" \
           ./scripts/ci/run-tests-in-docker.sh
