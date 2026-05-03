@@ -17,11 +17,11 @@ TEST_ENV=DEV THREADS=4 TAGS=merchant PROJECT=e2e npx playwright test
 # Multiple projects
 TEST_ENV=DEV THREADS=8 TAGS=smoke|regression PROJECT=e2e,api npx playwright test
 
-# Safe full run (recommended)
+# Regression full run (single full-suite invocation)
 npm run test:all
 
-# Safe full run with custom pause and workers
-SAFE_PAUSE_SECONDS=30 THREADS=4 npm run test:all:safe
+# Regression full run with custom workers
+THREADS=4 npm run test:all:regression
 
 # Stress full run (single full-suite invocation)
 THREADS=4 npm run test:all:stress
@@ -37,7 +37,6 @@ DRY_RUN=1 npm run test:all
 - `THREADS`: Playwright workers count (default `4`).
 - `TAGS`: grep pattern used by the config; empty means no grep filter.
 - `PROJECT`: `api`, `e2e`, `e2e,api`; empty means both.
-- `SAFE_PAUSE_SECONDS`: pause duration between safe batches (default `30`).
 - `DRY_RUN`: when `1`, prints batch plan/commands without running tests.
 - Discord channel mapping vars:
 
@@ -89,37 +88,33 @@ API tests resolve base URL in this order:
 
 ## Batch Modes
 
-- `safe` mode (default for `npm run test:all`):
+- `regression` mode (default for `npm run test:all`):
 
-1. API standalone (`api/tests`, excluding `@workflow`)
-2. Pause (`SAFE_PAUSE_SECONDS`)
-3. API E2E (`api/tests/e2e`)
-4. Pause (`SAFE_PAUSE_SECONDS`)
-5. UI E2E (`e2e/tests`)
-6. If a batch fails, next batches still run; final exit is failed when any batch failed.
+1. Runs a single full-suite Playwright invocation.
 
 - `stress` mode (`npm run test:all:stress`):
 
-1. Runs a single full-suite Playwright invocation (no safe pauses).
+1. Runs a single full-suite Playwright invocation with higher load intent.
 
 ## CI/CD Mode Behavior
 
-- `push` to `main` runs one CI job in `safe + smoke` mode by default.
-- `schedule` runs full QA safe coverage in `qa-scheduled-full`.
+- `push` to `main` runs `test-merge` in `basic + smoke` mode by default.
+- `schedule` runs full QA regression coverage in parallel API/E2E jobs.
 - `workflow_dispatch` can choose:
 
-1. `run_mode` (`basic`, `safe`, `stress`)
+1. `run_mode` (`basic`, `regression`, `stress`)
 2. `threads`
 3. `test_env` (`DEV` default, options: `DEV`, `QA`, `PROD`)
-4. `safe_pause_seconds`
-5. `tags` (`Run specific TAGS`, e.g. `PHARMA-180|PHARMA-181`)
+4. `tags` (`Run specific TAGS`, e.g. `PHARMA-180|PHARMA-181`)
 
 - Mode behavior:
 
 1. `basic` + empty `tags` runs smoke in one pass.
 2. `basic` + non-empty `tags` runs matching tags directly in one pass.
-3. `safe` + empty `tags` runs full 3-batch safe mode.
-4. `safe` + non-empty `tags` runs matching tags directly in one pass.
+3. `regression` runs one workflow with two parallel jobs:
+   - `regression-api` (`PROJECT=api`)
+   - `regression-e2e` (`PROJECT=e2e`)
+4. `regression` supports optional `tags` filtering per job.
 5. `stress` ignores `tags` and runs full suite in one pass.
 
 ## Tag Filtering

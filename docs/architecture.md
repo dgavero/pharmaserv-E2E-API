@@ -82,17 +82,16 @@ Global setup in `globalSetup.js`:
 - cleans screenshots/report artifacts
 - initializes Discord run reporting
 
-Safe full-run orchestration outside raw Playwright:
+Regression full-run orchestration outside raw Playwright:
 
 - `scripts/ci/run-all.sh` runs:
-  - API standalone batch
-  - API workflow batch
-  - UI/hybrid batch
+  - single full-suite invocation in `regression` mode
+  - single full-suite invocation in `stress` mode
 
 CI execution is controlled by `.github/workflows/tests.yml` and switches among:
 
 - `basic`
-- `safe`
+- `regression`
 - `stress`
 
 ## API Layer
