@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
       run_mode:
@@ -108,7 +108,7 @@ jobs:
     with:
       mode: regression
       test_env: QA
-      threads: '4'
+      threads: '2'
       run_tags: ''
       project: api
       artifact_name: playwright-report-qa-scheduled-api
@@ -120,7 +120,7 @@ jobs:
     with:
       mode: regression
       test_env: QA
-      threads: '4'
+      threads: '2'
       run_tags: ''
       project: e2e
       artifact_name: playwright-report-qa-scheduled-e2e
