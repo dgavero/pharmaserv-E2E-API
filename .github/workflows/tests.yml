@@ -17,7 +17,7 @@ on:
           - regression
           - stress
       threads:
-        description: 'Threads'
+        description: 'Threads (1/2/3/4)'
         required: false
         default: '4'
         type: string
