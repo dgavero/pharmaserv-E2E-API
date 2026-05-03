@@ -98,7 +98,7 @@ API tests resolve base URL in this order:
 
 ## CI/CD Mode Behavior
 
-- `push` to `main` runs one CI job in `basic + smoke` mode by default.
+- `push` to `main` runs `test-merge` in `basic + smoke` mode by default.
 - `schedule` runs full QA regression coverage in parallel API/E2E jobs.
 - `workflow_dispatch` can choose:
 

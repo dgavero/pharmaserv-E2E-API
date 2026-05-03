@@ -6,9 +6,6 @@ on:
       mode:
         required: true
         type: string
-      event_name:
-        required: true
-        type: string
       test_env:
         required: true
         type: string
@@ -38,8 +35,6 @@ env:
   GIT_COMMITTER_NAME: github-actions[bot]
   GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
   REPORT_PUBLISH: '1'
-  TEST_ENV: 'DEV'
-  THREADS: '4'
   SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
   CI: true
 
@@ -97,7 +92,6 @@ jobs:
         shell: bash
         run: |
           MODE="${{ inputs.mode }}" \
-          EVENT_NAME="${{ inputs.event_name }}" \
           TEST_ENV="${{ inputs.test_env }}" \
           THREADS="${{ inputs.threads }}" \
           RUN_TAGS="${{ inputs.run_tags }}" \

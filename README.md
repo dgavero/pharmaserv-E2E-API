@@ -109,7 +109,7 @@ Details: [secrets/README.md](./secrets/README.md)
 
 ## CI Behavior
 
-- `push` to `main`: runs `basic + smoke`.
+- `push` to `main`: runs `test-merge` job in `basic + smoke` mode.
 - `schedule`: runs full QA regression coverage in parallel `api` + `e2e` jobs.
 
 ## CI Manual Run Inputs

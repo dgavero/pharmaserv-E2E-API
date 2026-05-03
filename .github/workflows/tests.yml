@@ -46,8 +46,6 @@ env:
   GIT_COMMITTER_NAME: github-actions[bot]
   GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
   REPORT_PUBLISH: '1'
-  TEST_ENV: 'DEV'
-  THREADS: '4'
   SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
   CI: true
 
@@ -62,7 +60,6 @@ jobs:
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
       mode: ${{ inputs.run_mode || 'basic' }}
-      event_name: workflow_dispatch
       test_env: ${{ inputs.test_env || 'DEV' }}
       threads: ${{ inputs.threads || '4' }}
       run_tags: ${{ inputs.tags || '' }}
@@ -74,7 +71,6 @@ jobs:
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
       mode: regression
-      event_name: workflow_dispatch
       test_env: ${{ inputs.test_env || 'DEV' }}
       threads: ${{ inputs.threads || '4' }}
       run_tags: ${{ inputs.tags || '' }}
@@ -87,7 +83,6 @@ jobs:
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
       mode: regression
-      event_name: workflow_dispatch
       test_env: ${{ inputs.test_env || 'DEV' }}
       threads: ${{ inputs.threads || '4' }}
       run_tags: ${{ inputs.tags || '' }}
@@ -99,8 +94,8 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
+      # Keep job name for historical continuity; behavior is basic smoke pass.
       mode: basic
-      event_name: push
       test_env: DEV
       threads: '4'
       run_tags: smoke
@@ -112,7 +107,6 @@ jobs:
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
       mode: regression
-      event_name: schedule
       test_env: QA
       threads: '4'
       run_tags: ''
@@ -125,7 +119,6 @@ jobs:
     uses: ./.github/workflows/_run-docker-tests.yml
     with:
       mode: regression
-      event_name: schedule
       test_env: QA
       threads: '4'
       run_tags: ''

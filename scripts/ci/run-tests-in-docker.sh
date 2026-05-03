@@ -2,7 +2,6 @@
 set -euo pipefail
 
 MODE="${MODE:-basic}"
-EVENT_NAME="${EVENT_NAME:-workflow_dispatch}"
 TEST_ENV="${TEST_ENV:-DEV}"
 THREADS="${THREADS:-4}"
 RUN_TAGS="${RUN_TAGS:-}"
