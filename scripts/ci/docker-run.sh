@@ -16,7 +16,6 @@ MODE="${MODE}" \
 EVENT_NAME="${EVENT_NAME:-workflow_dispatch}" \
 TEST_ENV="${TEST_ENV:-DEV}" \
 THREADS="${THREADS:-4}" \
-SAFE_PAUSE_SECONDS="${SAFE_PAUSE_SECONDS:-30}" \
 RUN_TAGS="${RUN_TAGS}" \
 DOCKER_IMAGE="${DOCKER_IMAGE:-pharmaserv-tests}" \
 ENV_FILE="${ENV_FILE:-}" \

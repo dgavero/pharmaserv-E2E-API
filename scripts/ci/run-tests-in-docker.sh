@@ -42,16 +42,14 @@ BASE_ARGS+=(
 )
 
 run_container() {
-  local safe_tags="$1"
-  local tags="$2"
-  local project="$3"
-  local discord_label="$4"
-  shift 4
+  local tags="$1"
+  local project="$2"
+  local discord_label="$3"
+  shift 3
   local -a cmd=("$@")
 
   local -a args=("${BASE_ARGS[@]}")
   args+=(
-    -e SAFE_TAGS="${safe_tags}"
     -e TAGS="${tags}"
     -e PROJECT="${project}"
     -e DISCORD_GREP_LABEL="${discord_label}"
@@ -65,19 +63,19 @@ run_container() {
 if [[ "${MODE}" == "stress" ]]; then
   echo "Running full suite in STRESS mode"
   echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} npm run test:all:stress"
-  run_container "${RUN_TAGS}" "${RUN_TAGS}" "${PROJECT:-}" "${DISCORD_GREP_LABEL:-}" npm run test:all:stress
+  run_container "${RUN_TAGS}" "${PROJECT:-}" "${DISCORD_GREP_LABEL:-}" npm run test:all:stress
 elif [[ "${MODE}" == "regression" ]]; then
   echo "Running REGRESSION mode in a single invocation"
   echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=${PROJECT} npx playwright test"
-  run_container "${SAFE_TAGS:-}" "${RUN_TAGS}" "${PROJECT}" "${DISCORD_GREP_LABEL:-}" npx playwright test
+  run_container "${RUN_TAGS}" "${PROJECT}" "${DISCORD_GREP_LABEL:-}" npx playwright test
 else
   if [[ -n "${RUN_TAGS}" ]]; then
     echo "Running BASIC mode with specific TAGS"
     echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=e2e,api npx playwright test"
-    run_container "${SAFE_TAGS:-}" "${RUN_TAGS}" "e2e,api" "${DISCORD_GREP_LABEL:-}" npx playwright test
+    run_container "${RUN_TAGS}" "e2e,api" "${DISCORD_GREP_LABEL:-}" npx playwright test
   else
     echo "Running smoke suite in BASIC mode"
     echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=smoke DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test"
-    run_container "${SAFE_TAGS:-}" "smoke" "" "smoke" npx playwright test
+    run_container "smoke" "" "smoke" npx playwright test
   fi
 fi
