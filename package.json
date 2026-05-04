@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:smoke": "cross-env TEST_ENV=DEV TAGS=smoke PROJECT= npx playwright test",
+    "test:smoke": "cross-env TEST_ENV=DEV THREADS=2 TAGS=smoke PROJECT= npx playwright test",
     "test:check": "cross-env TEST_ENV=DEV TAGS=e2e-1 PROJECT=e2e npx playwright test",
     "test:all": "node scripts/ci/run-all.cjs regression",
     "test:all:regression": "node scripts/ci/run-all.cjs regression",
