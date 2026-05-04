@@ -84,9 +84,10 @@ Global setup in `globalSetup.js`:
 
 Regression full-run orchestration outside raw Playwright:
 
-- `scripts/ci/run-all.sh` runs:
-  - single full-suite invocation in `regression` mode
-  - single full-suite invocation in `stress` mode
+- local cross-platform npm entrypoint:
+  - `scripts/ci/run-all.cjs` runs single full-suite invocation in `regression` or `stress` mode
+- Bash wrapper retained for shell-driven flows:
+  - `scripts/ci/run-all.sh` runs single full-suite invocation in `regression` or `stress` mode
 
 CI execution is controlled by `.github/workflows/tests.yml` and switches among:
 

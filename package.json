@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:all": "bash scripts/ci/run-all.sh regression",
-    "test:all:regression": "bash scripts/ci/run-all.sh regression",
-    "test:all:stress": "bash scripts/ci/run-all.sh stress",
+    "test:smoke": "cross-env TEST_ENV=DEV TAGS=smoke PROJECT= npx playwright test",
+    "test:check": "cross-env TEST_ENV=DEV TAGS=e2e-1 PROJECT=e2e npx playwright test",
+    "test:all": "node scripts/ci/run-all.cjs regression",
+    "test:all:regression": "node scripts/ci/run-all.cjs regression",
+    "test:all:stress": "node scripts/ci/run-all.cjs stress",
     "report:publish": "node scripts/ci/publish-report.js",
     "secrets:encrypt": "node scripts/secrets/build-encrypted-files.js --all",
     "secrets:load": "node scripts/secrets/load-secrets.js --shell --required"
@@ -18,6 +20,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "cross-env": "^10.1.0",
     "gh-pages": "^6.3.0",
     "prettier": "^3.6.2"
   },
