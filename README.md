@@ -57,6 +57,20 @@ npm run test:all:stress
 DRY_RUN=1 npm run test:all
 ```
 
+```powershell
+$env:TEST_ENV='DEV'; $env:THREADS='4'; $env:TAGS=''; $env:PROJECT=''; npx playwright test
+$env:DRY_RUN='1'; npm run test:all; Remove-Item Env:DRY_RUN
+```
+
+Cross-OS local Docker entrypoints:
+
+```bash
+npm run docker:build
+npm run docker:test
+npm run docker:test:regression
+npm run docker:test:stress
+```
+
 ## Environment Profiles (DEV/QA/PROD)
 
 Use profile files so test code never changes across environments:
@@ -95,6 +109,11 @@ SOPS_AGE_RECIPIENTS="age1..." npm run secrets:encrypt
 eval "$(TEST_ENV=DEV npm run -s secrets:load)"
 ```
 
+```powershell
+npm run secrets:install-tools
+Invoke-Expression "& { $(npm run -s secrets:load:powershell) }"
+```
+
 3. CI load:
 
 - Set one bootstrap secret: `SOPS_AGE_KEY` (full age private key file content).
@@ -106,6 +125,7 @@ Details: [secrets/README.md](./secrets/README.md)
 
 - `npm run test:all` runs a single full-suite invocation (`regression` mode).
 - Direct `npx playwright test ...` remains useful for targeted local runs.
+- `npm run docker:test*` runs the local Docker workflow from macOS, Linux, and Windows PowerShell.
 
 ## CI Behavior
 

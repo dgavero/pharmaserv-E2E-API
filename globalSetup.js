@@ -12,7 +12,14 @@ function cleanDir(relPath) {
     return;
   } catch (error) {
     // Mounted dirs on CI can be busy; clear contents instead of deleting mountpoint.
-    if (!error || !['EBUSY', 'EPERM'].includes(error.code)) {
+    const errorCode = error?.code;
+    const errorMessage = String(error?.message || '').toLowerCase();
+    const isMountedDirError =
+      ['EBUSY', 'EPERM', 'ENOTEMPTY'].includes(errorCode) ||
+      errorMessage.includes('device or resource busy') ||
+      errorMessage.includes('resource busy');
+
+    if (!isMountedDirError) {
       throw error;
     }
   }

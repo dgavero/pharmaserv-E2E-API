@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { resolveToolCommand } = require('./tooling.cjs');
 
 const VALID_ENVS = new Set(['DEV', 'QA', 'PROD']);
 
@@ -31,6 +32,8 @@ function parseArgs(argv) {
       args.mode = 'github';
     } else if (arg === '--shell') {
       args.mode = 'shell';
+    } else if (arg === '--powershell') {
+      args.mode = 'powershell';
     } else if (arg === '--env-file' && argv[i + 1]) {
       args.envFile = String(argv[i + 1]);
       i += 1;
@@ -50,7 +53,7 @@ function validateEnv(envName) {
 
 function decryptJson(filePath) {
   try {
-    const out = execFileSync('sops', ['--decrypt', filePath], {
+    const out = execFileSync(resolveToolCommand('sops'), ['--decrypt', filePath], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -98,6 +101,13 @@ function printShellExports(vars) {
   }
 }
 
+function printPowershellExports(vars) {
+  for (const [key, value] of Object.entries(vars)) {
+    const escaped = value.replace(/'/g, "''");
+    process.stdout.write(`$env:${key}='${escaped}'\n`);
+  }
+}
+
 function writeEnvFile(filePath, vars) {
   let chunk = '';
   for (const [key, value] of Object.entries(vars)) {
@@ -141,6 +151,11 @@ function main() {
     }
     appendGithubEnv(githubEnvPath, vars);
     process.stdout.write(`Loaded ${Object.keys(vars).length} vars to GITHUB_ENV from ${filePath}\n`);
+    return;
+  }
+
+  if (args.mode === 'powershell') {
+    printPowershellExports(vars);
     return;
   }
 

@@ -8,11 +8,18 @@ This directory stores encrypted environment bundles used by CI/runtime:
 
 ## One-time setup
 
-1. Install `age` and create a key pair (local machine):
+1. Install local crypto tools and create a key pair (local machine):
 
 ```bash
+npm run secrets:install-tools
 mkdir -p ~/.config/sops/age
-age-keygen -o ~/.config/sops/age/keys.txt
+./.tools/bin/age-keygen -o ~/.config/sops/age/keys.txt
+```
+
+```powershell
+npm run secrets:install-tools
+New-Item -ItemType Directory -Force "$HOME\.config\sops\age" | Out-Null
+& ".\.tools\bin\age-keygen.exe" -o "$HOME\.config\sops\age\keys.txt"
 ```
 
 2. Get your public recipient from the generated key file:
@@ -21,10 +28,18 @@ age-keygen -o ~/.config/sops/age/keys.txt
 grep '^# public key:' ~/.config/sops/age/keys.txt | sed 's/# public key: //'
 ```
 
+```powershell
+(Select-String -Path "$HOME\.config\sops\age\keys.txt" -Pattern '^# public key: ').Line -replace '^# public key: ', ''
+```
+
 3. Encrypt files from local `.env` + `.env.<env>`:
 
 ```bash
 SOPS_AGE_RECIPIENTS="age1..." node scripts/secrets/build-encrypted-files.js --all
+```
+
+```powershell
+$env:SOPS_AGE_RECIPIENTS='age1...'; node scripts/secrets/build-encrypted-files.js --all; Remove-Item Env:SOPS_AGE_RECIPIENTS
 ```
 
 4. Commit `secrets/*.enc.json` to git.
@@ -48,6 +63,16 @@ TEST_ENV=DEV node scripts/secrets/load-secrets.js --env DEV --github-env --requi
 eval "$(TEST_ENV=DEV node scripts/secrets/load-secrets.js --env DEV --shell --required)"
 ```
 
+```powershell
+Invoke-Expression "& { $(node scripts/secrets/load-secrets.js --env DEV --powershell --required) }"
+```
+
+To write a decrypted env file through Node CLI, pass script args after `--`:
+
+```bash
+node scripts/secrets/load-secrets.js --env DEV -- --env-file .ci-secrets.env --required
+```
+
 ## Adding a New Credential (Manual Process)
 
 Follow this exact process whenever you add or change any credential key.
@@ -68,6 +93,10 @@ npm run secrets:encrypt
 
 ```bash
 eval "$(TEST_ENV=DEV npm run -s secrets:load)"
+```
+
+```powershell
+Invoke-Expression "& { $(npm run -s secrets:load:powershell) }"
 ```
 
 4. Commit updated encrypted files (and docs/config if changed):
