@@ -4,6 +4,8 @@ Operational guide for running Playwright tests in this repo.
 
 ## Run Commands
 
+Running on macOS/Linux:
+
 ```bash
 # Default behavior: TEST_ENV falls back to DEV, runs both projects
 TEST_ENV= THREADS=4 TAGS= PROJECT= npx playwright test
@@ -28,6 +30,34 @@ THREADS=4 npm run test:all:stress
 
 # Dry-run preview (no tests executed)
 DRY_RUN=1 npm run test:all
+```
+
+Running on Windows PowerShell:
+
+```powershell
+$env:THREADS='4'; $env:TAGS=''; $env:PROJECT=''; npx playwright test
+$env:DRY_RUN='1'; npm run test:all; Remove-Item Env:DRY_RUN
+```
+
+## Local Docker Commands
+
+Running on macOS/Linux:
+
+```bash
+npm run docker:build
+npm run docker:test
+npm run docker:test:regression
+npm run docker:test:stress
+TEST_ENV=DEV TAGS=e2e-1 PROJECT=e2e ./scripts/ci/docker-run.sh
+MODE=basic TEST_ENV=DEV RUN_TAGS=e2e-1 PROJECT=e2e ./scripts/ci/run-tests-in-docker.sh
+```
+
+Running on Windows PowerShell:
+
+```powershell
+npm run docker:test
+$env:MODE='regression'; npm run docker:test; Remove-Item Env:MODE
+$env:TEST_ENV='DEV'; $env:RUN_TAGS='e2e-1'; $env:PROJECT='e2e'; npm run docker:test; Remove-Item Env:TEST_ENV; Remove-Item Env:RUN_TAGS; Remove-Item Env:PROJECT
 ```
 
 ## Environment Behavior
@@ -73,8 +103,16 @@ Update flow for credential changes:
 1. Edit `.env.dev` / `.env.qa` / `.env.prod` (and `.env` for shared values only).
 2. Rebuild encrypted files:
 
+Running on macOS/Linux:
+
 ```bash
 npm run secrets:encrypt
+```
+
+Running on Windows PowerShell:
+
+```powershell
+$env:SOPS_AGE_RECIPIENTS='age1...'; npm run secrets:encrypt; Remove-Item Env:SOPS_AGE_RECIPIENTS
 ```
 
 3. Commit updated encrypted files in `secrets/`.
@@ -171,6 +209,11 @@ Open the latest trace from local runs:
 npx playwright show-trace $(find test-results -name trace.zip | head -n 1)
 ```
 
+```powershell
+$trace = Get-ChildItem -Recurse test-results -Filter trace.zip | Select-Object -First 1 -ExpandProperty FullName
+if ($trace) { npx playwright show-trace $trace }
+```
+
 ## API Authoring Rules
 
 For API test creation/update conventions, follow:
@@ -197,3 +240,4 @@ For framework extension work, also use:
 - Switching `TEST_ENV` should not require code edits.
 - Prefer account/profile helpers over direct env-ID reads in tests.
 - Prefer delivery-specific hybrid builders over generic delivery-type orchestration in merchant hybrid specs.
+- Local helper entrypoints should be usable from native Windows PowerShell as well as macOS/Linux shells.

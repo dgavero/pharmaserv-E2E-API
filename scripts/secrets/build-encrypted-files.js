@@ -13,6 +13,7 @@ const os = require('os');
 const path = require('path');
 const dotenv = require('dotenv');
 const { execFileSync } = require('child_process');
+const { resolveToolCommand } = require('./tooling.cjs');
 
 const VALID_ENVS = new Set(['DEV', 'QA', 'PROD']);
 
@@ -70,7 +71,7 @@ function buildEnvObject(envName) {
   });
 }
 
-function encryptJsonToFile(inputObject, outputPath, recipients) {
+function encryptJsonToFile(inputObject, outputPath, filenameOverride, recipients) {
   const tempFile = path.join(
     os.tmpdir(),
     `secrets-${Date.now()}-${Math.random().toString(36).slice(2)}.json`
@@ -87,13 +88,13 @@ function encryptJsonToFile(inputObject, outputPath, recipients) {
       '--output',
       outputPath,
       '--filename-override',
-      outputPath,
+      filenameOverride,
     ];
     if (recipients) {
       args.push('--age', recipients);
     }
     args.push(tempFile);
-    execFileSync('sops', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    execFileSync(resolveToolCommand('sops'), args, { stdio: ['ignore', 'pipe', 'pipe'] });
   } catch (error) {
     const stderr = String(error.stderr || '').trim();
     throw new Error(stderr || error.message || `Failed to encrypt ${outputPath}`);
@@ -113,8 +114,9 @@ function main() {
     validateEnv(envName);
     const envLower = envName.toLowerCase();
     const outFile = path.resolve(`secrets/secrets.${envLower}.enc.json`);
+    const filenameOverride = `secrets/secrets.${envLower}.enc.json`;
     const payload = buildEnvObject(envName);
-    encryptJsonToFile(payload, outFile, recipients);
+    encryptJsonToFile(payload, outFile, filenameOverride, recipients);
     process.stdout.write(`Encrypted ${outFile} with ${Object.keys(payload).length} keys\n`);
     processed += 1;
   }
