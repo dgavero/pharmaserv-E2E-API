@@ -67,6 +67,8 @@ eval "$(TEST_ENV=DEV node scripts/secrets/load-secrets.js --env DEV --shell --re
 Invoke-Expression "& { $(node scripts/secrets/load-secrets.js --env DEV --powershell --required) }"
 ```
 
+Direct interactive terminal printing is blocked by default to avoid leaking decrypted values into console scrollback. Use command substitution as shown above, or pass `--allow-stdout-secrets` only when you intentionally need raw output.
+
 To write a decrypted env file through Node CLI, pass script args after `--`:
 
 ```bash

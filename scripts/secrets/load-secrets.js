@@ -21,6 +21,7 @@ function parseArgs(argv) {
     mode: 'shell',
     envFile: null,
     required: false,
+    allowStdoutSecrets: false,
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -39,6 +40,8 @@ function parseArgs(argv) {
       i += 1;
     } else if (arg === '--required') {
       args.required = true;
+    } else if (arg === '--allow-stdout-secrets') {
+      args.allowStdoutSecrets = true;
     }
   }
 
@@ -84,13 +87,34 @@ function normalizeFlatObject(input) {
 }
 
 function appendGithubEnv(filePath, vars) {
-  let chunk = '';
   for (const [key, value] of Object.entries(vars)) {
     process.stdout.write(`::add-mask::${value}\n`);
+  }
+
+  let chunk = '';
+  for (const [key, value] of Object.entries(vars)) {
     const marker = `__SECRETS_${key}__`;
     chunk += `${key}<<${marker}\n${value}\n${marker}\n`;
   }
   fs.appendFileSync(filePath, chunk);
+}
+
+function emitGithubMasks(vars) {
+  if (!process.env.GITHUB_ACTIONS) return;
+  for (const value of Object.values(vars)) {
+    process.stdout.write(`::add-mask::${value}\n`);
+  }
+}
+
+function assertSafeStdoutMode(args) {
+  const emitsSecretsToStdout = args.mode === 'shell' || args.mode === 'powershell';
+  if (!emitsSecretsToStdout) return;
+  if (args.allowStdoutSecrets) return;
+  if (!process.stdout.isTTY) return;
+
+  throw new Error(
+    'Refusing to print decrypted secrets to an interactive terminal. Use command substitution / Invoke-Expression, or pass --allow-stdout-secrets if you really need raw output.'
+  );
 }
 
 function printShellExports(vars) {
@@ -123,6 +147,7 @@ function writeEnvFile(filePath, vars) {
 function main() {
   const args = parseArgs(process.argv);
   validateEnv(args.env);
+  assertSafeStdoutMode(args);
 
   const envLower = args.env.toLowerCase();
   const filePath = path.resolve(`secrets/secrets.${envLower}.enc.json`);
@@ -139,6 +164,7 @@ function main() {
   const vars = normalizeFlatObject(decrypted);
 
   if (args.envFile) {
+    emitGithubMasks(vars);
     const envFilePath = path.resolve(args.envFile);
     writeEnvFile(envFilePath, vars);
     process.stdout.write(`Wrote ${Object.keys(vars).length} vars to env file ${envFilePath}\n`);

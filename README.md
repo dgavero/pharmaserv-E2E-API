@@ -37,6 +37,8 @@ npm install
 
 ## Quick Start
 
+Running on macOS/Linux:
+
 ```bash
 # Run all projects (default)
 TEST_ENV=DEV THREADS=4 TAGS= PROJECT= npx playwright test
@@ -57,18 +59,29 @@ npm run test:all:stress
 DRY_RUN=1 npm run test:all
 ```
 
+Running on Windows PowerShell:
+
 ```powershell
 $env:TEST_ENV='DEV'; $env:THREADS='4'; $env:TAGS=''; $env:PROJECT=''; npx playwright test
 $env:DRY_RUN='1'; npm run test:all; Remove-Item Env:DRY_RUN
 ```
 
-Cross-OS local Docker entrypoints:
+Running local Docker on macOS/Linux:
 
 ```bash
 npm run docker:build
 npm run docker:test
 npm run docker:test:regression
 npm run docker:test:stress
+TEST_ENV=DEV TAGS=e2e-1 PROJECT=e2e ./scripts/ci/docker-run.sh
+```
+
+Running local Docker on Windows PowerShell:
+
+```powershell
+npm run docker:build
+npm run docker:test
+$env:TEST_ENV='DEV'; $env:RUN_TAGS='e2e-1'; $env:PROJECT='e2e'; npm run docker:test; Remove-Item Env:TEST_ENV; Remove-Item Env:RUN_TAGS; Remove-Item Env:PROJECT
 ```
 
 ## Environment Profiles (DEV/QA/PROD)
@@ -99,15 +112,27 @@ Credential and environment data can be sourced from encrypted bundles in `secret
 
 1. Build encrypted files from local profile files:
 
+Running on macOS/Linux:
+
 ```bash
 SOPS_AGE_RECIPIENTS="age1..." npm run secrets:encrypt
 ```
 
+Running on Windows PowerShell:
+
+```powershell
+$env:SOPS_AGE_RECIPIENTS='age1...'; npm run secrets:encrypt; Remove-Item Env:SOPS_AGE_RECIPIENTS
+```
+
 2. Runtime load (local):
+
+Running on macOS/Linux:
 
 ```bash
 eval "$(TEST_ENV=DEV npm run -s secrets:load)"
 ```
+
+Running on Windows PowerShell:
 
 ```powershell
 npm run secrets:install-tools
