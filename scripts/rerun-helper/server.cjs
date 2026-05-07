@@ -57,7 +57,6 @@ function validatePayload(payload) {
     ref: String(payload.ref),
     branch: String(payload.branch || payload.ref),
     repository: String(payload.repository),
-    project: String(payload.project || ''),
     workflowId: String(payload.workflowId),
     runMode: String(payload.runMode || 'basic'),
   };
@@ -85,7 +84,6 @@ async function triggerWorkflowDispatch(payload) {
           threads: payload.threads,
           test_env: payload.testEnv,
           tags: payload.tags,
-          project: payload.project,
         },
       }),
     }
@@ -214,7 +212,6 @@ function renderPage(payload, errorMessage = '') {
         <dt>Repository</dt><dd>${escapeHtml(payload.repository)}</dd>
         <dt>Workflow</dt><dd>${escapeHtml(payload.workflowId)}</dd>
         <dt>Run Mode</dt><dd>${escapeHtml(payload.runMode)}</dd>
-        <dt>PROJECT</dt><dd>${escapeHtml(payload.project || '(default)')}</dd>
         <dt>TEST_ENV</dt><dd>${escapeHtml(payload.testEnv)}</dd>
         <dt>THREADS</dt><dd>${escapeHtml(payload.threads)}</dd>
         <dt>TAGS</dt><dd>${escapeHtml(payload.tags)}</dd>
@@ -279,7 +276,6 @@ const server = http.createServer(async (req, res) => {
       } catch (error) {
         const fallbackPayload = {
           repository: '',
-          project: '',
           workflowId: 'tests.yml',
           runMode: 'basic',
           testEnv: '',

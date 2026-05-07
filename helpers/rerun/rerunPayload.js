@@ -66,7 +66,6 @@ export function buildRerunPayload({
   threads = process.env.THREADS || '4',
   ref = detectGitRef(),
   repository = detectGitRepository(),
-  project = process.env.PROJECT || process.env.PROJECTS || '',
   workflowId = DEFAULT_WORKFLOW_ID,
   runMode = DEFAULT_RUN_MODE,
 } = {}) {
@@ -82,7 +81,6 @@ export function buildRerunPayload({
     ref,
     branch,
     repository,
-    project: String(project || ''),
     workflowId,
     runMode,
   };
