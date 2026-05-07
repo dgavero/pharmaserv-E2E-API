@@ -35,6 +35,7 @@ env:
   GIT_COMMITTER_NAME: github-actions[bot]
   GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
   REPORT_PUBLISH: '1'
+  RERUN_HELPER_BASE_URL: https://pharmaserv-rerun-helper.onrender.com/
   SOPS_AGE_KEY: ${{ secrets.SOPS_AGE_KEY }}
   CI: true
 

@@ -54,6 +54,8 @@ function buildBaseArgs() {
     '-e',
     'GITHUB_TOKEN',
     '-e',
+    'RERUN_HELPER_BASE_URL',
+    '-e',
     'GIT_AUTHOR_NAME',
     '-e',
     'GIT_AUTHOR_EMAIL',
