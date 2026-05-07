@@ -54,6 +54,14 @@ function buildBaseArgs() {
     '-e',
     'GITHUB_TOKEN',
     '-e',
+    'GITHUB_REF',
+    '-e',
+    'GITHUB_REPOSITORY',
+    '-e',
+    'RERUN_HELPER_BASE_URL',
+    '-e',
+    'RERUN_HELPER_SIGNING_SECRET',
+    '-e',
     'GIT_AUTHOR_NAME',
     '-e',
     'GIT_AUTHOR_EMAIL',
@@ -124,11 +132,12 @@ function main() {
   }
 
   if (RUN_TAGS) {
+    const selectedProject = PROJECT || 'e2e,api';
     process.stdout.write(`Running BASIC mode with specific TAGS\n`);
     process.stdout.write(
-      `CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=e2e,api npx playwright test\n`
+      `CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=${selectedProject} npx playwright test\n`
     );
-    process.exit(runContainer(RUN_TAGS, 'e2e,api', DISCORD_GREP_LABEL, ['npx', 'playwright', 'test']));
+    process.exit(runContainer(RUN_TAGS, selectedProject, DISCORD_GREP_LABEL, ['npx', 'playwright', 'test']));
   }
 
   process.stdout.write(`Running smoke suite in BASIC mode\n`);

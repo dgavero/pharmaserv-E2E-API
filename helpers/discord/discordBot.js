@@ -8,6 +8,7 @@ import { Client, GatewayIntentBits } from 'discord.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { REST, Routes } from 'discord.js';
+import { buildRerunHelperUrl, buildRerunPayload } from '../rerun/rerunPayload.js';
 
 // --- Discord Tokens & Config ---
 const TOKEN = process.env.DISCORD_BOT_TOKEN; // Used by Gateway client
@@ -148,6 +149,18 @@ Tests completed ✅ 100% [${total}/${total}]
       const testEnv = process.env.TEST_ENV || 'DEV';
       const threads = process.env.THREADS || '4';
       const grepCmd = `TEST_ENV=${testEnv} THREADS=${threads} TAGS="${grep}" npx playwright test`;
+      const rerunPayload = buildRerunPayload({
+        failedCaseIds: uniqueIds,
+        testEnv,
+        threads,
+      });
+      const rerunHelperUrl = buildRerunHelperUrl({ payload: rerunPayload });
+
+      if (rerunHelperUrl) {
+        content += `\n\n🔁 Rerun the failures in GitHub Actions [here](${rerunHelperUrl})`;
+      } else {
+        content += `\n\n❌ Rerun the failures in GitHub Actions is not available.`;
+      }
 
       content += `\n\n🛠️ Rerun the failures manually:
 \`${grepCmd}\``;
