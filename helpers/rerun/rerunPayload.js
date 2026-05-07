@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const DEFAULT_WORKFLOW_ID = 'tests.yml';
 const DEFAULT_RUN_MODE = 'basic';
-const DEFAULT_TTL_MS = 60 * 60 * 1000;
+const DEFAULT_TTL_MS = 12 * 60 * 60 * 1000;
 
 function normalizeFailedCaseIds(failedCaseIds = []) {
   return Array.from(
