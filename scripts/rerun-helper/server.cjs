@@ -108,7 +108,7 @@ function renderPage(payload, errorMessage = '') {
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>GitHub Actions Rerun Helper</title>
+    <title>PharmaServ Rerun Helper</title>
     <style>
       :root {
         color-scheme: light;
@@ -205,7 +205,7 @@ function renderPage(payload, errorMessage = '') {
   </head>
   <body>
     <main>
-      <h1>GitHub Actions Rerun Helper</h1>
+      <h1>PharmaServ Rerun Helper</h1>
       <p>Review the preserved execution context, then trigger the existing workflow_dispatch target without editing the current Discord report format.</p>
       ${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
       <dl>
