@@ -157,7 +157,9 @@ Tests completed ✅ 100% [${total}/${total}]
       const rerunHelperUrl = buildRerunHelperUrl({ payload: rerunPayload });
 
       if (rerunHelperUrl) {
-        content += `\n\n🔁 Rerun the failures on GitHub Actions [here](${rerunHelperUrl})`;
+        content += `\n\n🔁 Rerun the failures in GitHub Actions [here](${rerunHelperUrl})`;
+      } else {
+        content += `\n\n❌ Rerun the failures in GitHub Actions is not available.`;
       }
 
       content += `\n\n🛠️ Rerun the failures manually:
