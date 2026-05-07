@@ -60,6 +60,8 @@ function buildBaseArgs() {
     '-e',
     'RERUN_HELPER_BASE_URL',
     '-e',
+    'RERUN_HELPER_SIGNING_SECRET',
+    '-e',
     'GIT_AUTHOR_NAME',
     '-e',
     'GIT_AUTHOR_EMAIL',

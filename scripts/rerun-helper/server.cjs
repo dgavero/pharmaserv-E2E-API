@@ -2,11 +2,13 @@
 'use strict';
 
 const http = require('node:http');
+const crypto = require('node:crypto');
 
 const PORT = parseInt(process.env.RERUN_HELPER_PORT || '8787', 10);
 const HOST = process.env.RERUN_HELPER_HOST || '0.0.0.0';
 const GITHUB_API_BASE = process.env.RERUN_HELPER_GITHUB_API_BASE || 'https://api.github.com';
 const GITHUB_TOKEN = process.env.RERUN_HELPER_GITHUB_TOKEN || '';
+const SIGNING_SECRET = process.env.RERUN_HELPER_SIGNING_SECRET || '';
 
 function sendJson(res, statusCode, payload) {
   const body = JSON.stringify(payload, null, 2);
@@ -43,12 +45,61 @@ function decodePayload(rawPayload) {
   return JSON.parse(json);
 }
 
+function buildSignablePayload(payload) {
+  return {
+    testEnv: String(payload.testEnv || '').toUpperCase(),
+    threads: String(payload.threads || ''),
+    tags: String(payload.tags || ''),
+    ref: String(payload.ref || ''),
+    branch: String(payload.branch || ''),
+    repository: String(payload.repository || ''),
+    workflowId: String(payload.workflowId || ''),
+    runMode: String(payload.runMode || ''),
+    issuedAt: String(payload.issuedAt || ''),
+    expiresAt: String(payload.expiresAt || ''),
+  };
+}
+
+function computePayloadSignature(payload, secret) {
+  const signablePayload = buildSignablePayload(payload);
+  return crypto.createHmac('sha256', secret).update(JSON.stringify(signablePayload)).digest('hex');
+}
+
+function verifyPayloadSignature(payload) {
+  const providedSignature = String(payload?.signature || '').trim();
+  if (!SIGNING_SECRET || !providedSignature) {
+    throw new Error('Missing or invalid rerun payload signature');
+  }
+
+  const expectedSignature = computePayloadSignature(payload, SIGNING_SECRET);
+  const providedBuffer = Buffer.from(providedSignature, 'utf-8');
+  const expectedBuffer = Buffer.from(expectedSignature, 'utf-8');
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    throw new Error('Invalid rerun payload signature');
+  }
+
+  if (!crypto.timingSafeEqual(providedBuffer, expectedBuffer)) {
+    throw new Error('Invalid rerun payload signature');
+  }
+}
+
 function validatePayload(payload) {
-  const requiredKeys = ['testEnv', 'threads', 'tags', 'ref', 'repository', 'workflowId'];
+  const requiredKeys = ['testEnv', 'threads', 'tags', 'ref', 'repository', 'workflowId', 'issuedAt', 'expiresAt'];
   const missingKeys = requiredKeys.filter((key) => !String(payload?.[key] || '').trim());
   if (missingKeys.length) {
     throw new Error(`Missing required payload field(s): ${missingKeys.join(', ')}`);
   }
+
+  const expiresAtMs = Date.parse(String(payload.expiresAt));
+  if (Number.isNaN(expiresAtMs)) {
+    throw new Error('Invalid rerun payload expiry');
+  }
+  if (Date.now() > expiresAtMs) {
+    throw new Error('Rerun link has expired');
+  }
+
+  verifyPayloadSignature(payload);
 
   return {
     testEnv: String(payload.testEnv).toUpperCase(),
@@ -59,6 +110,9 @@ function validatePayload(payload) {
     repository: String(payload.repository),
     workflowId: String(payload.workflowId),
     runMode: String(payload.runMode || 'basic'),
+    issuedAt: String(payload.issuedAt),
+    expiresAt: String(payload.expiresAt),
+    signature: String(payload.signature || ''),
   };
 }
 
@@ -282,6 +336,9 @@ const server = http.createServer(async (req, res) => {
           threads: '',
           tags: '',
           ref: '',
+          issuedAt: '',
+          expiresAt: '',
+          signature: '',
         };
         return sendHtml(res, 400, renderPage(fallbackPayload, error.message));
       }

@@ -1,7 +1,9 @@
 import { execSync } from 'node:child_process';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const DEFAULT_WORKFLOW_ID = 'tests.yml';
 const DEFAULT_RUN_MODE = 'basic';
+const DEFAULT_TTL_MS = 60 * 60 * 1000;
 
 function normalizeFailedCaseIds(failedCaseIds = []) {
   return Array.from(
@@ -60,6 +62,26 @@ function detectGitRepository() {
   return null;
 }
 
+function buildSignablePayload(payload) {
+  return {
+    testEnv: String(payload.testEnv || '').toUpperCase(),
+    threads: String(payload.threads || ''),
+    tags: String(payload.tags || ''),
+    ref: String(payload.ref || ''),
+    branch: String(payload.branch || ''),
+    repository: String(payload.repository || ''),
+    workflowId: String(payload.workflowId || ''),
+    runMode: String(payload.runMode || ''),
+    issuedAt: String(payload.issuedAt || ''),
+    expiresAt: String(payload.expiresAt || ''),
+  };
+}
+
+function computePayloadSignature(payload, secret) {
+  const signablePayload = buildSignablePayload(payload);
+  return createHmac('sha256', secret).update(JSON.stringify(signablePayload)).digest('hex');
+}
+
 export function buildRerunPayload({
   failedCaseIds = [],
   testEnv = process.env.TEST_ENV || 'DEV',
@@ -68,11 +90,15 @@ export function buildRerunPayload({
   repository = detectGitRepository(),
   workflowId = DEFAULT_WORKFLOW_ID,
   runMode = DEFAULT_RUN_MODE,
+  now = Date.now(),
+  ttlMs = DEFAULT_TTL_MS,
 } = {}) {
   const uniqueIds = normalizeFailedCaseIds(failedCaseIds);
   if (!uniqueIds.length || !ref || !repository) return null;
 
   const branch = ref.startsWith('refs/heads/') ? ref.replace('refs/heads/', '') : ref;
+  const issuedAt = new Date(now).toISOString();
+  const expiresAt = new Date(now + ttlMs).toISOString();
 
   return {
     testEnv: String(testEnv || 'DEV').toUpperCase(),
@@ -83,6 +109,8 @@ export function buildRerunPayload({
     repository,
     workflowId,
     runMode,
+    issuedAt,
+    expiresAt,
   };
 }
 
@@ -100,10 +128,31 @@ export function encodeRerunPayload(payload) {
 export function buildRerunHelperUrl({ baseUrl = process.env.RERUN_HELPER_BASE_URL, payload } = {}) {
   if (!baseUrl || !payload) return null;
 
-  const encodedPayload = encodeRerunPayload(payload);
+  const signingSecret = String(process.env.RERUN_HELPER_SIGNING_SECRET || '').trim();
+  if (!signingSecret) return null;
+
+  const signedPayload = {
+    ...payload,
+    signature: computePayloadSignature(payload, signingSecret),
+  };
+
+  const encodedPayload = encodeRerunPayload(signedPayload);
   if (!encodedPayload) return null;
 
   const url = new URL(baseUrl);
   url.searchParams.set('payload', encodedPayload);
   return url.toString();
+}
+
+export function verifySignedRerunPayload(payload, secret = process.env.RERUN_HELPER_SIGNING_SECRET) {
+  const signingSecret = String(secret || '').trim();
+  const providedSignature = String(payload?.signature || '').trim();
+  if (!signingSecret || !providedSignature) return false;
+
+  const expectedSignature = computePayloadSignature(payload, signingSecret);
+  const providedBuffer = Buffer.from(providedSignature, 'utf-8');
+  const expectedBuffer = Buffer.from(expectedSignature, 'utf-8');
+  if (providedBuffer.length !== expectedBuffer.length) return false;
+
+  return timingSafeEqual(providedBuffer, expectedBuffer);
 }
