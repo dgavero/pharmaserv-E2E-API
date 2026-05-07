@@ -69,9 +69,10 @@ elif [[ "${MODE}" == "regression" ]]; then
   run_container "${RUN_TAGS}" "${PROJECT}" "${DISCORD_GREP_LABEL:-}" npx playwright test
 else
   if [[ -n "${RUN_TAGS}" ]]; then
+    selected_project="${PROJECT:-e2e,api}"
     echo "Running BASIC mode with specific TAGS"
-    echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=e2e,api npx playwright test"
-    run_container "${RUN_TAGS}" "e2e,api" "${DISCORD_GREP_LABEL:-}" npx playwright test
+    echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${RUN_TAGS} PROJECT=${selected_project} npx playwright test"
+    run_container "${RUN_TAGS}" "${selected_project}" "${DISCORD_GREP_LABEL:-}" npx playwright test
   else
     echo "Running smoke suite in BASIC mode"
     echo "CMD: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=smoke DISCORD_GREP_LABEL=smoke PROJECT= npx playwright test"

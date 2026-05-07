@@ -10,6 +10,7 @@
     "test:all": "node scripts/ci/run-all.cjs regression",
     "test:all:regression": "node scripts/ci/run-all.cjs regression",
     "test:all:stress": "node scripts/ci/run-all.cjs stress",
+    "rerun-helper:start": "node scripts/rerun-helper/server.cjs",
     "docker:build": "docker build -t pharmaserv-tests .",
     "docker:test": "node scripts/ci/docker-run.cjs",
     "docker:test:regression": "cross-env MODE=regression node scripts/ci/docker-run.cjs",
