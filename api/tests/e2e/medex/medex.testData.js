@@ -3,6 +3,8 @@ import { getPatientAccount } from '../../../helpers/roleCredentials.js';
 export const MEDEX_BRANCH_ID = 2368;
 export const MEDEX_RX_ATTACHMENT_IMAGE_PATH = 'upload/images/prescription1.png';
 export const MEDEX_RX_PRESCRIPTION_IMAGE_PATH = 'upload/images/prescription2.png';
+export const MEDEX_SENIOR_CARD_FRONT_IMAGE_PATH = 'upload/api-images/senior-id-front.png';
+export const MEDEX_SENIOR_CARD_BACK_IMAGE_PATH = 'upload/api-images/senior-id-back.png';
 export const MEDEX_PROOF_OF_PAYMENT_IMAGE_PATH = 'upload/images/proof1.png';
 export const MEDEX_PICKUP_PROOF_IMAGE_PATH = 'upload/images/proofOfPickup.png';
 export const MEDEX_DELIVERY_PROOF_IMAGE_PATH = 'upload/images/proofOfDelivery.png';
@@ -25,6 +27,7 @@ export function buildMedexOrderInput({
   branchId = MEDEX_BRANCH_ID,
   prescriptionItems,
   prescriptionIds = [],
+  identificationCardIds = [],
   attachmentBlobName,
 } = {}) {
   const defaultPatientAccount = getPatientAccount('default');
@@ -33,6 +36,7 @@ export function buildMedexOrderInput({
     patientId: patientId || defaultPatientAccount.patientId,
     branchId,
     prescriptionIds,
+    identificationCardIds,
     prescriptionItems,
     addressName: 'Home API',
     address: 'Test API Address',
@@ -52,4 +56,20 @@ export function buildMedexOrderInput({
 
   orderInput.deliveryInstructions = 'API automated test only';
   return orderInput;
+}
+
+export function buildMedexIdentificationCardInput({
+  cardType,
+  name,
+  cardId,
+  frontPhoto,
+  backPhoto,
+}) {
+  return {
+    cardType,
+    name,
+    cardId,
+    frontPhoto,
+    backPhoto,
+  };
 }
