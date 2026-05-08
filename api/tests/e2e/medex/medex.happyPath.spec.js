@@ -10,6 +10,7 @@ import {
   MEDEX_PICKUP_PROOF_IMAGE_PATH,
   MEDEX_PROOF_OF_PAYMENT_IMAGE_PATH,
   MEDEX_RX_ATTACHMENT_IMAGE_PATH,
+  MEDEX_RX_PRESCRIPTION_IMAGE_PATH,
 } from './medex.testData.js';
 import {
   acceptQuoteAsPatientForMedex,
@@ -21,7 +22,9 @@ import {
 } from './medex.client.js';
 import {
   getAttachmentUploadUrlAsPatient,
+  getPrescriptionUploadUrlAsPatient,
   loginPatient,
+  savePrescriptionAsPatient,
   submitOrderAsPatient,
   getProofOfPaymentUploadUrlAsPatient,
   payOrderAsPatient,
@@ -41,7 +44,10 @@ import {
   setDeliveryProofAsRider,
   completeOrderAsRider,
 } from '../shared/steps/rider.steps.js';
-import { assertMedexQuotedOrderItems, getMedexQuotedOrderItems } from './medex.orderCheck.js';
+import {
+  assertMedexQuotedOrderItems,
+  getMedexQuotedOrderItems,
+} from './medex.orderCheck.js';
 
 const defaultRiderAccount = getRiderAccount('default');
 const MEDEX_PRE_LOGIN_WAIT_MS = 30_000;
@@ -348,4 +354,5 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
       });
     }
   );
+
 });

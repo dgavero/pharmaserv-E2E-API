@@ -2,6 +2,7 @@ import { getPatientAccount } from '../../../helpers/roleCredentials.js';
 
 export const MEDEX_BRANCH_ID = 2368;
 export const MEDEX_RX_ATTACHMENT_IMAGE_PATH = 'upload/images/prescription1.png';
+export const MEDEX_RX_PRESCRIPTION_IMAGE_PATH = 'upload/images/prescription2.png';
 export const MEDEX_PROOF_OF_PAYMENT_IMAGE_PATH = 'upload/images/proof1.png';
 export const MEDEX_PICKUP_PROOF_IMAGE_PATH = 'upload/images/proofOfPickup.png';
 export const MEDEX_DELIVERY_PROOF_IMAGE_PATH = 'upload/images/proofOfDelivery.png';
@@ -19,13 +20,19 @@ export function buildMedexPrescriptionItems({ medicineIds, quantity }) {
   }));
 }
 
-export function buildMedexOrderInput({ patientId, branchId = MEDEX_BRANCH_ID, prescriptionItems, attachmentBlobName } = {}) {
+export function buildMedexOrderInput({
+  patientId,
+  branchId = MEDEX_BRANCH_ID,
+  prescriptionItems,
+  prescriptionIds = [],
+  attachmentBlobName,
+} = {}) {
   const defaultPatientAccount = getPatientAccount('default');
   const orderInput = {
     deliveryType: 'MED_EX',
     patientId: patientId || defaultPatientAccount.patientId,
     branchId,
-    prescriptionIds: [],
+    prescriptionIds,
     prescriptionItems,
     addressName: 'Home API',
     address: 'Test API Address',
