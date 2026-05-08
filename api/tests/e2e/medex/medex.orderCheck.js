@@ -2,6 +2,7 @@ import { expect } from '../../../globalConfig.api.js';
 import { bearer, safeGraphQL } from '../../../helpers/graphqlUtils.js';
 import { GET_ORDER_QUERY } from '../../patient/ordering/patient.orderingQueries.js';
 import { GET_ORDER_HISTORY_QUERY } from '../../patient/historyAndNotifications/patient.getHistoryNotificationQueries.js';
+import { GET_MEDEX_ORDER_SUMMARY_QUERY } from './medex.orderQueries.js';
 
 function normalizeItem(item) {
   return {
@@ -42,6 +43,27 @@ export async function getMedexOrderHistoryEntry(api, { patientAccessToken, order
   const historyItems = historyRes.body?.data?.patient?.orderHistory || [];
   expect(Array.isArray(historyItems), 'Expected patient orderHistory to be an array').toBe(true);
   return historyItems.find((item) => String(item?.id || '') === String(orderId)) || null;
+}
+
+export async function getMedexOrderSummary(api, { patientAccessToken, orderId }) {
+  const getOrderSummaryRes = await safeGraphQL(api, {
+    query: GET_MEDEX_ORDER_SUMMARY_QUERY,
+    variables: { orderId },
+    headers: bearer(patientAccessToken),
+  });
+  expect(getOrderSummaryRes.ok, getOrderSummaryRes.error || 'Patient get MedEx order summary failed').toBe(true);
+  const orderNode = getOrderSummaryRes.body?.data?.patient?.order;
+  expect(orderNode, 'Missing data.patient.order from MedEx order summary query').toBeTruthy();
+  expect(orderNode?.summary, 'Missing data.patient.order.summary from MedEx order summary query').toBeTruthy();
+  return { orderNode, orderSummary: orderNode.summary };
+}
+
+export function assertNoMedexSeniorPwdDiscount(orderSummary) {
+  const lessPercentSCPWD = Number(orderSummary?.lessPercentSCPWD || 0);
+  expect(
+    lessPercentSCPWD,
+    `Expected no Senior/PWD discount to be applied, but lessPercentSCPWD was ${lessPercentSCPWD}`
+  ).toBe(0);
 }
 
 export function assertMedexQuotedOrderItems(items, expectedItems) {

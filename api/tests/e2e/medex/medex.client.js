@@ -1,6 +1,13 @@
 import { expect } from '../../../globalConfig.api.js';
 import { bearer, safeGraphQL } from '../../../helpers/graphqlUtils.js';
-import { MEDEX_CONFIRM_ORDER_PAYLOAD, MEDEX_LOGIN_PATH, MEDEX_SET_FOR_PICKUP_PAYLOAD, buildMedexOrderStatusPath } from './medexQueries.js';
+import {
+  MEDEX_CANCEL_ORDER_PAYLOAD,
+  MEDEX_CONFIRM_ORDER_PAYLOAD,
+  MEDEX_LOGIN_PATH,
+  MEDEX_SET_FOR_PICKUP_PAYLOAD,
+  buildMedexOrderStatusPath,
+} from './medexQueries.js';
+import { CANCEL_MEDEX_ORDER_AS_PATIENT_QUERY } from './medex.orderQueries.js';
 import { PATIENT_ACCEPT_QUOTE_QUERY } from '../shared/queries/patient.queries.js';
 
 const MEDEX_QUOTE_NOT_SENT_ERROR = 'Quote cannot be accepted since it has not been sent by pharmacy yet.';
@@ -72,6 +79,15 @@ export async function setOrderForPickupAsMedex(api, { medexAccessToken, tracking
   });
 }
 
+export async function cancelOrderAsMedex(api, { medexAccessToken, trackingCode }) {
+  return updateOrderStatusAsMedex(api, {
+    medexAccessToken,
+    trackingCode,
+    payload: MEDEX_CANCEL_ORDER_PAYLOAD,
+    actionLabel: 'cancel order',
+  });
+}
+
 export async function confirmOrderAsMedexWithRx(api, { medexAccessToken, trackingCode }) {
   return confirmOrderAsMedex(api, { medexAccessToken, trackingCode });
 }
@@ -102,4 +118,16 @@ export async function acceptQuoteAsPatientForMedex(api, { patientAccessToken, or
 
   expect(acceptQuoteRes.ok, acceptQuoteRes.error || 'Patient accept quote failed').toBe(true);
   return { acceptQuoteNode: null, quoteNotSent: false };
+}
+
+export async function cancelOrderAsPatientForMedex(api, { patientAccessToken, orderId }) {
+  const cancelOrderRes = await safeGraphQL(api, {
+    query: CANCEL_MEDEX_ORDER_AS_PATIENT_QUERY,
+    variables: { orderId },
+    headers: bearer(patientAccessToken),
+  });
+  expect(cancelOrderRes.ok, cancelOrderRes.error || 'Patient cancel order failed').toBe(true);
+  const cancelNode = cancelOrderRes.body?.data?.patient?.order?.cancel;
+  expect(cancelNode, 'Missing patient.order.cancel response').toBeTruthy();
+  return { cancelNode };
 }

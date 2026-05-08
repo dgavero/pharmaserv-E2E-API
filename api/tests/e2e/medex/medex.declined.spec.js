@@ -29,7 +29,7 @@ function wait(ms) {
 
 test.describe('GraphQL E2E Workflow: MedEx Declined Paths', () => {
   test(
-    'PHARMA-596 | MedEx with RX but no medicine should reveal post-submit order status',
+    'PHARMA-596 | MEDEX Happy Path With RX but no Medicine',
     {
       tag: ['@api', '@workflow', '@medex', '@patient', '@negative', '@pharma-596'],
     },

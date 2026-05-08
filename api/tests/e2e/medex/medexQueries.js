@@ -11,3 +11,8 @@ export const MEDEX_CONFIRM_ORDER_PAYLOAD = Object.freeze({
 export const MEDEX_SET_FOR_PICKUP_PAYLOAD = Object.freeze({
   CODE: 'OOP',
 });
+
+export const MEDEX_CANCEL_ORDER_PAYLOAD = Object.freeze({
+  CODE: 'OCN',
+  REMARKS: 'This order is cancelled via Automated Testing.',
+});
