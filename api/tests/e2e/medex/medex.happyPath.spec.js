@@ -1,6 +1,6 @@
 import { test, expect } from '../../../globalConfig.api.js';
 import path from 'node:path';
-import { randomAlphanumeric } from '../../../../helpers/globalTestUtils.js';
+import { randomAlphanumeric, randomNum } from '../../../../helpers/globalTestUtils.js';
 import { getPatientAccount, getRiderAccount } from '../../../helpers/roleCredentials.js';
 import {
   buildMedexOrderInput,
@@ -18,13 +18,13 @@ import {
   MEDEX_SENIOR_RX_ATTACHMENT_IMAGE_PATH,
 } from './medex.testData.js';
 import {
-  acceptQuoteAsPatientForMedex,
   confirmOrderAsMedex,
   confirmOrderAsMedexWithRx,
   loginMedex,
   setOrderForPickupAsMedex,
   setOrderForPickupAsMedexWithRx,
-} from './medex.client.js';
+  waitForMedexQuoteToBeAcceptable,
+} from './medex.actions.js';
 import {
   getIdentificationCardUploadUrlAsPatient,
   removeIdentificationCardAsPatient,
@@ -57,18 +57,13 @@ import {
 import {
   assertMedexQuotedOrderItems,
   getMedexQuotedOrderItems,
+  waitForMedexOrderIsAccepted,
 } from './medex.orderCheck.js';
 
 const defaultRiderAccount = getRiderAccount('default');
 const defaultPatientAccount = getPatientAccount('default');
-const MEDEX_PRE_LOGIN_WAIT_MS = 30_000;
-const MEDEX_ACCEPT_QUOTE_RETRY_WAIT_MS = 30_000;
 const MED_EX_HAPPY_PATH_MEDICINE_IDS = Object.freeze([62020, 54077, 57973, 57974]);
 const MED_EX_HAPPY_PATH_QUANTITY = 5;
-
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
   test(
@@ -106,8 +101,8 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
       const trackingCode = submitOrderNode?.trackingCode;
       expect(trackingCode, 'Missing trackingCode from patient submit order response').toBeTruthy();
 
-      // MedEx flow requires a fixed wait before the external MedEx login/confirm sequence becomes usable.
-      await wait(MEDEX_PRE_LOGIN_WAIT_MS);
+      // Wait until patient order leaves NEW_ORDER before MedEx confirm.
+      await waitForMedexOrderIsAccepted(api, { patientAccessToken, orderId });
 
       // MedEx: Login.
       const { medexAccessToken } = await loginMedex(api);
@@ -115,12 +110,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
       await confirmOrderAsMedex(api, { medexAccessToken, trackingCode });
 
       // Patient: Accept Quote.
-      let acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-      if (acceptQuoteResult.quoteNotSent) {
-        await wait(MEDEX_ACCEPT_QUOTE_RETRY_WAIT_MS);
-        acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-      }
-      expect(acceptQuoteResult.quoteNotSent, 'Patient accept quote failed after MedEx retry wait').toBe(false);
+      await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
       const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
       assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
       // Patient: Get Proof of Payment Upload URL.
@@ -259,8 +249,8 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
       const trackingCode = submitOrderNode?.trackingCode;
       expect(trackingCode, 'Missing trackingCode from patient submit order response').toBeTruthy();
 
-      // MedEx flow requires a fixed wait before the external MedEx login/confirm sequence becomes usable.
-      await wait(MEDEX_PRE_LOGIN_WAIT_MS);
+      // Wait until patient order leaves NEW_ORDER before MedEx confirm.
+      await waitForMedexOrderIsAccepted(api, { patientAccessToken, orderId });
 
       // MedEx: Login.
       const { medexAccessToken } = await loginMedex(api);
@@ -268,12 +258,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
       await confirmOrderAsMedexWithRx(api, { medexAccessToken, trackingCode });
 
       // Patient: Accept Quote.
-      let acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-      if (acceptQuoteResult.quoteNotSent) {
-        await wait(MEDEX_ACCEPT_QUOTE_RETRY_WAIT_MS);
-        acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-      }
-      expect(acceptQuoteResult.quoteNotSent, 'Patient accept quote failed after MedEx retry wait').toBe(false);
+      await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
       const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
       assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
       // Patient: Get Proof of Payment Upload URL.
@@ -387,7 +372,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
       const expectedQuotedItems = [
         { medicineId: 57973, quantity: MED_EX_HAPPY_PATH_QUANTITY, zeroTotal: false },
       ];
-      const seniorCardSuffix = randomAlphanumeric(6);
+      const seniorCardSuffix = randomNum(6);
       let identificationCardId = null;
       let primaryError = null;
 
@@ -417,7 +402,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
           identificationCard: buildMedexIdentificationCardInput({
             cardType: 'Senior ID',
             name: 'QA Senior Card',
-            cardId: `SC-QA-${seniorCardSuffix}`,
+            cardId: seniorCardSuffix,
             frontPhoto: seniorCardFrontBlobName,
             backPhoto: seniorCardBackBlobName,
           }),
@@ -434,7 +419,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
         const trackingCode = submitOrderNode?.trackingCode;
         expect(trackingCode, 'Missing trackingCode from patient submit order response').toBeTruthy();
 
-        await wait(MEDEX_PRE_LOGIN_WAIT_MS);
+        await waitForMedexOrderIsAccepted(api, { patientAccessToken, orderId });
 
         // MedEx: Login.
         const { medexAccessToken } = await loginMedex(api);
@@ -442,12 +427,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
         await confirmOrderAsMedex(api, { medexAccessToken, trackingCode });
 
         // Patient: Accept Quote.
-        let acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-        if (acceptQuoteResult.quoteNotSent) {
-          await wait(MEDEX_ACCEPT_QUOTE_RETRY_WAIT_MS);
-          acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-        }
-        expect(acceptQuoteResult.quoteNotSent, 'Patient accept quote failed after MedEx retry wait').toBe(false);
+        await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
         const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
         assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
         // Patient: Get Proof of Payment Upload URL.
@@ -586,7 +566,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
         { medicineId: 57974, zeroTotal: true },
         { medicineId: 62020, zeroTotal: true },
       ];
-      const seniorCardSuffix = randomAlphanumeric(6);
+      const seniorCardSuffix = randomNum(6);
       let identificationCardId = null;
       let primaryError = null;
 
@@ -616,7 +596,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
           identificationCard: buildMedexIdentificationCardInput({
             cardType: 'Senior ID',
             name: 'QA Senior Card',
-            cardId: `SC-QA-${seniorCardSuffix}`,
+            cardId: seniorCardSuffix,
             frontPhoto: seniorCardFrontBlobName,
             backPhoto: seniorCardBackBlobName,
           }),
@@ -643,7 +623,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
         const trackingCode = submitOrderNode?.trackingCode;
         expect(trackingCode, 'Missing trackingCode from patient submit order response').toBeTruthy();
 
-        await wait(MEDEX_PRE_LOGIN_WAIT_MS);
+        await waitForMedexOrderIsAccepted(api, { patientAccessToken, orderId });
 
         // MedEx: Login.
         const { medexAccessToken } = await loginMedex(api);
@@ -651,12 +631,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
         await confirmOrderAsMedexWithRx(api, { medexAccessToken, trackingCode });
 
         // Patient: Accept Quote.
-        let acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-        if (acceptQuoteResult.quoteNotSent) {
-          await wait(MEDEX_ACCEPT_QUOTE_RETRY_WAIT_MS);
-          acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-        }
-        expect(acceptQuoteResult.quoteNotSent, 'Patient accept quote failed after MedEx retry wait').toBe(false);
+        await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
         const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
         assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
         // Patient: Get Proof of Payment Upload URL.
@@ -791,7 +766,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
       const expectedQuotedItems = [
         { medicineId: 57973, quantity: MED_EX_HAPPY_PATH_QUANTITY, zeroTotal: false },
       ];
-      const pwdCardSuffix = randomAlphanumeric(6);
+      const pwdCardSuffix = randomNum(6);
       let identificationCardId = null;
       let primaryError = null;
 
@@ -821,7 +796,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
           identificationCard: buildMedexIdentificationCardInput({
             cardType: 'PWD ID',
             name: 'QA PWD Card',
-            cardId: `PWD-QA-${pwdCardSuffix}`,
+            cardId: pwdCardSuffix,
             frontPhoto: pwdCardFrontBlobName,
             backPhoto: pwdCardBackBlobName,
           }),
@@ -838,7 +813,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
         const trackingCode = submitOrderNode?.trackingCode;
         expect(trackingCode, 'Missing trackingCode from patient submit order response').toBeTruthy();
 
-        await wait(MEDEX_PRE_LOGIN_WAIT_MS);
+        await waitForMedexOrderIsAccepted(api, { patientAccessToken, orderId });
 
         // MedEx: Login.
         const { medexAccessToken } = await loginMedex(api);
@@ -846,12 +821,7 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
         await confirmOrderAsMedex(api, { medexAccessToken, trackingCode });
 
         // Patient: Accept Quote.
-        let acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-        if (acceptQuoteResult.quoteNotSent) {
-          await wait(MEDEX_ACCEPT_QUOTE_RETRY_WAIT_MS);
-          acceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
-        }
-        expect(acceptQuoteResult.quoteNotSent, 'Patient accept quote failed after MedEx retry wait').toBe(false);
+        await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
         const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
         assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
         // Patient: Get Proof of Payment Upload URL.

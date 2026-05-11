@@ -2,15 +2,21 @@ import { expect } from '../../../globalConfig.api.js';
 import { bearer, safeGraphQL } from '../../../helpers/graphqlUtils.js';
 import {
   MEDEX_CANCEL_ORDER_PAYLOAD,
+  CANCEL_MEDEX_ORDER_AS_PATIENT_QUERY,
   MEDEX_CONFIRM_ORDER_PAYLOAD,
   MEDEX_LOGIN_PATH,
   MEDEX_SET_FOR_PICKUP_PAYLOAD,
   buildMedexOrderStatusPath,
-} from './medexQueries.js';
-import { CANCEL_MEDEX_ORDER_AS_PATIENT_QUERY } from './medex.orderQueries.js';
+} from './medex.queries.js';
 import { PATIENT_ACCEPT_QUOTE_QUERY } from '../shared/queries/patient.queries.js';
 
 const MEDEX_QUOTE_NOT_SENT_ERROR = 'Quote cannot be accepted since it has not been sent by pharmacy yet.';
+const MEDEX_ACCEPT_QUOTE_POLL_INTERVAL_MS = 10_000;
+const MEDEX_ACCEPT_QUOTE_MAX_ATTEMPTS = 10;
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function getMedexCredentialsFromEnv() {
   const username = String(process.env.MEDEX_USERNAME || '').trim();
@@ -118,6 +124,35 @@ export async function acceptQuoteAsPatientForMedex(api, { patientAccessToken, or
 
   expect(acceptQuoteRes.ok, acceptQuoteRes.error || 'Patient accept quote failed').toBe(true);
   return { acceptQuoteNode: null, quoteNotSent: false };
+}
+
+export async function waitForMedexQuoteToBeAcceptable(api, {
+  patientAccessToken,
+  orderId,
+  intervalMs = MEDEX_ACCEPT_QUOTE_POLL_INTERVAL_MS,
+  maxAttempts = MEDEX_ACCEPT_QUOTE_MAX_ATTEMPTS,
+} = {}) {
+  let lastAcceptQuoteResult = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    lastAcceptQuoteResult = await acceptQuoteAsPatientForMedex(api, { patientAccessToken, orderId });
+
+    if (!lastAcceptQuoteResult.quoteNotSent) {
+      return {
+        ...lastAcceptQuoteResult,
+        attemptsUsed: attempt,
+      };
+    }
+
+    if (attempt < maxAttempts) {
+      await wait(intervalMs);
+    }
+  }
+
+  expect(
+    lastAcceptQuoteResult?.quoteNotSent,
+    `Patient accept quote failed after ${maxAttempts} attempts with ${intervalMs}ms polling interval`
+  ).toBe(false);
 }
 
 export async function cancelOrderAsPatientForMedex(api, { patientAccessToken, orderId }) {

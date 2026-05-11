@@ -2,7 +2,14 @@ import { expect } from '../../../globalConfig.api.js';
 import { bearer, safeGraphQL } from '../../../helpers/graphqlUtils.js';
 import { GET_ORDER_QUERY } from '../../patient/ordering/patient.orderingQueries.js';
 import { GET_ORDER_HISTORY_QUERY } from '../../patient/historyAndNotifications/patient.getHistoryNotificationQueries.js';
-import { GET_MEDEX_ORDER_SUMMARY_QUERY } from './medex.orderQueries.js';
+import { GET_MEDEX_ORDER_SUMMARY_QUERY } from './medex.queries.js';
+
+const MEDEX_ORDER_READY_POLL_INTERVAL_MS = 10_000;
+const MEDEX_ORDER_READY_MAX_ATTEMPTS = 10;
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function normalizeItem(item) {
   return {
@@ -56,6 +63,41 @@ export async function getMedexOrderSummary(api, { patientAccessToken, orderId })
   expect(orderNode, 'Missing data.patient.order from MedEx order summary query').toBeTruthy();
   expect(orderNode?.summary, 'Missing data.patient.order.summary from MedEx order summary query').toBeTruthy();
   return { orderNode, orderSummary: orderNode.summary };
+}
+
+export async function waitForMedexOrderIsAccepted(api, {
+  patientAccessToken,
+  orderId,
+  intervalMs = MEDEX_ORDER_READY_POLL_INTERVAL_MS,
+  maxAttempts = MEDEX_ORDER_READY_MAX_ATTEMPTS,
+} = {}) {
+  let lastStatus = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const orderNode = await getMedexOrderDetail(api, { patientAccessToken, orderId });
+    const currentStatus = String(orderNode?.status || '');
+    lastStatus = currentStatus;
+
+    if (currentStatus && currentStatus !== 'NEW_ORDER') {
+      expect(
+        currentStatus,
+        `Unexpected MedEx pre-confirm patient order status ${currentStatus}`
+      ).not.toBe('CANCELLED');
+      return {
+        orderNode,
+        attemptsUsed: attempt,
+      };
+    }
+
+    if (attempt < maxAttempts) {
+      await wait(intervalMs);
+    }
+  }
+
+  expect(
+    false,
+    `MedEx order did not leave NEW_ORDER after ${maxAttempts} attempts with ${intervalMs}ms polling interval. Last status=${lastStatus}`
+  ).toBe(true);
 }
 
 export function assertNoMedexSeniorPwdDiscount(orderSummary) {
