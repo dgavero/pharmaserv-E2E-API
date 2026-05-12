@@ -127,6 +127,8 @@ Then read the local code closest to the requested change:
 
 Use `docs/change-workflow.md`. Do not edit before completing that workflow.
 
+If the task changes approval-required framework areas such as runner config, shared harnesses, CI, secrets loading, Docker runners, or reporting, also use `docs/framework-change-checklist.md` before and after the change.
+
 ## Implementation Rules
 
 ### General

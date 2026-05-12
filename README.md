@@ -35,6 +35,45 @@ Playwright test framework for Pharmaserv with:
 npm install
 ```
 
+## First Run
+
+Use this checklist for a clean local setup before you troubleshoot framework behavior.
+
+1. Use Node.js 20 to match CI.
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Install Playwright browsers:
+
+```bash
+npx playwright install
+```
+
+4. Choose one local config path:
+- Plain local env files:
+  copy [.env.example](/Users/dgavero/pw/pharmaserv/pharmaserv-E2E-API/.env.example) to `.env`, then fill in real values locally.
+- Encrypted env bundle:
+  use [secrets/README.md](/Users/dgavero/pw/pharmaserv/pharmaserv-E2E-API/secrets/README.md), then load secrets with:
+
+```bash
+eval "$(TEST_ENV=DEV npm run -s secrets:load)"
+```
+
+5. If you plan to use local Docker runs, install Docker Desktop or a compatible local Docker Engine and confirm `docker` is available on your shell path.
+
+6. Run one narrow sanity check per layer:
+
+```bash
+# API sanity
+TEST_ENV=DEV THREADS=1 PROJECT=api TAGS=PHARMA-160 npx playwright test
+
+# E2E sanity
+TEST_ENV=DEV THREADS=1 PROJECT=e2e TAGS=merchant npx playwright test
+```
+
 ## Quick Start
 
 Running on macOS/Linux:
@@ -157,6 +196,41 @@ Details: [secrets/README.md](./secrets/README.md)
 - `push` to `main`: runs `test-merge` job in `basic + smoke` mode.
 - `schedule`: runs full QA regression coverage in parallel `api` + `e2e` jobs.
 
+## CI Architecture
+
+Current CI flow from trigger to outputs:
+
+```text
+push main
+  -> .github/workflows/tests.yml
+  -> test-merge
+  -> .github/workflows/_run-docker-tests.yml
+  -> scripts/secrets/load-secrets.js
+  -> scripts/ci/run-tests-in-docker.sh
+  -> Docker image pharmaserv-tests-ci
+  -> playwright run
+  -> artifacts: .playwright-report, test-results, screenshots, .blob-report
+  -> Discord/report publishing based on branch routing
+
+workflow_dispatch
+  -> .github/workflows/tests.yml
+  -> test-manual or regression-api + regression-e2e
+  -> .github/workflows/_run-docker-tests.yml
+  -> scripts/ci/run-tests-in-docker.sh
+  -> Docker image pharmaserv-tests-ci
+  -> playwright run
+  -> artifacts + Discord/report outputs
+
+schedule
+  -> .github/workflows/tests.yml
+  -> qa-scheduled-api + qa-scheduled-e2e
+  -> .github/workflows/_run-docker-tests.yml
+  -> scripts/ci/run-tests-in-docker.sh
+  -> Docker image pharmaserv-tests-ci
+  -> playwright run
+  -> artifacts + Discord/report outputs
+```
+
 ## CI Manual Run Inputs
 
 - In GitHub Actions `workflow_dispatch`, you can set:
@@ -180,6 +254,9 @@ Details: [secrets/README.md](./secrets/README.md)
 
 - Usage and run patterns: [USAGE.md](./USAGE.md)
 - API test authoring source-of-truth: [AGENTS.md](./AGENTS.md)
+- Execution entrypoints and when to use them: [docs/execution-matrix.md](./docs/execution-matrix.md)
+- Framework change validation for approval-required areas: [docs/framework-change-checklist.md](./docs/framework-change-checklist.md)
+- Runtime env var reference and dummy values: [.env.example](./.env.example)
 - Framework architecture and extension rules:
   - [docs/architecture.md](./docs/architecture.md)
   - [docs/test-layer-map.md](./docs/test-layer-map.md)

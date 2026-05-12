@@ -32,6 +32,8 @@ run_regression() {
   log "Running mode: REGRESSION MODE (single full-suite invocation)"
   log "Config: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags}"
   rm -f .discord-run.json .discord-cumulative.json
+  # Keep blob cleanup at runner start so each top-level run starts fresh, while allowing
+  # reused multi-batch Playwright invocations to keep accumulated blob zips until final merge.
   clear_dir .blob-report
   if [[ "${DRY_RUN}" == "1" ]]; then
     log "[DRY_RUN] TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags} PROJECT= DISCORD_REUSE_RUN=${DISCORD_REUSE_RUN} npx playwright test"
@@ -47,6 +49,8 @@ run_stress() {
   log "Running mode: STRESS MODE (single full-suite invocation)"
   log "Config: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags}"
   rm -f .discord-run.json .discord-cumulative.json
+  # Keep blob cleanup at runner start so each top-level run starts fresh, while allowing
+  # reused multi-batch Playwright invocations to keep accumulated blob zips until final merge.
   clear_dir .blob-report
   if [[ "${DRY_RUN}" == "1" ]]; then
     log "[DRY_RUN] TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags} PROJECT= DISCORD_REUSE_RUN=${DISCORD_REUSE_RUN} npx playwright test"
