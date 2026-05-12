@@ -56,6 +56,9 @@ import {
 } from '../shared/steps/rider.steps.js';
 import {
   assertMedexQuotedOrderItems,
+  assertMedexSeniorPwdDiscountApplied,
+  assertNoMedexSeniorPwdDiscount,
+  getMedexOrderSummary,
   getMedexQuotedOrderItems,
   waitForMedexOrderIsAccepted,
 } from './medex.orderCheck.js';
@@ -111,6 +114,8 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
 
       // Patient: Accept Quote.
       await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
+      const { orderSummary } = await getMedexOrderSummary(api, { patientAccessToken, orderId });
+      assertNoMedexSeniorPwdDiscount(orderSummary);
       const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
       assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
       // Patient: Get Proof of Payment Upload URL.
@@ -259,6 +264,8 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
 
       // Patient: Accept Quote.
       await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
+      const { orderSummary } = await getMedexOrderSummary(api, { patientAccessToken, orderId });
+      assertNoMedexSeniorPwdDiscount(orderSummary);
       const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
       assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
       // Patient: Get Proof of Payment Upload URL.
@@ -428,6 +435,8 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
 
         // Patient: Accept Quote.
         await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
+        const { orderSummary } = await getMedexOrderSummary(api, { patientAccessToken, orderId });
+        assertMedexSeniorPwdDiscountApplied(orderSummary);
         const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
         assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
         // Patient: Get Proof of Payment Upload URL.
@@ -632,6 +641,8 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
 
         // Patient: Accept Quote.
         await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
+        const { orderSummary } = await getMedexOrderSummary(api, { patientAccessToken, orderId });
+        assertMedexSeniorPwdDiscountApplied(orderSummary);
         const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
         assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
         // Patient: Get Proof of Payment Upload URL.
@@ -822,6 +833,8 @@ test.describe('GraphQL E2E Workflow: MedEx Happy Paths', () => {
 
         // Patient: Accept Quote.
         await waitForMedexQuoteToBeAcceptable(api, { patientAccessToken, orderId });
+        const { orderSummary } = await getMedexOrderSummary(api, { patientAccessToken, orderId });
+        assertMedexSeniorPwdDiscountApplied(orderSummary);
         const medexQuotedItems = await getMedexQuotedOrderItems(api, { patientAccessToken, orderId });
         assertMedexQuotedOrderItems(medexQuotedItems, expectedQuotedItems);
         // Patient: Get Proof of Payment Upload URL.

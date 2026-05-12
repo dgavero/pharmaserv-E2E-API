@@ -108,6 +108,14 @@ export function assertNoMedexSeniorPwdDiscount(orderSummary) {
   ).toBe(0);
 }
 
+export function assertMedexSeniorPwdDiscountApplied(orderSummary) {
+  const lessPercentSCPWD = Number(orderSummary?.lessPercentSCPWD || 0);
+  expect(
+    lessPercentSCPWD,
+    `Expected Senior/PWD discount to be applied, but lessPercentSCPWD was ${lessPercentSCPWD}`
+  ).toBeGreaterThan(0);
+}
+
 export function assertMedexQuotedOrderItems(items, expectedItems) {
   expect(items.length, 'Unexpected MedEx quoted item count').toBe(expectedItems.length);
 

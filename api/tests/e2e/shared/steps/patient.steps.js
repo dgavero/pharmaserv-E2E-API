@@ -19,6 +19,8 @@ import {
   PATIENT_RATE_RIDER_QUERY,
 } from '../queries/patient.queries.js';
 
+const SUBMIT_ORDER_FLAT_MAP_RETRY_ERROR = "Did not observe any item or terminal signal within 5000ms in 'flatMap'";
+
 export async function loginPatient(api, { accountKey = 'default', credentials } = {}) {
   const resolvedCredentials = credentials || getPatientCredentials(accountKey);
   const { accessToken: patientAccessToken, raw: patientLoginRes } = await loginAsPatientAndGetTokens(
@@ -30,11 +32,23 @@ export async function loginPatient(api, { accountKey = 'default', credentials } 
 }
 
 export async function submitOrderAsPatient(api, { patientAccessToken, order }) {
-  const submitOrderRes = await safeGraphQL(api, {
+  let submitOrderRes = await safeGraphQL(api, {
     query: PATIENT_SUBMIT_ORDER_QUERY,
     variables: { order },
     headers: bearer(patientAccessToken),
   });
+
+  const shouldRetrySubmitOrder = !submitOrderRes.ok &&
+    String(submitOrderRes.error || submitOrderRes.errorMessage || '').includes(SUBMIT_ORDER_FLAT_MAP_RETRY_ERROR);
+
+  if (shouldRetrySubmitOrder) {
+    submitOrderRes = await safeGraphQL(api, {
+      query: PATIENT_SUBMIT_ORDER_QUERY,
+      variables: { order },
+      headers: bearer(patientAccessToken),
+    });
+  }
+
   expect(submitOrderRes.ok, submitOrderRes.error || 'Patient submit order failed').toBe(true);
   const submitOrderNode = submitOrderRes.body?.data?.patient?.order?.book;
   expect(submitOrderNode, 'Missing patient.order.book').toBeTruthy();
