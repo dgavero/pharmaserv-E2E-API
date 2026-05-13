@@ -33,6 +33,8 @@ export default async function globalSetup(config) {
   cleanDir('screenshots');
   cleanDir('.playwright-report');
   cleanDir('test-results');
+  // Intentionally do not clean .blob-report here. Top-level runner scripts own blob cleanup
+  // so each full run starts fresh without wiping multi-batch blob accumulation mid-sequence.
   console.log('🧹 Cleaned screenshots, playwright-report, test-results');
 
   // Global setup: posts the Discord header + thread before tests

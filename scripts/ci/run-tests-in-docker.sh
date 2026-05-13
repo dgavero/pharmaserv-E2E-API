@@ -12,6 +12,8 @@ HEADLESS="${HEADLESS:-true}"
 
 echo "Resolved selector: mode=${MODE} test_env=${TEST_ENV} threads=${THREADS} run_tags=${RUN_TAGS} project=${PROJECT}"
 
+# Reset host-side mount points before the container starts so stale blob zips do not leak into
+# this top-level Docker run or the reporter's final merge/publish path.
 rm -rf .playwright-report test-results screenshots .blob-report
 mkdir -p .playwright-report test-results screenshots .blob-report
 

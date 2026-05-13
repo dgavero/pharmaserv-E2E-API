@@ -65,6 +65,8 @@ function runRegression() {
   log(`Config: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags}`);
   clearPath('.discord-run.json');
   clearPath('.discord-cumulative.json');
+  // Keep blob cleanup at runner start so each top-level run starts fresh, while allowing
+  // reused multi-batch Playwright invocations to keep accumulated blob zips until final merge.
   clearPath('.blob-report');
   runPlaywright(tags);
   log('✓ REGRESSION MODE completed');
@@ -76,6 +78,8 @@ function runStress() {
   log(`Config: TEST_ENV=${TEST_ENV} THREADS=${THREADS} TAGS=${tags}`);
   clearPath('.discord-run.json');
   clearPath('.discord-cumulative.json');
+  // Keep blob cleanup at runner start so each top-level run starts fresh, while allowing
+  // reused multi-batch Playwright invocations to keep accumulated blob zips until final merge.
   clearPath('.blob-report');
   runPlaywright(tags);
   log('✓ STRESS MODE completed');

@@ -21,6 +21,8 @@ function toDockerHostPath(targetPath) {
 }
 
 function resetArtifactDirs() {
+  // Reset host-side mount points before the container starts so stale blob zips do not leak into
+  // this top-level Docker run or the reporter's final merge/publish path.
   for (const dir of ['.playwright-report', 'test-results', 'screenshots', '.blob-report']) {
     const abs = path.resolve(dir);
     fs.rmSync(abs, { recursive: true, force: true });
